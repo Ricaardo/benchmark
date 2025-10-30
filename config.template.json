@@ -1,0 +1,41 @@
+{
+  "_comment": "基础配置说明：anonymous=true 表示匿名模式，headless=false 表示显示浏览器窗口（调试用）",
+  "mode": {
+    "anonymous": true,
+    "headless": false
+  },
+  "runners": {
+    "Initialization": {
+      "enabled": false,
+      "testCases": [
+        {
+          "target": "https://www.bilibili.com",
+          "description": "B站首页"
+        }
+      ]
+    },
+    "Runtime": {
+      "enabled": true,
+      "durationMs": 60000,
+      "delayMs": 10000,
+      "testCases": [
+        {
+          "target": "https://www.bilibili.com",
+          "description": "B站首页"
+        }
+      ]
+    },
+    "MemoryLeak": {
+      "enabled": false,
+      "intervalMs": 60000,
+      "iterations": 3,
+      "onPageTesting": "",
+      "testCases": [
+        {
+          "target": "https://www.bilibili.com",
+          "description": "B站首页"
+        }
+      ]
+    }
+  }
+}

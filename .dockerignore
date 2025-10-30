@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.DS_Store
+*.log
+.env
+benchmark_report/*
+!benchmark_report/.gitkeep
+dist
+coverage

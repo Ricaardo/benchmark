@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benchmark Web Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+
+        .status-idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .status-running {
+            background: #ffd54f;
+            color: #f57c00;
+            animation: pulse 2s infinite;
+        }
+
+        .status-completed {
+            background: #81c784;
+            color: #2e7d32;
+        }
+
+        .status-error {
+            background: #e57373;
+            color: #c62828;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: #e57373;
+            color: white;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: #ef5350;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(229, 115, 115, 0.4);
+        }
+
+        .btn-secondary {
+            background: #90a4ae;
+            color: white;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #78909c;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .output-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 15px;
+        }
+
+        .config-editor {
+            width: 100%;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            resize: vertical;
+        }
+
+        .config-editor:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .reports-list {
+            list-style: none;
+        }
+
+        .reports-list li {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .reports-list li:last-child {
+            border-bottom: none;
+        }
+
+        .reports-list a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .reports-list a:hover {
+            text-decoration: underline;
+        }
+
+        .report-date {
+            color: #999;
+            font-size: 0.85em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+        }
+
+        .test-case-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .test-case-item input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .test-case-item label {
+            display: block;
+            margin-top: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .test-case-item button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Benchmark Web Runner</h1>
+            <p>Bilibili Player Performance Testing</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="/" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">🏠 控制台</a>
+            <a href="/config.html" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">⚙️ 配置管理</a>
+        </div>
+
+        <div class="card">
+            <h2>控制面板</h2>
+            <div style="margin-bottom: 15px;">
+                <strong>当前状态:</strong>
+                <span id="status-badge" class="status-badge status-idle">IDLE</span>
+                <span id="current-runner" style="margin-left: 10px; color: #666;"></span>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <strong>选择测试模式:</strong>
+                <select id="runner-select" style="margin-left: 10px; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1em; background: white;">
+                    <option value="Initialization">Initialization - 初始化性能测试</option>
+                    <option value="Runtime" selected>Runtime - 运行时性能测试</option>
+                    <option value="MemoryLeak">MemoryLeak - 内存泄漏测试</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button id="start-btn" class="btn-primary" onclick="startBenchmark()">
+                    ▶️ 启动测试
+                </button>
+                <button id="stop-btn" class="btn-danger" onclick="stopBenchmark()" disabled>
+                    ⏹️ 停止测试
+                </button>
+                <button class="btn-secondary" onclick="refreshStatus()">
+                    🔄 刷新状态
+                </button>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px; font-size: 0.9em;">
+                <strong>测试模式说明:</strong>
+                <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
+                    <li><strong>Initialization:</strong> 测试页面初始化加载性能</li>
+                    <li><strong>Runtime:</strong> 测试页面运行时长时间性能表现</li>
+                    <li><strong>MemoryLeak:</strong> 检测页面内存泄漏问题</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="card" style="border: 2px solid #667eea;">
+            <h2 style="color: #667eea;">⚙️ 快速配置</h2>
+
+            <!-- Initialization 配置 -->
+            <div id="init-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h3 style="margin-bottom: 10px; color: #333;">🚀 Initialization 配置</h3>
+                <div id="init-test-cases-quick"></div>
+                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('Initialization')">➕ 添加测试用例</button>
+            </div>
+
+            <!-- Runtime 配置 -->
+            <div id="runtime-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h3 style="margin-bottom: 10px; color: #333;">⏱️ Runtime 配置</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">运行时长 (毫秒)</label>
+                        <input type="number" id="runtime-duration-quick" value="60000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">延迟时间 (毫秒)</label>
+                        <input type="number" id="runtime-delay-quick" value="10000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    </div>
+                </div>
+                <div id="runtime-test-cases-quick"></div>
+                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('Runtime')">➕ 添加测试用例</button>
+            </div>
+
+            <!-- MemoryLeak 配置 -->
+            <div id="memory-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h3 style="margin-bottom: 10px; color: #333;">🔍 MemoryLeak 配置</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">迭代间隔 (毫秒)</label>
+                        <input type="number" id="memory-interval-quick" value="60000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">迭代次数</label>
+                        <input type="number" id="memory-iterations-quick" value="3" min="2" max="10" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    </div>
+                </div>
+                <div id="memory-test-cases-quick"></div>
+                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('MemoryLeak')">➕ 添加测试用例</button>
+            </div>
+
+            <div class="button-group" style="margin-top: 15px;">
+                <button class="btn-primary" onclick="saveQuickConfig()">💾 保存配置</button>
+                <button class="btn-secondary" onclick="loadQuickConfig()">🔄 重新加载</button>
+            </div>
+
+            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
+                <strong style="color: #1565c0;">💡 提示：</strong>
+                <span style="color: #1565c0;">在这里快速配置，或前往 <a href="/config.html" style="color: #1565c0; font-weight: 600;">配置管理页面</a> 进行高级配置。</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>实时输出</h2>
+            <div id="output" class="output-box">等待启动测试...</div>
+        </div>
+
+        <div class="card">
+            <h2>测试报告</h2>
+            <div id="reports" class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let statusInterval;
+        let currentConfig = null;
+
+        // 启动测试
+        async function startBenchmark() {
+            try {
+                const runner = document.getElementById('runner-select').value;
+                const response = await fetch(`${API_BASE}/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ runner })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    startStatusPolling();
+                } else {
+                    alert(data.error || '启动失败');
+                }
+            } catch (error) {
+                alert('启动测试失败: ' + error.message);
+            }
+        }
+
+        // 停止测试
+        async function stopBenchmark() {
+            try {
+                const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    stopStatusPolling();
+                    await refreshStatus();
+                } else {
+                    alert(data.error || '停止失败');
+                }
+            } catch (error) {
+                alert('停止测试失败: ' + error.message);
+            }
+        }
+
+        // 刷新状态
+        async function refreshStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/status`);
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error('获取状态失败:', error);
+            }
+        }
+
+        // 更新UI
+        function updateUI(data) {
+            const badge = document.getElementById('status-badge');
+            const startBtn = document.getElementById('start-btn');
+            const stopBtn = document.getElementById('stop-btn');
+            const output = document.getElementById('output');
+            const runnerSelect = document.getElementById('runner-select');
+            const currentRunner = document.getElementById('current-runner');
+
+            badge.className = `status-badge status-${data.status}`;
+            badge.textContent = data.status.toUpperCase();
+
+            startBtn.disabled = data.status === 'running';
+            stopBtn.disabled = data.status !== 'running';
+            runnerSelect.disabled = data.status === 'running';
+
+            if (data.currentRunner) {
+                currentRunner.textContent = `(${data.currentRunner})`;
+            } else {
+                currentRunner.textContent = '';
+            }
+
+            output.textContent = data.output || '暂无输出...';
+            output.scrollTop = output.scrollHeight;
+        }
+
+        // 开始轮询状态
+        function startStatusPolling() {
+            if (!statusInterval) {
+                statusInterval = setInterval(refreshStatus, 1000);
+            }
+        }
+
+        // 停止轮询状态
+        function stopStatusPolling() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+                statusInterval = null;
+            }
+        }
+
+        // 加载报告列表
+        async function loadReports() {
+            try {
+                const response = await fetch(`${API_BASE}/reports`);
+                const reports = await response.json();
+                const reportsDiv = document.getElementById('reports');
+
+                if (reports.length === 0) {
+                    reportsDiv.innerHTML = '<p class="loading">暂无测试报告</p>';
+                    return;
+                }
+
+                const list = document.createElement('ul');
+                list.className = 'reports-list';
+
+                reports.forEach(report => {
+                    const li = document.createElement('li');
+                    const date = new Date(report.modified).toLocaleString('zh-CN');
+                    li.innerHTML = `
+                        <a href="${report.path}" target="_blank">${report.name}</a>
+                        <span class="report-date">${date}</span>
+                    `;
+                    list.appendChild(li);
+                });
+
+                reportsDiv.innerHTML = '';
+                reportsDiv.appendChild(list);
+            } catch (error) {
+                document.getElementById('reports').innerHTML =
+                    '<p class="loading">加载报告失败</p>';
+            }
+        }
+
+        // 监听 runner 选择变化，显示对应的快速配置
+        document.addEventListener('DOMContentLoaded', () => {
+            const runnerSelect = document.getElementById('runner-select');
+            runnerSelect.addEventListener('change', updateQuickConfigVisibility);
+            updateQuickConfigVisibility(); // 初始化显示
+        });
+
+        function updateQuickConfigVisibility() {
+            const runner = document.getElementById('runner-select').value;
+
+            // 隐藏所有配置
+            document.getElementById('init-quick-config').style.display = 'none';
+            document.getElementById('runtime-quick-config').style.display = 'none';
+            document.getElementById('memory-quick-config').style.display = 'none';
+
+            // 显示选中的配置
+            if (runner === 'Initialization') {
+                document.getElementById('init-quick-config').style.display = 'block';
+            } else if (runner === 'Runtime') {
+                document.getElementById('runtime-quick-config').style.display = 'block';
+            } else if (runner === 'MemoryLeak') {
+                document.getElementById('memory-quick-config').style.display = 'block';
+            }
+        }
+
+        // 加载快速配置
+        async function loadQuickConfig() {
+            try {
+                const response = await fetch(`${API_BASE}/dynamic-config`);
+                currentConfig = await response.json();
+
+                // 渲染 Initialization 配置
+                renderQuickTestCases('Initialization', currentConfig.runners.Initialization.testCases || []);
+
+                // 渲染 Runtime 配置
+                document.getElementById('runtime-duration-quick').value = currentConfig.runners.Runtime.durationMs || 60000;
+                document.getElementById('runtime-delay-quick').value = currentConfig.runners.Runtime.delayMs || 10000;
+                renderQuickTestCases('Runtime', currentConfig.runners.Runtime.testCases || []);
+
+                // 渲染 MemoryLeak 配置
+                document.getElementById('memory-interval-quick').value = currentConfig.runners.MemoryLeak.intervalMs || 60000;
+                document.getElementById('memory-iterations-quick').value = currentConfig.runners.MemoryLeak.iterations || 3;
+                renderQuickTestCases('MemoryLeak', currentConfig.runners.MemoryLeak.testCases || []);
+
+            } catch (error) {
+                alert('加载配置失败: ' + error.message);
+            }
+        }
+
+        // 渲染测试用例列表
+        function renderQuickTestCases(runner, testCases) {
+            const containerId = runner === 'Initialization' ? 'init-test-cases-quick' :
+                               runner === 'Runtime' ? 'runtime-test-cases-quick' :
+                               'memory-test-cases-quick';
+
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            testCases.forEach((tc, index) => {
+                const div = document.createElement('div');
+                div.className = 'test-case-item';
+                div.innerHTML = `
+                    <label>测试 URL</label>
+                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target">
+                    <label>描述</label>
+                    <input type="text" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description">
+                    <button class="btn-danger" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 添加测试用例
+        function addQuickTestCase(runner) {
+            if (!currentConfig) return;
+
+            const runnerKey = runner;
+            if (!currentConfig.runners[runnerKey].testCases) {
+                currentConfig.runners[runnerKey].testCases = [];
+            }
+
+            currentConfig.runners[runnerKey].testCases.push({
+                target: '',
+                description: ''
+            });
+
+            renderQuickTestCases(runner, currentConfig.runners[runnerKey].testCases);
+        }
+
+        // 删除测试用例
+        function removeQuickTestCase(runner, index) {
+            if (!currentConfig) return;
+
+            currentConfig.runners[runner].testCases.splice(index, 1);
+            renderQuickTestCases(runner, currentConfig.runners[runner].testCases);
+        }
+
+        // 保存快速配置
+        async function saveQuickConfig() {
+            if (!currentConfig) {
+                alert('请先加载配置');
+                return;
+            }
+
+            try {
+                // 收集表单中的修改
+                const inputs = document.querySelectorAll('.test-case-item input[data-runner]');
+                inputs.forEach(input => {
+                    const runner = input.dataset.runner;
+                    const index = parseInt(input.dataset.index);
+                    const field = input.dataset.field;
+
+                    if (currentConfig.runners[runner].testCases[index]) {
+                        currentConfig.runners[runner].testCases[index][field] = input.value;
+                    }
+                });
+
+                // 收集 Runtime 参数
+                currentConfig.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration-quick').value);
+                currentConfig.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay-quick').value);
+
+                // 收集 MemoryLeak 参数
+                currentConfig.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval-quick').value);
+                currentConfig.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations-quick').value);
+
+                // 发送到后端
+                const response = await fetch(`${API_BASE}/dynamic-config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('✅ 配置保存成功！');
+                } else {
+                    alert('❌ 保存失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                alert('保存配置失败: ' + error.message);
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = async () => {
+            await refreshStatus();
+            await loadReports();
+            await loadQuickConfig();
+        };
+    </script>
+</body>
+</html>
