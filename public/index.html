@@ -88,6 +88,7 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         button {
@@ -98,6 +99,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 600;
+            position: relative;
         }
 
         .btn-primary {
@@ -122,6 +124,15 @@
             box-shadow: 0 5px 15px rgba(229, 115, 115, 0.4);
         }
 
+        .btn-warning {
+            background: #ffa726;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #fb8c00;
+        }
+
         .btn-secondary {
             background: #90a4ae;
             color: white;
@@ -131,9 +142,32 @@
             background: #78909c;
         }
 
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        button.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            right: 8px;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .output-box {
@@ -150,20 +184,102 @@
             margin-top: 15px;
         }
 
-        .config-editor {
-            width: 100%;
-            min-height: 300px;
-            font-family: 'Courier New', monospace;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
+        .test-case-item {
+            background: white;
+            padding: 12px;
             border-radius: 6px;
-            font-size: 0.9em;
-            resize: vertical;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
         }
 
-        .config-editor:focus {
-            outline: none;
-            border-color: #667eea;
+        .test-case-item input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .test-case-item input.error {
+            border-color: #e57373;
+        }
+
+        .test-case-item label {
+            display: block;
+            margin-top: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .test-case-item button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .error-message {
+            color: #e57373;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        /* Toast通知系统 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #81c784;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e57373;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ffa726;
+        }
+
+        .toast.info {
+            border-left: 4px solid #64b5f6;
+        }
+
+        .toast-icon {
+            font-size: 1.5em;
+        }
+
+        .toast-message {
+            flex: 1;
+            color: #333;
         }
 
         .reports-list {
@@ -186,6 +302,7 @@
             color: #667eea;
             text-decoration: none;
             font-weight: 500;
+            flex: 1;
         }
 
         .reports-list a:hover {
@@ -195,6 +312,13 @@
         .report-date {
             color: #999;
             font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .report-size {
+            color: #999;
+            font-size: 0.85em;
+            margin-right: 10px;
         }
 
         .loading {
@@ -202,40 +326,11 @@
             padding: 20px;
             color: #999;
         }
-
-        .test-case-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
-        }
-
-        .test-case-item input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        .test-case-item label {
-            display: block;
-            margin-top: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 0.9em;
-        }
-
-        .test-case-item button {
-            margin-top: 8px;
-            padding: 6px 12px;
-            font-size: 0.85em;
-        }
     </style>
 </head>
 <body>
+    <div class="toast-container" id="toast-container"></div>
+
     <div class="container">
         <div class="header">
             <h1>🚀 Benchmark Web Runner</h1>
@@ -272,6 +367,9 @@
                 <button class="btn-secondary" onclick="refreshStatus()">
                     🔄 刷新状态
                 </button>
+                <button class="btn-warning" onclick="resetStatus()">
+                    🔧 强制重置
+                </button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px; font-size: 0.9em;">
                 <strong>测试模式说明:</strong>
@@ -280,6 +378,10 @@
                     <li><strong>Runtime:</strong> 测试页面运行时长时间性能表现</li>
                     <li><strong>MemoryLeak:</strong> 检测页面内存泄漏问题</li>
                 </ul>
+            </div>
+            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em;">
+                <strong>💡 快捷键：</strong>
+                <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
             </div>
         </div>
 
@@ -330,6 +432,8 @@
             <div class="button-group" style="margin-top: 15px;">
                 <button class="btn-primary" onclick="saveQuickConfig()">💾 保存配置</button>
                 <button class="btn-secondary" onclick="loadQuickConfig()">🔄 重新加载</button>
+                <button class="btn-secondary" onclick="exportConfig()">📤 导出配置</button>
+                <button class="btn-secondary" onclick="importConfig()">📥 导入配置</button>
             </div>
 
             <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
@@ -350,12 +454,69 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3000/api';
+        // 使用相对路径，动态获取 API 地址
+        const API_BASE = `${window.location.origin}/api`;
         let statusInterval;
         let currentConfig = null;
 
+        // Toast 通知系统
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // URL验证
+        function isValidURL(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        // 添加按钮加载状态
+        function setButtonLoading(button, loading) {
+            if (loading) {
+                button.disabled = true;
+                button.classList.add('loading');
+                button.dataset.originalText = button.textContent;
+                button.textContent = button.textContent.replace(/^[^\s]+\s/, '⏳ ');
+            } else {
+                button.disabled = false;
+                button.classList.remove('loading');
+                if (button.dataset.originalText) {
+                    button.textContent = button.dataset.originalText;
+                }
+            }
+        }
+
         // 启动测试
         async function startBenchmark() {
+            const startBtn = document.getElementById('start-btn');
+            setButtonLoading(startBtn, true);
+
             try {
                 const runner = document.getElementById('runner-select').value;
                 const response = await fetch(`${API_BASE}/start`, {
@@ -364,29 +525,62 @@
                     body: JSON.stringify({ runner })
                 });
                 const data = await response.json();
+
                 if (data.success) {
+                    showToast(`测试已启动：${runner}`, 'success');
                     startStatusPolling();
                 } else {
-                    alert(data.error || '启动失败');
+                    showToast(data.error || '启动失败', 'error');
                 }
             } catch (error) {
-                alert('启动测试失败: ' + error.message);
+                showToast('启动测试失败: ' + error.message, 'error');
+            } finally {
+                setButtonLoading(startBtn, false);
             }
         }
 
         // 停止测试
         async function stopBenchmark() {
+            const stopBtn = document.getElementById('stop-btn');
+            setButtonLoading(stopBtn, true);
+
             try {
                 const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
                 const data = await response.json();
+
                 if (data.success) {
+                    showToast('测试已停止', 'warning');
                     stopStatusPolling();
                     await refreshStatus();
                 } else {
-                    alert(data.error || '停止失败');
+                    showToast(data.error || '停止失败', 'error');
                 }
             } catch (error) {
-                alert('停止测试失败: ' + error.message);
+                showToast('停止测试失败: ' + error.message, 'error');
+            } finally {
+                setButtonLoading(stopBtn, false);
+            }
+        }
+
+        // 强制重置状态
+        async function resetStatus() {
+            if (!confirm('确定要强制重置所有状态吗？这将终止所有正在运行的测试。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('状态已重置', 'success');
+                    stopStatusPolling();
+                    await refreshStatus();
+                } else {
+                    showToast('重置失败', 'error');
+                }
+            } catch (error) {
+                showToast('重置失败: ' + error.message, 'error');
             }
         }
 
@@ -460,9 +654,12 @@
                 reports.forEach(report => {
                     const li = document.createElement('li');
                     const date = new Date(report.modified).toLocaleString('zh-CN');
+                    const size = formatFileSize(report.size);
                     li.innerHTML = `
                         <a href="${report.path}" target="_blank">${report.name}</a>
                         <span class="report-date">${date}</span>
+                        <span class="report-size">${size}</span>
+                        <button class="btn-danger btn-small" onclick="deleteReport('${report.name}', event)">🗑️ 删除</button>
                     `;
                     list.appendChild(li);
                 });
@@ -472,6 +669,41 @@
             } catch (error) {
                 document.getElementById('reports').innerHTML =
                     '<p class="loading">加载报告失败</p>';
+            }
+        }
+
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // 删除报告
+        async function deleteReport(filename, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!confirm(`确定要删除报告 "${filename}" 吗？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reports/${filename}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('报告已删除', 'success');
+                    await loadReports();
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除失败: ' + error.message, 'error');
             }
         }
 
@@ -520,7 +752,7 @@
                 renderQuickTestCases('MemoryLeak', currentConfig.runners.MemoryLeak.testCases || []);
 
             } catch (error) {
-                alert('加载配置失败: ' + error.message);
+                showToast('加载配置失败: ' + error.message, 'error');
             }
         }
 
@@ -538,13 +770,30 @@
                 div.className = 'test-case-item';
                 div.innerHTML = `
                     <label>测试 URL</label>
-                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target">
+                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target" oninput="validateURL(this)">
+                    <div class="error-message" data-error-for="${runner}-${index}-target"></div>
                     <label>描述</label>
                     <input type="text" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description">
-                    <button class="btn-danger" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
+                    <button class="btn-danger btn-small" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        // 实时验证 URL
+        function validateURL(input) {
+            const url = input.value.trim();
+            const runner = input.dataset.runner;
+            const index = input.dataset.index;
+            const errorDiv = document.querySelector(`[data-error-for="${runner}-${index}-target"]`);
+
+            if (url && !isValidURL(url)) {
+                input.classList.add('error');
+                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效';
+            } else {
+                input.classList.remove('error');
+                if (errorDiv) errorDiv.textContent = '';
+            }
         }
 
         // 添加测试用例
@@ -575,7 +824,7 @@
         // 保存快速配置
         async function saveQuickConfig() {
             if (!currentConfig) {
-                alert('请先加载配置');
+                showToast('请先加载配置', 'warning');
                 return;
             }
 
@@ -609,20 +858,102 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    alert('✅ 配置保存成功！');
+                    showToast('配置保存成功！', 'success');
                 } else {
-                    alert('❌ 保存失败: ' + (data.error || '未知错误'));
+                    showToast('保存失败: ' + (data.error || '未知错误'), 'error');
                 }
             } catch (error) {
-                alert('保存配置失败: ' + error.message);
+                showToast('保存配置失败: ' + error.message, 'error');
             }
         }
+
+        // 导出配置
+        function exportConfig() {
+            if (!currentConfig) {
+                showToast('请先加载配置', 'warning');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(currentConfig, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `benchmark-config-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('配置已导出', 'success');
+        }
+
+        // 导入配置
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    currentConfig = JSON.parse(text);
+                    await loadQuickConfig();
+                    showToast('配置已导入', 'success');
+                } catch (error) {
+                    showToast('导入失败: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter: 启动测试
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const startBtn = document.getElementById('start-btn');
+                if (!startBtn.disabled) {
+                    startBenchmark();
+                }
+            }
+
+            // Ctrl/Cmd + S: 保存配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveQuickConfig();
+            }
+        });
+
+        // 页面关闭时清理
+        window.addEventListener('beforeunload', () => {
+            stopStatusPolling();
+        });
+
+        // 页面可见性变化时暂停/恢复轮询
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopStatusPolling();
+            } else {
+                refreshStatus().then(() => {
+                    // 如果测试正在运行，恢复轮询
+                    const badge = document.getElementById('status-badge');
+                    if (badge.textContent === 'RUNNING') {
+                        startStatusPolling();
+                    }
+                });
+            }
+        });
 
         // 页面加载时初始化
         window.onload = async () => {
             await refreshStatus();
             await loadReports();
             await loadQuickConfig();
+
+            // 如果测试正在运行，自动开始轮询
+            const badge = document.getElementById('status-badge');
+            if (badge.textContent === 'RUNNING') {
+                startStatusPolling();
+            }
         };
     </script>
 </body>
