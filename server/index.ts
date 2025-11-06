@@ -370,7 +370,7 @@ app.post('/api/dynamic-config', async (req, res) => {
     }
 });
 
-// 启动benchmark（改进版本，包含验证和并发控制）
+// 启动benchmark（改进版本，包含验证和并发控制，支持多runner）
 app.post('/api/start', async (req, res) => {
     // 并发控制
     if (isStarting) {
@@ -381,58 +381,83 @@ app.post('/api/start', async (req, res) => {
         return res.status(400).json({ error: 'Benchmark is already running' });
     }
 
-    const { runner } = req.body;
-    const validRunners = ['Initialization', 'Runtime', 'MemoryLeak'];
-
-    if (!runner || !validRunners.includes(runner)) {
-        return res.status(400).json({
-            error: 'Invalid runner. Must be one of: Initialization, Runtime, MemoryLeak'
-        });
-    }
+    const { runner, config } = req.body;
 
     isStarting = true;
 
     try {
-        // 读取完整配置
-        const configPath = path.join(__dirname, '../benchmark.dynamic.json');
-        let fullConfig;
+        let finalConfig;
+        let runnerNames: string[] = [];
 
-        try {
-            const configContent = await fs.readFile(configPath, 'utf-8');
-            fullConfig = JSON.parse(configContent);
-        } catch (error) {
-            isStarting = false;
-            return res.status(400).json({
-                error: '配置文件不存在或格式错误，请先在配置页面保存配置'
-            });
-        }
+        if (config) {
+            // 新模式：直接使用传入的config（支持多runner）
+            finalConfig = config;
 
-        // 验证配置
-        const validation = validateConfig(fullConfig, runner);
-        if (!validation.valid) {
+            // 提取启用的runner名称
+            if (finalConfig.runners) {
+                for (const [name, runnerConfig] of Object.entries(finalConfig.runners)) {
+                    if ((runnerConfig as any).enabled !== false) {
+                        runnerNames.push(name);
+                    }
+                }
+            }
+        } else if (runner) {
+            // 旧模式：基于runner参数构建配置（兼容）
+            const validRunners = ['Initialization', 'Runtime', 'MemoryLeak'];
+
+            if (!validRunners.includes(runner)) {
+                isStarting = false;
+                return res.status(400).json({
+                    error: 'Invalid runner. Must be one of: Initialization, Runtime, MemoryLeak'
+                });
+            }
+
+            // 读取完整配置
+            const configPath = path.join(__dirname, '../benchmark.dynamic.json');
+            let fullConfig;
+
+            try {
+                const configContent = await fs.readFile(configPath, 'utf-8');
+                fullConfig = JSON.parse(configContent);
+            } catch (error) {
+                isStarting = false;
+                return res.status(400).json({
+                    error: '配置文件不存在或格式错误，请先在配置页面保存配置'
+                });
+            }
+
+            // 验证配置
+            const validation = validateConfig(fullConfig, runner);
+            if (!validation.valid) {
+                isStarting = false;
+                return res.status(400).json({ error: validation.error });
+            }
+
+            // 创建只包含选定 runner 的配置
+            finalConfig = {
+                mode: fullConfig.mode,
+                runners: {
+                    [runner]: fullConfig.runners[runner]
+                }
+            };
+
+            runnerNames = [runner];
+        } else {
             isStarting = false;
-            return res.status(400).json({ error: validation.error });
+            return res.status(400).json({ error: 'Runner或config参数缺失' });
         }
 
         // 确保报告目录存在
         await ensureReportsDir();
 
-        // 创建只包含选定 runner 的临时配置
-        const tempConfig = {
-            mode: fullConfig.mode,
-            runners: {
-                [runner]: fullConfig.runners[runner]
-            }
-        };
-
-        // 生成临时配置文件
-        const tempConfigCode = generateConfig(tempConfig);
+        // 生成配置文件
+        const tempConfigCode = generateConfig(finalConfig);
         const tempConfigPath = path.join(__dirname, '../benchmark.config.mts');
         await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
 
         benchmarkStatus = 'running';
         benchmarkOutput = ''; // 清空之前的输出
-        currentRunner = runner;
+        currentRunner = runnerNames.join(' + '); // 显示所有runner
 
         // 广播状态更新
         broadcastStatus();

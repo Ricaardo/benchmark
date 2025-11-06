@@ -539,17 +539,36 @@
             </div>
 
             <div class="form-group">
-                <label>测试类型 *</label>
-                <select id="case-runner">
-                    <option value="Initialization">Initialization - 初始化性能</option>
-                    <option value="Runtime">Runtime - 运行时性能</option>
-                    <option value="MemoryLeak">MemoryLeak - 内存泄漏检测</option>
-                </select>
+                <label>测试类型 *（可多选）</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                        <input type="checkbox" id="runner-initialization" style="margin-right: 8px;">
+                        <strong>Initialization</strong> - 初始化性能测试
+                    </label>
+                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
+                        <input type="checkbox" id="runner-runtime" style="margin-right: 8px;">
+                        <strong>Runtime</strong> - 运行时性能测试
+                    </label>
+                    <label style="display: block; margin-bottom: 0; cursor: pointer;">
+                        <input type="checkbox" id="runner-memoryleak" style="margin-right: 8px;">
+                        <strong>MemoryLeak</strong> - 内存泄漏检测
+                    </label>
+                </div>
+                <small style="color: #718096; font-size: 0.85em; margin-top: 8px; display: block;">可以选择1个或多个测试类型，它们将在同一用例中顺序执行</small>
             </div>
 
             <div class="form-group">
-                <label>测试URL *</label>
-                <input type="url" id="case-url" placeholder="https://www.bilibili.com">
+                <label>测试URL *（每行一个URL，支持多个）</label>
+                <textarea id="case-urls" placeholder="https://www.bilibili.com&#10;https://www.bilibili.com/video/BV1xx411c7mD&#10;https://t.bilibili.com" rows="4"></textarea>
+                <small style="color: #718096; font-size: 0.85em;">每行输入一个URL，可以添加多个测试地址</small>
+            </div>
+
+            <div class="form-group">
+                <label>运行模式</label>
+                <select id="case-mode">
+                    <option value="headless">Headless - 无头模式（后台运行，性能更好）</option>
+                    <option value="headed">Headed - 有头模式（显示浏览器界面）</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -653,31 +672,56 @@
                         <tr>
                             <th><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>
                             <th>用例名称</th>
-                            <th>类型</th>
-                            <th>测试URL</th>
+                            <th>测试类型</th>
+                            <th>URL数量</th>
+                            <th>模式</th>
                             <th>重复次数</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${testCases.map(testCase => `
+                        ${testCases.map(testCase => {
+                            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                            const mode = testCase.mode || 'headless';
+                            const urlsTitle = urls.join('\\n');
+
+                            // 处理runner - 兼容新旧格式
+                            let runners = [];
+                            if (testCase.runners) {
+                                // 新格式：runners对象
+                                if (testCase.runners.Initialization?.enabled) runners.push('Init');
+                                if (testCase.runners.Runtime?.enabled) runners.push('Runtime');
+                                if (testCase.runners.MemoryLeak?.enabled) runners.push('Memory');
+                            } else if (testCase.runner) {
+                                // 旧格式：单个runner字符串
+                                runners.push(testCase.runner === 'Initialization' ? 'Init' :
+                                           testCase.runner === 'MemoryLeak' ? 'Memory' : testCase.runner);
+                            }
+
+                            const runnerTags = runners.map(r =>
+                                \`<span class="runner-tag runner-\${r.toLowerCase()}" style="margin-right: 4px;">\${r}</span>\`
+                            ).join('');
+
+                            return \`
                             <tr>
-                                <td><input type="checkbox" onchange="toggleCaseSelection(${testCase.id}, this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
-                                <td><strong>${escapeHtml(testCase.name)}</strong></td>
-                                <td><span class="runner-tag runner-${testCase.runner.toLowerCase()}">${testCase.runner}</span></td>
-                                <td><div class="url-display" title="${escapeHtml(testCase.url)}">${escapeHtml(testCase.url)}</div></td>
-                                <td>${testCase.repeatCount}</td>
-                                <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
+                                <td><input type="checkbox" onchange="toggleCaseSelection(\${testCase.id}, this.checked)" \${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
+                                <td><strong>\${escapeHtml(testCase.name)}</strong></td>
+                                <td>\${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
+                                <td><span title="\${escapeHtml(urlsTitle)}" style="cursor: help;">\${urls.length} 个URL</span></td>
+                                <td><span style="font-size: 0.85em; color: #4a5568;">\${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
+                                <td>\${testCase.repeatCount || 3}</td>
+                                <td><span class="status-badge status-\${testCase.status || 'idle'}">\${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})" ${currentRunning ? 'disabled' : ''}>▶ 运行</button>
-                                        <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
-                                        <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
+                                        <button class="btn-success btn-small" onclick="runCase(\${testCase.id})" \${currentRunning ? 'disabled' : ''}>▶ 运行</button>
+                                        <button class="btn-secondary btn-small" onclick="editCase(\${testCase.id})">✏️ 编辑</button>
+                                        <button class="btn-danger btn-small" onclick="deleteCase(\${testCase.id})">🗑️ 删除</button>
                                     </div>
                                 </td>
                             </tr>
-                        `).join('')}
+                        \`;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -724,8 +768,11 @@
 
             // 清空表单
             document.getElementById('case-name').value = '';
-            document.getElementById('case-runner').value = 'Initialization';
-            document.getElementById('case-url').value = '';
+            document.getElementById('runner-initialization').checked = false;
+            document.getElementById('runner-runtime').checked = false;
+            document.getElementById('runner-memoryleak').checked = false;
+            document.getElementById('case-urls').value = '';
+            document.getElementById('case-mode').value = 'headless';
             document.getElementById('case-repeat').value = '3';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
@@ -743,9 +790,26 @@
             document.querySelector('.modal-header').textContent = '✏️ 编辑测试用例';
 
             document.getElementById('case-name').value = testCase.name;
-            document.getElementById('case-runner').value = testCase.runner;
-            document.getElementById('case-url').value = testCase.url;
-            document.getElementById('case-repeat').value = testCase.repeatCount;
+
+            // 处理runners - 兼容新旧格式
+            if (testCase.runners) {
+                // 新格式：runners对象
+                document.getElementById('runner-initialization').checked = testCase.runners.Initialization?.enabled || false;
+                document.getElementById('runner-runtime').checked = testCase.runners.Runtime?.enabled || false;
+                document.getElementById('runner-memoryleak').checked = testCase.runners.MemoryLeak?.enabled || false;
+            } else if (testCase.runner) {
+                // 旧格式：单个runner字符串
+                document.getElementById('runner-initialization').checked = testCase.runner === 'Initialization';
+                document.getElementById('runner-runtime').checked = testCase.runner === 'Runtime';
+                document.getElementById('runner-memoryleak').checked = testCase.runner === 'MemoryLeak';
+            }
+
+            // 处理URLs - 兼容旧格式（url）和新格式（urls数组）
+            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+            document.getElementById('case-urls').value = urls.join('\n');
+
+            document.getElementById('case-mode').value = testCase.mode || 'headless';
+            document.getElementById('case-repeat').value = testCase.repeatCount || 3;
             document.getElementById('case-description').value = testCase.description || '';
             document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
 
@@ -756,8 +820,11 @@
         // 保存用例
         function saveCase() {
             const name = document.getElementById('case-name').value.trim();
-            const runner = document.getElementById('case-runner').value;
-            const url = document.getElementById('case-url').value.trim();
+            const initChecked = document.getElementById('runner-initialization').checked;
+            const runtimeChecked = document.getElementById('runner-runtime').checked;
+            const memoryChecked = document.getElementById('runner-memoryleak').checked;
+            const urlsText = document.getElementById('case-urls').value.trim();
+            const mode = document.getElementById('case-mode').value;
             const repeatCount = parseInt(document.getElementById('case-repeat').value);
             const description = document.getElementById('case-description').value.trim();
             const tags = document.getElementById('case-tags').value.split(',').map(t => t.trim()).filter(t => t);
@@ -767,10 +834,48 @@
                 return;
             }
 
-            if (!url || !isValidURL(url)) {
-                showToast('请输入有效的URL', 'error');
+            // 检查至少选择一个runner
+            if (!initChecked && !runtimeChecked && !memoryChecked) {
+                showToast('请至少选择一个测试类型', 'error');
                 return;
             }
+
+            // 解析多个URL
+            const urls = urlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+
+            if (urls.length === 0) {
+                showToast('请至少输入一个URL', 'error');
+                return;
+            }
+
+            // 验证所有URL格式
+            const invalidUrls = urls.filter(url => !isValidURL(url));
+            if (invalidUrls.length > 0) {
+                showToast(`以下URL格式无效：\n${invalidUrls.join('\n')}`, 'error');
+                return;
+            }
+
+            // 构建runners配置对象
+            const runners = {
+                Initialization: {
+                    enabled: initChecked,
+                    repeatCount: repeatCount
+                },
+                Runtime: {
+                    enabled: runtimeChecked,
+                    repeatCount: repeatCount,
+                    durationMs: 60000,
+                    delayMs: 10000
+                },
+                MemoryLeak: {
+                    enabled: memoryChecked,
+                    repeatCount: repeatCount,
+                    intervalMs: 60000,
+                    iterations: 3
+                }
+            };
 
             const editId = document.getElementById('case-modal').dataset.editId;
 
@@ -779,11 +884,15 @@
                 const testCase = testCases.find(tc => tc.id === parseInt(editId));
                 if (testCase) {
                     testCase.name = name;
-                    testCase.runner = runner;
-                    testCase.url = url;
+                    testCase.runners = runners;
+                    testCase.urls = urls;
+                    testCase.mode = mode;
                     testCase.repeatCount = repeatCount;
                     testCase.description = description;
                     testCase.tags = tags;
+                    // 移除旧的字段（如果存在）
+                    delete testCase.url;
+                    delete testCase.runner;
                     showToast('用例更新成功', 'success');
                 }
             } else {
@@ -791,8 +900,9 @@
                 const newCase = {
                     id: Date.now(),
                     name,
-                    runner,
-                    url,
+                    runners,
+                    urls,
+                    mode,
                     repeatCount,
                     description,
                     tags,
@@ -834,19 +944,69 @@
             document.getElementById('current-status').className = 'status-badge status-running';
 
             try {
+                // 获取URLs - 兼容旧格式
+                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                const mode = testCase.mode || 'headless';
+
+                if (urls.length === 0) {
+                    throw new Error('测试用例没有配置URL');
+                }
+
+                // 构建runners配置 - 兼容新旧格式
+                let runnersConfig = {};
+                let enabledRunners = [];
+
+                if (testCase.runners) {
+                    // 新格式：多runner支持
+                    if (testCase.runners.Initialization?.enabled) {
+                        runnersConfig.Initialization = {
+                            repeatCount: testCase.runners.Initialization.repeatCount || testCase.repeatCount || 3,
+                            urls: urls
+                        };
+                        enabledRunners.push('Initialization');
+                    }
+
+                    if (testCase.runners.Runtime?.enabled) {
+                        runnersConfig.Runtime = {
+                            repeatCount: testCase.runners.Runtime.repeatCount || testCase.repeatCount || 3,
+                            urls: urls,
+                            durationMs: testCase.runners.Runtime.durationMs || 60000,
+                            delayMs: testCase.runners.Runtime.delayMs || 10000
+                        };
+                        enabledRunners.push('Runtime');
+                    }
+
+                    if (testCase.runners.MemoryLeak?.enabled) {
+                        runnersConfig.MemoryLeak = {
+                            repeatCount: testCase.runners.MemoryLeak.repeatCount || testCase.repeatCount || 3,
+                            urls: urls,
+                            intervalMs: testCase.runners.MemoryLeak.intervalMs || 60000,
+                            iterations: testCase.runners.MemoryLeak.iterations || 3
+                        };
+                        enabledRunners.push('MemoryLeak');
+                    }
+                } else if (testCase.runner) {
+                    // 旧格式：单个runner
+                    runnersConfig[testCase.runner] = {
+                        repeatCount: testCase.repeatCount || 3,
+                        urls: urls
+                    };
+                    enabledRunners.push(testCase.runner);
+                }
+
+                if (Object.keys(runnersConfig).length === 0) {
+                    throw new Error('测试用例没有启用任何测试类型');
+                }
+
+                // 发送请求 - 注意：对于多runner，后端需要调整
                 const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        runner: testCase.runner,
+                        runner: enabledRunners[0], // 暂时使用第一个runner（后端需要调整支持多runner）
                         config: {
-                            mode: 'headless',
-                            runners: {
-                                [testCase.runner]: {
-                                    repeatCount: testCase.repeatCount,
-                                    urls: [testCase.url]
-                                }
-                            }
+                            mode: mode,
+                            runners: runnersConfig
                         }
                     })
                 });
@@ -858,6 +1018,9 @@
                 }
 
                 appendOutput(`[系统] 测试用例 "${testCase.name}" 已启动`);
+                appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
+                appendOutput(`[系统] 测试类型: ${enabledRunners.join(' + ')}`);
+                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount} 次`);
             } catch (error) {
                 testCase.status = 'error';
                 currentRunning = null;
@@ -1001,34 +1164,88 @@
             const presets = [
                 {
                     id: Date.now(),
-                    name: 'B站首页-初始化性能',
-                    runner: 'Initialization',
-                    url: 'https://www.bilibili.com',
+                    name: 'B站首页-初始化测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3 },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
                     repeatCount: 3,
-                    description: '测试B站首页的加载和初始化性能',
+                    description: '仅测试B站首页的初始化性能',
                     tags: ['bilibili', '首页', '初始化'],
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 },
                 {
                     id: Date.now() + 1,
-                    name: 'B站视频页-运行时性能',
-                    runner: 'Runtime',
-                    url: 'https://www.bilibili.com/video/BV1xx411c7mD',
+                    name: 'B站视频页-全面性能测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
+                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
+                    },
+                    urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
+                    mode: 'headless',
                     repeatCount: 3,
-                    description: '测试视频播放页面的运行时性能',
-                    tags: ['bilibili', '视频', '运行时'],
+                    description: '对视频页进行全面测试：初始化 + 运行时 + 内存泄漏',
+                    tags: ['bilibili', '视频', '综合测试'],
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 },
                 {
                     id: Date.now() + 2,
-                    name: 'B站动态页-内存泄漏检测',
-                    runner: 'MemoryLeak',
-                    url: 'https://t.bilibili.com',
+                    name: 'B站多页面-初始化+运行时',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: [
+                        'https://www.bilibili.com',
+                        'https://www.bilibili.com/video/BV1xx411c7mD',
+                        'https://t.bilibili.com'
+                    ],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '测试多个页面的初始化和运行时性能',
+                    tags: ['bilibili', '多页面', '双测试'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    name: 'B站首页-内存泄漏专项',
+                    runners: {
+                        Initialization: { enabled: false },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
                     repeatCount: 5,
-                    description: '检测动态页面是否存在内存泄漏',
-                    tags: ['bilibili', '动态', '内存'],
+                    description: '专门检测首页的内存泄漏问题',
+                    tags: ['bilibili', '首页', '内存'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 4,
+                    name: 'B站核心页面-有头模式观察',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 2 },
+                        Runtime: { enabled: true, repeatCount: 2, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: [
+                        'https://www.bilibili.com',
+                        'https://www.bilibili.com/video/BV1xx411c7mD'
+                    ],
+                    mode: 'headed',
+                    repeatCount: 2,
+                    description: '使用有头模式观察核心页面的初始化和运行时表现',
+                    tags: ['bilibili', '核心页面', '有头模式'],
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 }
@@ -1037,7 +1254,7 @@
             testCases = [...testCases, ...presets];
             saveToStorage();
             renderCases();
-            showToast('已加载 3 个预设用例', 'success');
+            showToast('已加载 5 个预设用例（含多runner示例）', 'success');
         }
 
         // 工具函数
