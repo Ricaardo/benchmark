@@ -205,6 +205,10 @@
             border-color: #e57373;
         }
 
+        .test-case-item input.warning {
+            border-color: #ff9800;
+        }
+
         .test-case-item label {
             display: block;
             margin-top: 8px;
@@ -479,6 +483,138 @@
             border-left-color: #ffd54f;
             animation: pulse 2s infinite;
         }
+
+        /* 移动端响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
+
+            .toast-container {
+                top: 60px;
+                right: 10px;
+                left: 10px;
+            }
+
+            .toast {
+                min-width: auto;
+                width: 100%;
+            }
+
+            /* 快速配置区域在移动端堆叠 */
+            [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            .progress-info {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .queue-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .reports-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            /* 导航按钮在移动端堆叠 */
+            [style*="text-align: center"] a {
+                display: block !important;
+                margin: 5px 0 !important;
+            }
+
+            .output-box {
+                font-size: 0.8em;
+                max-height: 300px;
+            }
+        }
+
+        /* 小屏幕手机 */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .card h2 {
+                font-size: 1.2em;
+            }
+
+            button {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+
+            .status-badge {
+                font-size: 0.75em;
+                padding: 6px 12px;
+            }
+
+            select, input {
+                font-size: 0.9em !important;
+            }
+        }
+
+        /* 平板横屏 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 0 20px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            .theme-toggle,
+            .button-group,
+            .toast-container {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
     </style>
 </head>
 <body>
@@ -533,9 +669,12 @@
                     <li><strong>MemoryLeak:</strong> 检测页面内存泄漏问题</li>
                 </ul>
             </div>
-            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em;">
-                <strong>💡 快捷键：</strong>
-                <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
+            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>💡 快捷键：</strong>
+                    <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
+                </div>
+                <button onclick="showKeyboardShortcuts()" class="btn-secondary btn-small" style="margin: 0;">⌨️ 查看全部</button>
             </div>
 
             <!-- 测试队列显示 -->
@@ -625,6 +764,30 @@
             <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
                 <strong style="color: #1565c0;">💡 提示：</strong>
                 <span style="color: #1565c0;">在这里快速配置，或前往 <a href="/config.html" style="color: #1565c0; font-weight: 600;">配置管理页面</a> 进行高级配置。</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>性能指标</h2>
+            <div id="metrics-container" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">CPU 使用率</div>
+                        <div id="metric-cpu" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">内存使用</div>
+                        <div id="metric-memory" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">FPS</div>
+                        <div id="metric-fps" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">加载时间</div>
+                        <div id="metric-load" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -866,6 +1029,13 @@
         // 启动测试
         async function startBenchmark() {
             const startBtn = document.getElementById('start-btn');
+
+            // 前端配置验证
+            const validation = validateCurrentConfig();
+            if (!showValidationResult(validation)) {
+                return; // 验证失败，不启动
+            }
+
             setButtonLoading(startBtn, true);
 
             // 重置进度
@@ -885,13 +1055,13 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    showToast(`测试已启动：${runner}`, 'success');
+                    showToast(`✅ 测试已启动：${runner}`, 'success');
                     // WebSocket 会自动推送更新，不需要轮询
                 } else {
-                    showToast(data.error || '启动失败', 'error');
+                    showToast('❌ ' + (data.error || '启动失败'), 'error');
                 }
             } catch (error) {
-                showToast('启动测试失败: ' + error.message, 'error');
+                showToast('❌ 启动测试失败: ' + error.message, 'error');
             } finally {
                 setButtonLoading(startBtn, false);
             }
@@ -976,10 +1146,10 @@
             output.textContent = data.output || '暂无输出...';
             output.scrollTop = output.scrollHeight;
 
-            // 更新进度
+            // 更新进度、指标和队列
             if (data.output) {
                 updateProgress(data.output);
-                // 更新测试队列状态
+                updateMetrics(data.output);
                 updateQueueFromOutput(data.output);
             }
 
@@ -1167,6 +1337,71 @@
             progressContainer.classList.remove('active');
         }
 
+        // 性能指标提取和显示
+        function updateMetrics(output) {
+            const metricsContainer = document.getElementById('metrics-container');
+
+            // 提取 CPU 使用率
+            const cpuMatch = output.match(/CPU[:\s]+(\d+\.?\d*)%?/i);
+            if (cpuMatch) {
+                document.getElementById('metric-cpu').textContent = cpuMatch[1] + '%';
+                metricsContainer.style.display = 'block';
+            }
+
+            // 提取内存使用
+            const memoryMatches = [
+                output.match(/Memory[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
+                output.match(/Heap[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
+                output.match(/(\d+\.?\d*)\s*(MB|GB).*memory/i)
+            ];
+            for (const match of memoryMatches) {
+                if (match) {
+                    document.getElementById('metric-memory').textContent = match[1] + ' ' + match[2];
+                    metricsContainer.style.display = 'block';
+                    break;
+                }
+            }
+
+            // 提取 FPS
+            const fpsMatch = output.match(/FPS[:\s]+(\d+\.?\d*)/i);
+            if (fpsMatch) {
+                document.getElementById('metric-fps').textContent = fpsMatch[1];
+                metricsContainer.style.display = 'block';
+            }
+
+            // 提取加载时间
+            const loadMatches = [
+                output.match(/Load[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
+                output.match(/Loading time[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
+                output.match(/Initialization[:\s]+(\d+\.?\d*)\s*(ms|s)/i)
+            ];
+            for (const match of loadMatches) {
+                if (match) {
+                    let value = parseFloat(match[1]);
+                    let unit = match[2];
+                    if (unit === 's') {
+                        value = (value * 1000).toFixed(0);
+                        unit = 'ms';
+                    }
+                    document.getElementById('metric-load').textContent = value + ' ' + unit;
+                    metricsContainer.style.display = 'block';
+                    break;
+                }
+            }
+
+            // 如果测试结束，隐藏指标卡片
+            if (benchmarkStatus === 'completed' || benchmarkStatus === 'error' || benchmarkStatus === 'idle') {
+                setTimeout(() => {
+                    metricsContainer.style.display = 'none';
+                    // 重置指标显示
+                    document.getElementById('metric-cpu').textContent = '--';
+                    document.getElementById('metric-memory').textContent = '--';
+                    document.getElementById('metric-fps').textContent = '--';
+                    document.getElementById('metric-load').textContent = '--';
+                }, 5000);
+            }
+        }
+
         // 测试队列管理
         function showTestQueue(runner) {
             if (!currentConfig || !currentConfig.runners[runner]) return;
@@ -1336,20 +1571,123 @@
             });
         }
 
-        // 实时验证 URL
+        // 增强的URL验证，支持多种协议和格式检查
         function validateURL(input) {
             const url = input.value.trim();
             const runner = input.dataset.runner;
             const index = input.dataset.index;
             const errorDiv = document.querySelector(`[data-error-for="${runner}-${index}-target"]`);
 
-            if (url && !isValidURL(url)) {
-                input.classList.add('error');
-                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效';
-            } else {
+            if (!url) {
                 input.classList.remove('error');
                 if (errorDiv) errorDiv.textContent = '';
+                return;
             }
+
+            // 检查URL格式
+            if (!isValidURL(url)) {
+                input.classList.add('error');
+                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效，应以 http:// 或 https:// 开头';
+                return;
+            }
+
+            // 检查是否是B站相关域名（提示）
+            try {
+                const urlObj = new URL(url);
+                if (!urlObj.hostname.includes('bilibili.com')) {
+                    input.classList.add('warning');
+                    input.classList.remove('error');
+                    if (errorDiv) {
+                        errorDiv.style.color = '#ff9800';
+                        errorDiv.textContent = 'ℹ️ 提示：建议使用B站域名以获得最佳测试效果';
+                    }
+                } else {
+                    input.classList.remove('error', 'warning');
+                    if (errorDiv) {
+                        errorDiv.style.color = '#4caf50';
+                        errorDiv.textContent = '✓ URL 格式正确';
+                    }
+                }
+            } catch (e) {
+                input.classList.add('error');
+                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效';
+            }
+        }
+
+        // 验证配置完整性
+        function validateCurrentConfig() {
+            if (!currentConfig) return { valid: false, errors: ['配置未加载'] };
+
+            const errors = [];
+            const warnings = [];
+            const runner = document.getElementById('runner-select').value;
+
+            if (!currentConfig.runners[runner]) {
+                errors.push(`未找到 ${runner} 的配置`);
+                return { valid: false, errors, warnings };
+            }
+
+            const runnerConfig = currentConfig.runners[runner];
+
+            if (!runnerConfig.enabled) {
+                errors.push(`${runner} 未启用`);
+            }
+
+            if (!runnerConfig.testCases || runnerConfig.testCases.length === 0) {
+                errors.push(`${runner} 没有配置测试用例`);
+            } else {
+                runnerConfig.testCases.forEach((tc, index) => {
+                    if (!tc.target) {
+                        errors.push(`测试用例 #${index + 1} 缺少 URL`);
+                    } else if (!isValidURL(tc.target)) {
+                        errors.push(`测试用例 #${index + 1} URL 格式无效: ${tc.target}`);
+                    }
+                    if (!tc.description) {
+                        warnings.push(`测试用例 #${index + 1} 缺少描述`);
+                    }
+                });
+            }
+
+            // Runner特定验证
+            if (runner === 'Runtime') {
+                if (!runnerConfig.durationMs || runnerConfig.durationMs < 1000) {
+                    errors.push('Runtime 运行时长至少为 1000ms (1秒)');
+                }
+                if (runnerConfig.delayMs < 0) {
+                    errors.push('Runtime 延迟时间不能为负数');
+                }
+            }
+
+            if (runner === 'MemoryLeak') {
+                if (!runnerConfig.iterations || runnerConfig.iterations < 2) {
+                    errors.push('MemoryLeak 迭代次数至少为 2');
+                }
+                if (!runnerConfig.intervalMs || runnerConfig.intervalMs < 1000) {
+                    errors.push('MemoryLeak 迭代间隔至少为 1000ms (1秒)');
+                }
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors,
+                warnings
+            };
+        }
+
+        // 显示验证结果
+        function showValidationResult(result) {
+            if (result.errors.length > 0) {
+                const errorMsg = '配置验证失败：\n' + result.errors.map(e => '• ' + e).join('\n');
+                showToast(errorMsg, 'error');
+                return false;
+            }
+
+            if (result.warnings.length > 0) {
+                const warningMsg = '配置警告：\n' + result.warnings.map(w => '• ' + w).join('\n');
+                showToast(warningMsg, 'warning');
+            }
+
+            return true;
         }
 
         // 添加测试用例
@@ -1509,7 +1847,98 @@
                 e.preventDefault();
                 saveQuickConfig();
             }
+
+            // Escape: 停止测试
+            if (e.key === 'Escape') {
+                const stopBtn = document.getElementById('stop-btn');
+                if (!stopBtn.disabled) {
+                    e.preventDefault();
+                    stopBenchmark();
+                }
+            }
+
+            // Ctrl/Cmd + R: 刷新状态
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshStatus();
+                showToast('状态已刷新', 'info');
+            }
+
+            // Ctrl/Cmd + L: 重新加载配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                loadQuickConfig();
+                showToast('配置已重新加载', 'info');
+            }
+
+            // Ctrl/Cmd + D: 切换深色模式
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+
+            // Ctrl/Cmd + E: 导出配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportConfig();
+            }
+
+            // Ctrl/Cmd + /: 显示快捷键帮助
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                showKeyboardShortcuts();
+            }
         });
+
+        // 显示快捷键帮助
+        function showKeyboardShortcuts() {
+            const shortcuts = `
+<strong>⌨️ 键盘快捷键</strong>
+
+• Ctrl/Cmd + Enter - 启动测试
+• Ctrl/Cmd + S - 保存配置
+• Escape - 停止测试
+• Ctrl/Cmd + R - 刷新状态
+• Ctrl/Cmd + L - 重新加载配置
+• Ctrl/Cmd + D - 切换深色模式
+• Ctrl/Cmd + E - 导出配置
+• Ctrl/Cmd + / - 显示快捷键帮助
+            `.trim();
+
+            // 创建一个临时的模态框显示快捷键
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                z-index: 10001;
+                max-width: 500px;
+                white-space: pre-line;
+            `;
+
+            if (document.body.classList.contains('dark-mode')) {
+                modal.style.background = '#2d2d2d';
+                modal.style.color = '#e0e0e0';
+            }
+
+            modal.innerHTML = shortcuts + '<br><br><button onclick="this.parentElement.remove()" class="btn-primary" style="width: 100%;">关闭 (点击任意位置)</button>';
+
+            modal.onclick = (e) => {
+                if (e.target === modal || e.target.tagName === 'BUTTON') {
+                    modal.remove();
+                }
+            };
+
+            document.body.appendChild(modal);
+
+            // 3秒后自动关闭
+            setTimeout(() => modal.remove(), 10000);
+        }
 
         // 页面关闭时清理 WebSocket
         window.addEventListener('beforeunload', () => {
