@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Benchmark Web Runner</title>
+    <title>Benchmark Web Runner - 用例管理</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -34,6 +34,11 @@
             margin-bottom: 10px;
         }
 
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
         .card {
             background: white;
             border-radius: 12px;
@@ -45,61 +50,36 @@
         .card h2 {
             margin-bottom: 15px;
             color: #333;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.85em;
+        /* 工具栏 */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .status-idle {
-            background: #e0e0e0;
-            color: #666;
-        }
-
-        .status-running {
-            background: #ffd54f;
-            color: #f57c00;
-            animation: pulse 2s infinite;
-        }
-
-        .status-completed {
-            background: #81c784;
-            color: #2e7d32;
-        }
-
-        .status-error {
-            background: #e57373;
-            color: #c62828;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
-        .button-group {
+        .toolbar-left, .toolbar-right {
             display: flex;
             gap: 10px;
-            margin-top: 15px;
             flex-wrap: wrap;
         }
 
+        /* 按钮样式 */
         button {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 6px;
-            font-size: 1em;
+            font-size: 0.95em;
             cursor: pointer;
             transition: all 0.3s;
-            font-weight: 600;
-            position: relative;
+            font-weight: 500;
         }
 
         .btn-primary {
@@ -107,39 +87,38 @@
             color: white;
         }
 
-        .btn-primary:hover:not(:disabled) {
+        .btn-primary:hover {
             background: #5568d3;
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+            transform: translateY(-2px);
         }
 
         .btn-danger {
-            background: #e57373;
+            background: #f56565;
             color: white;
         }
 
-        .btn-danger:hover:not(:disabled) {
-            background: #ef5350;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(229, 115, 115, 0.4);
-        }
-
-        .btn-warning {
-            background: #ffa726;
-            color: white;
-        }
-
-        .btn-warning:hover:not(:disabled) {
-            background: #fb8c00;
+        .btn-danger:hover {
+            background: #e53e3e;
         }
 
         .btn-secondary {
-            background: #90a4ae;
+            background: #a0aec0;
             color: white;
         }
 
-        .btn-secondary:hover:not(:disabled) {
-            background: #78909c;
+        .btn-secondary:hover {
+            background: #718096;
         }
 
         .btn-small {
@@ -152,102 +131,224 @@
             cursor: not-allowed;
         }
 
-        button.loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            top: 50%;
-            right: 8px;
-            margin-top: -8px;
-            border: 2px solid transparent;
-            border-top-color: currentColor;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .output-box {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 0.9em;
-            max-height: 400px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+        /* 用例表格 */
+        .test-cases-table {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 15px;
         }
 
-        .test-case-item {
-            background: white;
+        .test-cases-table thead {
+            background: #f7fafc;
+        }
+
+        .test-cases-table th {
             padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
+            text-align: left;
+            font-weight: 600;
+            color: #4a5568;
+            border-bottom: 2px solid #e2e8f0;
         }
 
-        .test-case-item input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
+        .test-cases-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
         }
 
-        .test-case-item input.error {
-            border-color: #e57373;
+        .test-cases-table tbody tr:hover {
+            background: #f7fafc;
         }
 
-        .test-case-item input.warning {
-            border-color: #ff9800;
-        }
-
-        .test-case-item label {
-            display: block;
-            margin-top: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 0.9em;
-        }
-
-        .test-case-item button {
-            margin-top: 8px;
-            padding: 6px 12px;
-            font-size: 0.85em;
-        }
-
-        .error-message {
-            color: #e57373;
-            font-size: 0.85em;
-            margin-top: 5px;
-        }
-
-        /* Toast通知系统 */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-        }
-
-        .toast {
-            background: white;
-            padding: 16px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            margin-bottom: 10px;
-            min-width: 300px;
+        .test-cases-table .actions {
             display: flex;
+            gap: 8px;
+        }
+
+        /* 用例类型标签 */
+        .runner-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .runner-initialization {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+
+        .runner-runtime {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .runner-memoryleak {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .status-idle {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .status-running {
+            background: #fbd38d;
+            color: #7c2d12;
+            animation: pulse 2s infinite;
+        }
+
+        .status-completed {
+            background: #9ae6b4;
+            color: #22543d;
+        }
+
+        .status-error {
+            background: #fc8181;
+            color: #742a2a;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* URL显示 */
+        .url-display {
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #4a5568;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        /* 输出面板 */
+        .output-panel {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+        }
+
+        .output-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .output-panel::-webkit-scrollbar-track {
+            background: #2d3748;
+        }
+
+        .output-panel::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
             align-items: center;
-            gap: 12px;
-            animation: slideIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* Toast通知 */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2d3748;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            animation: slideIn 0.3s;
         }
 
         @keyframes slideIn {
@@ -262,791 +363,241 @@
         }
 
         .toast.success {
-            border-left: 4px solid #81c784;
+            background: #48bb78;
         }
 
         .toast.error {
-            border-left: 4px solid #e57373;
+            background: #f56565;
         }
 
-        .toast.warning {
-            border-left: 4px solid #ffa726;
-        }
-
-        .toast.info {
-            border-left: 4px solid #64b5f6;
-        }
-
-        .toast-icon {
-            font-size: 1.5em;
-        }
-
-        .toast-message {
-            flex: 1;
-            color: #333;
-        }
-
-        .reports-list {
-            list-style: none;
-        }
-
-        .reports-list li {
-            padding: 12px;
-            border-bottom: 1px solid #e0e0e0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .reports-list li:last-child {
-            border-bottom: none;
-        }
-
-        .reports-list a {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 500;
-            flex: 1;
-        }
-
-        .reports-list a:hover {
-            text-decoration: underline;
-        }
-
-        .report-date {
-            color: #999;
-            font-size: 0.85em;
-            margin-right: 10px;
-        }
-
-        .report-size {
-            color: #999;
-            font-size: 0.85em;
-            margin-right: 10px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #999;
-        }
-
-        /* 进度条样式 */
-        .progress-container {
-            margin-top: 15px;
-            background: #2d2d2d;
-            border-radius: 8px;
-            padding: 15px;
-            display: none;
-        }
-
-        .progress-container.active {
-            display: block;
-        }
-
+        /* 进度条 */
         .progress-bar {
             width: 100%;
-            height: 30px;
-            background: #1e1e1e;
-            border-radius: 15px;
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
             overflow: hidden;
-            position: relative;
-            margin-bottom: 10px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            margin-top: 10px;
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-            font-size: 0.9em;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+            background: #667eea;
+            transition: width 0.3s;
         }
 
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            color: #d4d4d4;
-            font-size: 0.9em;
-        }
-
-        .progress-info strong {
-            color: #fff;
-        }
-
-        /* 深色模式 */
-        body.dark-mode {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-        }
-
-        body.dark-mode .card {
-            background: #2d2d2d;
-            color: #e0e0e0;
-        }
-
-        body.dark-mode .card h2 {
-            color: #fff;
-            border-bottom-color: #667eea;
-        }
-
-        body.dark-mode .output-box {
-            background: #1a1a1a;
-            color: #d4d4d4;
-        }
-
-        body.dark-mode input,
-        body.dark-mode select,
-        body.dark-mode textarea {
-            background: #3d3d3d;
-            color: #e0e0e0;
-            border-color: #555;
-        }
-
-        body.dark-mode .test-case-item {
-            background: #3d3d3d;
-            border-color: #555;
-        }
-
-        /* 深色模式切换按钮 */
-        .theme-toggle {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 1.5em;
+        /* 选择框 */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s;
         }
 
-        .theme-toggle:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        /* 快捷操作提示 */
+        .shortcuts-hint {
+            font-size: 0.85em;
+            color: #718096;
+            margin-top: 10px;
         }
 
-        body.dark-mode .theme-toggle {
-            background: rgba(45, 45, 45, 0.9);
-        }
-
-        /* 队列状态样式 */
-        .queue-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            display: none;
-        }
-
-        .queue-container.active {
-            display: block;
-        }
-
-        body.dark-mode .queue-container {
-            background: #2d2d2d;
-        }
-
-        .queue-item {
-            padding: 10px;
-            background: white;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border-left: 4px solid #667eea;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        body.dark-mode .queue-item {
-            background: #3d3d3d;
-        }
-
-        .queue-item.completed {
-            border-left-color: #81c784;
-            opacity: 0.7;
-        }
-
-        .queue-item.error {
-            border-left-color: #e57373;
-        }
-
-        .queue-item.running {
-            border-left-color: #ffd54f;
-            animation: pulse 2s infinite;
-        }
-
-        /* 移动端响应式设计 */
+        /* 响应式 */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
             }
 
-            .header h1 {
-                font-size: 1.8em;
+            .toolbar-left, .toolbar-right {
+                width: 100%;
+                justify-content: space-between;
             }
 
-            .header p {
+            .test-cases-table {
                 font-size: 0.9em;
             }
 
-            .card {
-                padding: 15px;
-                margin-bottom: 15px;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            .button-group button {
-                width: 100%;
-                margin-bottom: 8px;
-            }
-
-            .theme-toggle {
-                top: 10px;
-                right: 10px;
-                width: 40px;
-                height: 40px;
-                font-size: 1.2em;
-            }
-
-            .toast-container {
-                top: 60px;
-                right: 10px;
-                left: 10px;
-            }
-
-            .toast {
-                min-width: auto;
-                width: 100%;
-            }
-
-            /* 快速配置区域在移动端堆叠 */
-            [style*="grid-template-columns"] {
-                grid-template-columns: 1fr !important;
-            }
-
-            .progress-info {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .queue-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            .reports-list li {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
-
-            /* 导航按钮在移动端堆叠 */
-            [style*="text-align: center"] a {
-                display: block !important;
-                margin: 5px 0 !important;
-            }
-
-            .output-box {
-                font-size: 0.8em;
-                max-height: 300px;
+            .url-display {
+                max-width: 150px;
             }
         }
 
-        /* 小屏幕手机 */
-        @media (max-width: 480px) {
-            .header h1 {
-                font-size: 1.5em;
-            }
-
-            .card h2 {
-                font-size: 1.2em;
-            }
-
-            button {
-                padding: 10px 16px;
-                font-size: 0.9em;
-            }
-
-            .status-badge {
-                font-size: 0.75em;
-                padding: 6px 12px;
-            }
-
-            select, input {
-                font-size: 0.9em !important;
-            }
+        /* 统计信息 */
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
-        /* 平板横屏 */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .container {
-                max-width: 100%;
-                padding: 0 20px;
-            }
+        .stat-item {
+            background: #f7fafc;
+            padding: 15px 20px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 150px;
         }
 
-        /* 打印样式 */
-        @media print {
-            .theme-toggle,
-            .button-group,
-            .toast-container {
-                display: none !important;
-            }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
 
-            body {
-                background: white !important;
-            }
-
-            .card {
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
+        .stat-label {
+            color: #718096;
+            font-size: 0.9em;
+            margin-top: 5px;
         }
     </style>
 </head>
 <body>
-    <button class="theme-toggle" onclick="toggleTheme()" title="切换深色模式">🌙</button>
-    <div class="toast-container" id="toast-container"></div>
-
     <div class="container">
         <div class="header">
             <h1>🚀 Benchmark Web Runner</h1>
-            <p>Bilibili Player Performance Testing</p>
+            <p class="subtitle">用例驱动的性能测试平台</p>
         </div>
 
-        <div style="text-align: center; margin-bottom: 20px;">
-            <a href="/" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">🏠 控制台</a>
-            <a href="/config.html" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">⚙️ 配置管理</a>
+        <!-- 统计信息 -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="total-cases">0</div>
+                <div class="stat-label">测试用例总数</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="running-cases">0</div>
+                <div class="stat-label">正在运行</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completed-today">0</div>
+                <div class="stat-label">今日完成</div>
+            </div>
         </div>
 
+        <!-- 用例管理面板 -->
         <div class="card">
-            <h2>🚀 快速启动</h2>
+            <h2>📋 测试用例管理</h2>
 
-            <div style="margin-bottom: 20px;">
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                    <div>
-                        <strong>当前状态:</strong>
-                        <span id="status-badge" class="status-badge status-idle">IDLE</span>
-                        <span id="current-runner" style="margin-left: 10px; color: #666;"></span>
-                    </div>
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="btn-primary" onclick="showAddCaseModal()">➕ 添加用例</button>
+                    <button class="btn-success" onclick="runSelectedCases()" id="run-selected-btn" disabled>▶ 运行选中 (<span id="selected-count">0</span>)</button>
+                    <button class="btn-secondary btn-small" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
-
-                <!-- 主要操作按钮 -->
-                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
-                    <button id="start-all-btn" class="btn-primary" onclick="startAllEnabledTests()" style="font-size: 1.1em; padding: 15px 24px;">
-                        🚀 运行所有启用的测试
-                    </button>
-                    <button id="stop-btn" class="btn-danger" onclick="stopBenchmark()" disabled>
-                        ⏹️ 停止测试
-                    </button>
-                    <button class="btn-warning" onclick="resetStatus()">
-                        🔧 重置
-                    </button>
-                </div>
-
-                <!-- 单个runner快速启动 -->
-                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #666;">⚡ 单项测试快速启动</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
-                        <button class="btn-secondary" onclick="startSingleRunner('Initialization')" id="quick-init">
-                            🚀 Initialization
-                        </button>
-                        <button class="btn-secondary" onclick="startSingleRunner('Runtime')" id="quick-runtime">
-                            ⏱️ Runtime
-                        </button>
-                        <button class="btn-secondary" onclick="startSingleRunner('MemoryLeak')" id="quick-memory">
-                            🔍 MemoryLeak
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 快速预设 -->
-                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #2e7d32;">✨ 一键预设测试</h4>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
-                        <button class="btn-primary" onclick="quickPreset('quick-test')" style="padding: 10px; font-size: 0.9em;">
-                            ⚡ 1分钟快测
-                        </button>
-                        <button class="btn-primary" onclick="quickPreset('standard-test')" style="padding: 10px; font-size: 0.9em;">
-                            📊 标准测试
-                        </button>
-                        <button class="btn-primary" onclick="quickPreset('full-test')" style="padding: 10px; font-size: 0.9em;">
-                            🚀 完整测试
-                        </button>
-                        <button class="btn-primary" onclick="quickPreset('memory-focus')" style="padding: 10px; font-size: 0.9em;">
-                            🔍 内存专项
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 测试历史 -->
-                <div style="background: #fff3e0; padding: 15px; border-radius: 8px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #e65100; display: flex; justify-content: space-between; align-items: center;">
-                        <span>📜 最近运行</span>
-                        <button class="btn-secondary btn-small" onclick="clearTestHistory()">清空历史</button>
-                    </h4>
-                    <div id="test-history" style="max-height: 100px; overflow-y: auto;">
-                        <p style="color: #999; font-size: 0.9em; margin: 0;">暂无测试历史</p>
-                    </div>
+                <div class="toolbar-right">
+                    <button class="btn-secondary btn-small" onclick="exportCases()">📤 导出</button>
+                    <button class="btn-secondary btn-small" onclick="importCases()">📥 导入</button>
+                    <button class="btn-secondary btn-small" onclick="window.location.href='/api.html'">🔑 API管理</button>
                 </div>
             </div>
 
-            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <strong>💡 快捷键：</strong>
-                    <span style="color: #1976d2;">Ctrl+Enter: 运行全部 | Ctrl+1/2/3: 单项测试 | Ctrl+S: 保存配置</span>
+            <div id="cases-container">
+                <div class="empty-state">
+                    <h3>暂无测试用例</h3>
+                    <p>点击"添加用例"创建第一个测试用例</p>
                 </div>
-                <button onclick="showKeyboardShortcuts()" class="btn-secondary btn-small" style="margin: 0;">⌨️ 全部</button>
-            </div>
-
-            <!-- 测试队列显示 -->
-            <div class="queue-container" id="queue-container">
-                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1em;">📋 测试队列</h3>
-                <div id="queue-list"></div>
             </div>
         </div>
 
-        <div class="card" style="border: 2px solid #9c27b0;">
-            <h2 style="color: #9c27b0; display: flex; justify-content: space-between; align-items: center;">
-                <span>📚 用例库</span>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary btn-small" onclick="toggleCaseLibrary()">
-                        <span id="library-toggle-text">📖 展开</span>
-                    </button>
-                    <button class="btn-secondary btn-small" onclick="exportCaseLibrary()">📤 导出</button>
-                    <button class="btn-secondary btn-small" onclick="importCaseLibrary()">📥 导入</button>
-                </div>
+        <!-- 运行状态 -->
+        <div class="card" id="status-card" style="display:none;">
+            <h2>
+                📊 运行状态
+                <span class="status-badge" id="current-status">idle</span>
             </h2>
-
-            <div id="case-library-panel" style="display: none;">
-                <!-- 添加新用例 -->
-                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #9c27b0;">➕ 添加新用例到库</h4>
-                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; align-items: end;">
-                        <div>
-                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">URL</label>
-                            <input type="text" id="new-case-url" placeholder="https://www.bilibili.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">描述</label>
-                            <input type="text" id="new-case-description" placeholder="B站首页" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">标签</label>
-                            <input type="text" id="new-case-tags" placeholder="首页,基础" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <button class="btn-primary" onclick="addToCaseLibrary()" style="padding: 8px 16px;">➕ 添加</button>
-                    </div>
-                </div>
-
-                <!-- 用例库列表 -->
-                <div style="background: #fafafa; padding: 15px; border-radius: 8px;">
-                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #666; display: flex; justify-content: space-between; align-items: center;">
-                        <span>📋 已保存的用例 (<span id="library-count">0</span>)</span>
-                        <button class="btn-secondary btn-small" onclick="clearCaseLibrary()">🗑️ 清空库</button>
-                    </h4>
-                    <div id="case-library-list" style="max-height: 400px; overflow-y: auto;">
-                        <p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>
-                    </div>
-                </div>
-
-                <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px; font-size: 0.9em;">
-                    💡 <strong>提示：</strong>将常用的测试URL保存到用例库，配置时可以快速添加到任意runner。支持标签分类和批量导入导出。
-                </div>
+            <div>
+                <strong>当前用例：</strong><span id="current-case-name">-</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>进度：</strong><span id="progress-text">0/0</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
             </div>
         </div>
 
-        <div class="card" style="border: 2px solid #667eea;">
-            <h2 style="color: #667eea; display: flex; justify-content: space-between; align-items: center;">
-                <span>⚙️ 统一配置面板</span>
-                <div style="display: flex; gap: 8px;">
-                    <button class="btn-secondary btn-small" onclick="loadQuickConfig()">🔄 重载</button>
-                    <button class="btn-secondary btn-small" onclick="exportConfig()">📤 导出</button>
-                    <button class="btn-secondary btn-small" onclick="importConfig()">📥 导入</button>
-                    <button class="btn-primary btn-small" onclick="saveQuickConfig()">💾 保存</button>
-                </div>
-            </h2>
-
-            <!-- 统一的runner配置 -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
-
-                <!-- Initialization -->
-                <div class="runner-config-card" style="background: #f0f7ff; border: 2px solid #667eea; border-radius: 8px; padding: 15px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 1em; color: #667eea;">🚀 Initialization</h3>
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="enable-init" onchange="toggleRunner('Initialization', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
-                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
-                        </label>
-                    </div>
-                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">测试页面初始化加载性能</p>
-                    <div id="init-test-cases-unified"></div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-                        <button class="btn-secondary btn-small" onclick="addTestCase('Initialization')">➕ 手动添加</button>
-                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Initialization')">📚 从库添加</button>
-                    </div>
-                </div>
-
-                <!-- Runtime -->
-                <div class="runner-config-card" style="background: #fff8f0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 1em; color: #ff9800;">⏱️ Runtime</h3>
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="enable-runtime" onchange="toggleRunner('Runtime', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
-                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
-                        </label>
-                    </div>
-                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">测试页面长时间运行性能</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                        <div>
-                            <label style="font-size: 0.85em; color: #555;">时长(ms)</label>
-                            <input type="number" id="runtime-duration" value="60000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85em; color: #555;">延迟(ms)</label>
-                            <input type="number" id="runtime-delay" value="10000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    </div>
-                    <div id="runtime-test-cases-unified"></div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-                        <button class="btn-secondary btn-small" onclick="addTestCase('Runtime')">➕ 手动添加</button>
-                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Runtime')">📚 从库添加</button>
-                    </div>
-                </div>
-
-                <!-- MemoryLeak -->
-                <div class="runner-config-card" style="background: #f0fff4; border: 2px solid #4caf50; border-radius: 8px; padding: 15px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 1em; color: #4caf50;">🔍 MemoryLeak</h3>
-                        <label style="display: flex; align-items: center; cursor: pointer;">
-                            <input type="checkbox" id="enable-memory" onchange="toggleRunner('MemoryLeak', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
-                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
-                        </label>
-                    </div>
-                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">检测页面内存泄漏问题</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                        <div>
-                            <label style="font-size: 0.85em; color: #555;">间隔(ms)</label>
-                            <input type="number" id="memory-interval" value="60000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                        <div>
-                            <label style="font-size: 0.85em; color: #555;">迭代次数</label>
-                            <input type="number" id="memory-iterations" value="3" min="2" max="10" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    </div>
-                    <div id="memory-test-cases-unified"></div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
-                        <button class="btn-secondary btn-small" onclick="addTestCase('MemoryLeak')">➕ 手动添加</button>
-                        <button class="btn-primary btn-small" onclick="showLibrarySelector('MemoryLeak')">📚 从库添加</button>
-                    </div>
-                </div>
-            </div>
-
-            <div style="padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
-                <strong style="color: #1565c0;">💡 提示：</strong>
-                <span style="color: #1565c0;">勾选启用需要运行的测试类型，配置后点击"保存配置"，然后使用上方"运行所有启用的测试"按钮一键执行。也可前往 <a href="/config.html" style="color: #1565c0; font-weight: 600;">配置管理页面</a> 进行高级配置。</span>
-            </div>
-        </div>
-
+        <!-- 输出面板 -->
         <div class="card">
-            <h2>性能指标</h2>
-            <div id="metrics-container" style="display: none;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                    <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">CPU 使用率</div>
-                        <div id="metric-cpu" style="font-size: 2em; font-weight: bold;">--</div>
-                    </div>
-                    <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">内存使用</div>
-                        <div id="metric-memory" style="font-size: 2em; font-weight: bold;">--</div>
-                    </div>
-                    <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">FPS</div>
-                        <div id="metric-fps" style="font-size: 2em; font-weight: bold;">--</div>
-                    </div>
-                    <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">加载时间</div>
-                        <div id="metric-load" style="font-size: 2em; font-weight: bold;">--</div>
-                    </div>
-                </div>
+            <h2>💻 输出日志</h2>
+            <div class="output-panel" id="output">
+                等待测试运行...
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn-secondary btn-small" onclick="clearOutput()">清空日志</button>
+                <button class="btn-secondary btn-small" onclick="stopTest()">⏹ 停止测试</button>
             </div>
         </div>
+    </div>
 
-        <div class="card">
-            <h2>实时输出</h2>
+    <!-- 添加/编辑用例模态框 -->
+    <div class="modal" id="case-modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ 添加测试用例</div>
 
-            <!-- 进度条 -->
-            <div class="progress-container" id="progress-container">
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
-                </div>
-                <div class="progress-info">
-                    <div>
-                        <strong>当前进度:</strong> <span id="progress-current">0/0</span>
-                    </div>
-                    <div>
-                        <strong>预计剩余:</strong> <span id="progress-eta">计算中...</span>
-                    </div>
-                    <div>
-                        <strong>已用时间:</strong> <span id="progress-elapsed">00:00</span>
-                    </div>
-                </div>
+            <div class="form-group">
+                <label>用例名称 *</label>
+                <input type="text" id="case-name" placeholder="例如：B站首页初始化测试">
             </div>
 
-            <div id="output" class="output-box">等待启动测试...</div>
-        </div>
+            <div class="form-group">
+                <label>测试类型 *</label>
+                <select id="case-runner">
+                    <option value="Initialization">Initialization - 初始化性能</option>
+                    <option value="Runtime">Runtime - 运行时性能</option>
+                    <option value="MemoryLeak">MemoryLeak - 内存泄漏检测</option>
+                </select>
+            </div>
 
-        <div class="card">
-            <h2>测试报告</h2>
-            <div id="reports" class="loading">加载中...</div>
+            <div class="form-group">
+                <label>测试URL *</label>
+                <input type="url" id="case-url" placeholder="https://www.bilibili.com">
+            </div>
+
+            <div class="form-group">
+                <label>重复次数</label>
+                <input type="number" id="case-repeat" value="3" min="1" max="100">
+            </div>
+
+            <div class="form-group">
+                <label>描述</label>
+                <textarea id="case-description" placeholder="描述该测试用例的目的和预期结果"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>标签（逗号分隔）</label>
+                <input type="text" id="case-tags" placeholder="例如：bilibili, 首页, 冒烟测试">
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeModal()">取消</button>
+                <button class="btn-primary" onclick="saveCase()">保存</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // 使用相对路径，动态获取 API 地址
-        const API_BASE = `${window.location.origin}/api`;
-        const WS_URL = `ws://${window.location.host}`;
+        // 数据存储
+        let testCases = JSON.parse(localStorage.getItem('testCases') || '[]');
+        let selectedCases = new Set();
+        let currentRunning = null;
+        let runningQueue = [];
+        let completedToday = 0;
+
+        // WebSocket连接
         let ws = null;
-        let reconnectInterval = null;
-        let currentConfig = null;
+        let reconnectTimer = null;
 
-        // 配置预设模板
-        const CONFIG_PRESETS = {
-            'quick-test': {
-                name: '⚡ 快速测试（1分钟）',
-                description: '快速验证功能，1分钟完成',
-                config: {
-                    mode: { anonymous: true, headless: true },
-                    runners: {
-                        Initialization: { enabled: false, testCases: [] },
-                        Runtime: {
-                            enabled: true,
-                            durationMs: 60000,
-                            delayMs: 5000,
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' }
-                            ]
-                        },
-                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
-                    }
-                }
-            },
-            'standard-test': {
-                name: '📊 标准测试（5分钟）',
-                description: '标准性能测试，包含Runtime',
-                config: {
-                    mode: { anonymous: true, headless: false },
-                    runners: {
-                        Initialization: { enabled: false, testCases: [] },
-                        Runtime: {
-                            enabled: true,
-                            durationMs: 300000,
-                            delayMs: 10000,
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' },
-                                { target: 'https://live.bilibili.com', description: 'B站直播' }
-                            ]
-                        },
-                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
-                    }
-                }
-            },
-            'full-test': {
-                name: '🚀 完整测试（所有模式）',
-                description: '包含所有测试类型，全面检测',
-                config: {
-                    mode: { anonymous: true, headless: false },
-                    runners: {
-                        Initialization: {
-                            enabled: true,
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' }
-                            ]
-                        },
-                        Runtime: {
-                            enabled: true,
-                            durationMs: 180000,
-                            delayMs: 10000,
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' }
-                            ]
-                        },
-                        MemoryLeak: {
-                            enabled: true,
-                            intervalMs: 60000,
-                            iterations: 3,
-                            onPageTesting: '',
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' }
-                            ]
-                        }
-                    }
-                }
-            },
-            'memory-focus': {
-                name: '🔍 内存泄漏专项',
-                description: '专注检测内存泄漏问题',
-                config: {
-                    mode: { anonymous: true, headless: false },
-                    runners: {
-                        Initialization: { enabled: false, testCases: [] },
-                        Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000 },
-                        MemoryLeak: {
-                            enabled: true,
-                            intervalMs: 90000,
-                            iterations: 5,
-                            onPageTesting: '',
-                            testCases: [
-                                { target: 'https://www.bilibili.com', description: 'B站首页' },
-                                { target: 'https://live.bilibili.com', description: 'B站直播' }
-                            ]
-                        }
-                    }
-                }
-            }
-        };
-
-        // WebSocket 连接管理
         function connectWebSocket() {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                return; // 已经连接
-            }
-
-            ws = new WebSocket(WS_URL);
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${wsProtocol}//${window.location.host}`);
 
             ws.onopen = () => {
                 console.log('WebSocket connected');
-                // 清除重连定时器
-                if (reconnectInterval) {
-                    clearInterval(reconnectInterval);
-                    reconnectInterval = null;
-                }
+                appendOutput('[系统] WebSocket连接成功');
             };
 
             ws.onmessage = (event) => {
-                try {
-                    const message = JSON.parse(event.data);
-
-                    if (message.type === 'status') {
-                        // 实时更新UI
-                        updateUI(message.data);
-                    }
-                } catch (error) {
-                    console.error('Error parsing WebSocket message:', error);
-                }
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
             };
 
             ws.onerror = (error) => {
@@ -1055,1634 +606,526 @@
 
             ws.onclose = () => {
                 console.log('WebSocket disconnected');
-                ws = null;
-
-                // 自动重连
-                if (!reconnectInterval) {
-                    reconnectInterval = setInterval(() => {
-                        console.log('Attempting to reconnect...');
-                        connectWebSocket();
-                    }, 3000);
-                }
+                appendOutput('[系统] WebSocket连接断开，5秒后重连...');
+                reconnectTimer = setTimeout(connectWebSocket, 5000);
             };
         }
 
-        // Toast 通知系统
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
+        function handleWebSocketMessage(data) {
+            switch (data.type) {
+                case 'status':
+                    updateStatus(data.status, data.runner);
+                    break;
+                case 'output':
+                    appendOutput(data.data);
+                    break;
+                case 'progress':
+                    updateProgress(data.current, data.total);
+                    break;
+            }
+        }
 
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
-            };
+        // 初始化
+        window.onload = () => {
+            connectWebSocket();
+            renderCases();
+            updateStats();
+            loadCompletedToday();
+        };
 
-            toast.innerHTML = `
-                <div class="toast-icon">${icons[type] || icons.info}</div>
-                <div class="toast-message">${message}</div>
+        // 渲染用例列表
+        function renderCases() {
+            const container = document.getElementById('cases-container');
+
+            if (testCases.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>暂无测试用例</h3>
+                        <p>点击"添加用例"创建第一个测试用例</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const table = `
+                <table class="test-cases-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>
+                            <th>用例名称</th>
+                            <th>类型</th>
+                            <th>测试URL</th>
+                            <th>重复次数</th>
+                            <th>状态</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${testCases.map(testCase => `
+                            <tr>
+                                <td><input type="checkbox" onchange="toggleCaseSelection(${testCase.id}, this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
+                                <td><strong>${escapeHtml(testCase.name)}</strong></td>
+                                <td><span class="runner-tag runner-${testCase.runner.toLowerCase()}">${testCase.runner}</span></td>
+                                <td><div class="url-display" title="${escapeHtml(testCase.url)}">${escapeHtml(testCase.url)}</div></td>
+                                <td>${testCase.repeatCount}</td>
+                                <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
+                                <td>
+                                    <div class="actions">
+                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})" ${currentRunning ? 'disabled' : ''}>▶ 运行</button>
+                                        <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
+                                        <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
 
-            container.appendChild(toast);
-
-            // 3秒后自动移除
-            setTimeout(() => {
-                toast.style.animation = 'slideIn 0.3s ease-out reverse';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            container.innerHTML = table;
+            updateStats();
         }
 
-        // URL验证
-        function isValidURL(url) {
-            try {
-                new URL(url);
-                return true;
-            } catch {
-                return false;
-            }
+        // 更新统计信息
+        function updateStats() {
+            document.getElementById('total-cases').textContent = testCases.length;
+            document.getElementById('running-cases').textContent = currentRunning ? 1 : 0;
+            document.getElementById('completed-today').textContent = completedToday;
         }
 
-        // 添加按钮加载状态
-        function setButtonLoading(button, loading) {
-            if (loading) {
-                button.disabled = true;
-                button.classList.add('loading');
-                button.dataset.originalText = button.textContent;
-                button.textContent = button.textContent.replace(/^[^\s]+\s/, '⏳ ');
+        // 选择/取消选择用例
+        function toggleCaseSelection(id, checked) {
+            if (checked) {
+                selectedCases.add(id);
             } else {
-                button.disabled = false;
-                button.classList.remove('loading');
-                if (button.dataset.originalText) {
-                    button.textContent = button.dataset.originalText;
-                }
+                selectedCases.delete(id);
             }
+            updateSelectionUI();
         }
 
-        // 测试历史
-        let testHistory = JSON.parse(localStorage.getItem('testHistory') || '[]');
-
-        // 用例库
-        let caseLibrary = JSON.parse(localStorage.getItem('caseLibrary') || '[]');
-
-        // 初始化预设用例
-        function initDefaultCaseLibrary() {
-            if (caseLibrary.length === 0) {
-                caseLibrary = [
-                    { url: 'https://www.bilibili.com', description: 'B站首页', tags: ['首页', '基础'] },
-                    { url: 'https://live.bilibili.com', description: 'B站直播', tags: ['直播', '基础'] },
-                    { url: 'https://www.bilibili.com/video/BV1xx411c7XZ', description: '视频播放页', tags: ['视频', '播放器'] },
-                    { url: 'https://search.bilibili.com/all?keyword=test', description: '搜索页面', tags: ['搜索'] },
-                    { url: 'https://space.bilibili.com/1', description: '用户空间', tags: ['空间'] }
-                ];
-                saveCaseLibrary();
+        function toggleSelectAll(checked) {
+            selectedCases.clear();
+            if (checked) {
+                testCases.forEach(tc => selectedCases.add(tc.id));
             }
+            renderCases();
+            updateSelectionUI();
         }
 
-        // 保存用例库到localStorage
-        function saveCaseLibrary() {
-            localStorage.setItem('caseLibrary', JSON.stringify(caseLibrary));
-            renderCaseLibrary();
+        function updateSelectionUI() {
+            document.getElementById('selected-count').textContent = selectedCases.size;
+            document.getElementById('run-selected-btn').disabled = selectedCases.size === 0 || currentRunning !== null;
         }
 
-        // 切换用例库面板
-        function toggleCaseLibrary() {
-            const panel = document.getElementById('case-library-panel');
-            const toggleText = document.getElementById('library-toggle-text');
+        // 显示添加用例模态框
+        function showAddCaseModal() {
+            document.getElementById('case-modal').classList.add('active');
+            document.querySelector('.modal-header').textContent = '➕ 添加测试用例';
 
-            if (panel.style.display === 'none') {
-                panel.style.display = 'block';
-                toggleText.textContent = '📕 收起';
-            } else {
-                panel.style.display = 'none';
-                toggleText.textContent = '📖 展开';
-            }
-        }
+            // 清空表单
+            document.getElementById('case-name').value = '';
+            document.getElementById('case-runner').value = 'Initialization';
+            document.getElementById('case-url').value = '';
+            document.getElementById('case-repeat').value = '3';
+            document.getElementById('case-description').value = '';
+            document.getElementById('case-tags').value = '';
 
-        // 添加用例到库
-        function addToCaseLibrary() {
-            const url = document.getElementById('new-case-url').value.trim();
-            const description = document.getElementById('new-case-description').value.trim();
-            const tagsStr = document.getElementById('new-case-tags').value.trim();
-
-            if (!url) {
-                showToast('❌ 请输入URL', 'error');
-                return;
-            }
-
-            if (!isValidURL(url)) {
-                showToast('❌ URL格式无效', 'error');
-                return;
-            }
-
-            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
-
-            const newCase = {
-                id: Date.now(),
-                url,
-                description: description || url,
-                tags,
-                addedAt: new Date().toLocaleString('zh-CN')
-            };
-
-            caseLibrary.unshift(newCase);
-            saveCaseLibrary();
-
-            // 清空输入框
-            document.getElementById('new-case-url').value = '';
-            document.getElementById('new-case-description').value = '';
-            document.getElementById('new-case-tags').value = '';
-
-            showToast('✅ 用例已添加到库', 'success');
-        }
-
-        // 渲染用例库
-        function renderCaseLibrary() {
-            const container = document.getElementById('case-library-list');
-            const count = document.getElementById('library-count');
-
-            count.textContent = caseLibrary.length;
-
-            if (caseLibrary.length === 0) {
-                container.innerHTML = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>';
-                return;
-            }
-
-            container.innerHTML = caseLibrary.map((item, index) => `
-                <div style="background: white; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #9c27b0;">
-                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; color: #333; font-size: 0.95em; margin-bottom: 3px;">${item.description}</div>
-                            <div style="color: #666; font-size: 0.85em; word-break: break-all;">${item.url}</div>
-                            ${item.tags && item.tags.length > 0 ? `
-                                <div style="margin-top: 6px;">
-                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div style="display: flex; gap: 4px; margin-left: 10px;">
-                            <button class="btn-secondary btn-small" onclick="editCaseInLibrary(${index})" style="padding: 4px 8px;">✏️</button>
-                            <button class="btn-danger btn-small" onclick="removeCaseFromLibrary(${index})" style="padding: 4px 8px;">🗑️</button>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.75em; color: #999;">添加时间: ${item.addedAt}</div>
-                </div>
-            `).join('');
+            // 移除编辑模式标记
+            delete document.getElementById('case-modal').dataset.editId;
         }
 
         // 编辑用例
-        function editCaseInLibrary(index) {
-            const item = caseLibrary[index];
-            if (!item) return;
+        function editCase(id) {
+            const testCase = testCases.find(tc => tc.id === id);
+            if (!testCase) return;
 
-            const url = prompt('编辑URL:', item.url);
-            if (url === null) return;
+            document.getElementById('case-modal').classList.add('active');
+            document.querySelector('.modal-header').textContent = '✏️ 编辑测试用例';
 
-            if (!isValidURL(url)) {
-                showToast('❌ URL格式无效', 'error');
+            document.getElementById('case-name').value = testCase.name;
+            document.getElementById('case-runner').value = testCase.runner;
+            document.getElementById('case-url').value = testCase.url;
+            document.getElementById('case-repeat').value = testCase.repeatCount;
+            document.getElementById('case-description').value = testCase.description || '';
+            document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
+
+            // 标记为编辑模式
+            document.getElementById('case-modal').dataset.editId = id;
+        }
+
+        // 保存用例
+        function saveCase() {
+            const name = document.getElementById('case-name').value.trim();
+            const runner = document.getElementById('case-runner').value;
+            const url = document.getElementById('case-url').value.trim();
+            const repeatCount = parseInt(document.getElementById('case-repeat').value);
+            const description = document.getElementById('case-description').value.trim();
+            const tags = document.getElementById('case-tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            if (!name) {
+                showToast('请输入用例名称', 'error');
                 return;
             }
 
-            const description = prompt('编辑描述:', item.description) || url;
-            const tagsStr = prompt('编辑标签（逗号分隔）:', item.tags.join(',')) || '';
-            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
-
-            caseLibrary[index] = {
-                ...item,
-                url,
-                description,
-                tags
-            };
-
-            saveCaseLibrary();
-            showToast('✅ 用例已更新', 'success');
-        }
-
-        // 从库中删除用例
-        function removeCaseFromLibrary(index) {
-            if (confirm('确定要删除这个用例吗？')) {
-                caseLibrary.splice(index, 1);
-                saveCaseLibrary();
-                showToast('✅ 用例已删除', 'info');
-            }
-        }
-
-        // 清空用例库
-        function clearCaseLibrary() {
-            if (confirm('确定要清空整个用例库吗？这将删除所有保存的用例。')) {
-                caseLibrary = [];
-                saveCaseLibrary();
-                showToast('✅ 用例库已清空', 'info');
-            }
-        }
-
-        // 导出用例库
-        function exportCaseLibrary() {
-            if (caseLibrary.length === 0) {
-                showToast('❌ 用例库为空，无法导出', 'warning');
+            if (!url || !isValidURL(url)) {
+                showToast('请输入有效的URL', 'error');
                 return;
             }
 
-            const blob = new Blob([JSON.stringify(caseLibrary, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `case-library-${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('✅ 用例库已导出', 'success');
-        }
+            const editId = document.getElementById('case-modal').dataset.editId;
 
-        // 导入用例库
-        function importCaseLibrary() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'application/json';
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-
-                try {
-                    const text = await file.text();
-                    const imported = JSON.parse(text);
-
-                    if (!Array.isArray(imported)) {
-                        showToast('❌ 导入失败：格式错误', 'error');
-                        return;
-                    }
-
-                    // 合并模式还是替换模式
-                    const merge = confirm('是否与现有用例库合并？\n\n点击"确定"合并，点击"取消"替换现有用例库。');
-
-                    if (merge) {
-                        // 去重合并
-                        const existingUrls = new Set(caseLibrary.map(c => c.url));
-                        const newCases = imported.filter(c => !existingUrls.has(c.url));
-                        caseLibrary = [...caseLibrary, ...newCases];
-                        showToast(`✅ 成功导入 ${newCases.length} 个新用例`, 'success');
-                    } else {
-                        caseLibrary = imported;
-                        showToast(`✅ 用例库已替换，共 ${imported.length} 个用例`, 'success');
-                    }
-
-                    saveCaseLibrary();
-                } catch (error) {
-                    showToast('❌ 导入失败: ' + error.message, 'error');
+            if (editId) {
+                // 编辑模式
+                const testCase = testCases.find(tc => tc.id === parseInt(editId));
+                if (testCase) {
+                    testCase.name = name;
+                    testCase.runner = runner;
+                    testCase.url = url;
+                    testCase.repeatCount = repeatCount;
+                    testCase.description = description;
+                    testCase.tags = tags;
+                    showToast('用例更新成功', 'success');
                 }
-            };
-            input.click();
-        }
-
-        // 显示用例库选择器（从库中添加到runner）
-        function showLibrarySelector(runner) {
-            if (caseLibrary.length === 0) {
-                showToast('❌ 用例库为空，请先添加用例', 'warning');
-                // 自动展开用例库
-                if (document.getElementById('case-library-panel').style.display === 'none') {
-                    toggleCaseLibrary();
-                }
-                return;
-            }
-
-            // 创建选择器模态框
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10002;
-                padding: 20px;
-            `;
-
-            const content = document.createElement('div');
-            content.style.cssText = `
-                background: ${document.body.classList.contains('dark-mode') ? '#2d2d2d' : 'white'};
-                color: ${document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333'};
-                padding: 25px;
-                border-radius: 12px;
-                max-width: 600px;
-                width: 100%;
-                max-height: 80vh;
-                overflow-y: auto;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            `;
-
-            let selectedCases = new Set();
-
-            content.innerHTML = `
-                <h3 style="margin: 0 0 15px 0; color: #9c27b0;">📚 从用例库添加到 ${runner}</h3>
-                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">选择要添加的用例（可多选）：</p>
-                <div id="library-selector-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
-                    ${caseLibrary.map((item, index) => `
-                        <label style="display: block; padding: 10px; margin-bottom: 8px; background: ${document.body.classList.contains('dark-mode') ? '#3d3d3d' : '#f5f5f5'}; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.borderColor='#9c27b0'" onmouseout="this.style.borderColor='transparent'">
-                            <input type="checkbox" value="${index}" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
-                            <span style="font-weight: 600;">${item.description}</span>
-                            <div style="font-size: 0.85em; color: #666; margin-top: 4px; word-break: break-all;">${item.url}</div>
-                            ${item.tags && item.tags.length > 0 ? `
-                                <div style="margin-top: 6px;">
-                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
-                                </div>
-                            ` : ''}
-                        </label>
-                    `).join('')}
-                </div>
-                <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                    <button class="btn-secondary" onclick="this.closest('[style*=fixed]').remove()">取消</button>
-                    <button class="btn-primary" id="confirm-add-btn">添加选中的用例</button>
-                </div>
-            `;
-
-            modal.appendChild(content);
-            document.body.appendChild(modal);
-
-            // 点击背景关闭
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    modal.remove();
-                }
-            };
-
-            // 确认添加
-            document.getElementById('confirm-add-btn').onclick = () => {
-                const checkboxes = content.querySelectorAll('input[type="checkbox"]:checked');
-                if (checkboxes.length === 0) {
-                    showToast('❌ 请至少选择一个用例', 'warning');
-                    return;
-                }
-
-                checkboxes.forEach(checkbox => {
-                    const index = parseInt(checkbox.value);
-                    const item = caseLibrary[index];
-                    if (item) {
-                        addTestCaseFromLibrary(runner, item);
-                    }
-                });
-
-                modal.remove();
-                showToast(`✅ 已添加 ${checkboxes.length} 个用例到 ${runner}`, 'success');
-            };
-        }
-
-        // 从库中添加用例到runner
-        function addTestCaseFromLibrary(runner, item) {
-            if (!currentConfig) return;
-
-            if (!currentConfig.runners[runner].testCases) {
-                currentConfig.runners[runner].testCases = [];
-            }
-
-            currentConfig.runners[runner].testCases.push({
-                target: item.url,
-                description: item.description
-            });
-
-            renderTestCases(runner, currentConfig.runners[runner].testCases);
-        }
-
-        // 添加到测试历史
-        function addToHistory(runners, status) {
-            const historyItem = {
-                runners: Array.isArray(runners) ? runners : [runners],
-                time: new Date().toLocaleString('zh-CN'),
-                status: status || 'running'
-            };
-            testHistory.unshift(historyItem);
-            if (testHistory.length > 5) testHistory.pop(); // 只保留最近5条
-            localStorage.setItem('testHistory', JSON.stringify(testHistory));
-            renderTestHistory();
-        }
-
-        // 渲染测试历史
-        function renderTestHistory() {
-            const container = document.getElementById('test-history');
-            if (testHistory.length === 0) {
-                container.innerHTML = '<p style="color: #999; font-size: 0.9em; margin: 0;">暂无测试历史</p>';
-                return;
-            }
-
-            container.innerHTML = testHistory.map((item, index) => `
-                <div style="padding: 8px; background: white; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid ${item.status === 'completed' ? '#4caf50' : item.status === 'error' ? '#f44336' : '#ff9800'};">
-                    <div style="flex: 1;">
-                        <div style="font-size: 0.85em; font-weight: 600; color: #333;">${item.runners.join(' + ')}</div>
-                        <div style="font-size: 0.75em; color: #999;">${item.time}</div>
-                    </div>
-                    <button class="btn-secondary btn-small" onclick="rerunTest(${index})" style="padding: 4px 8px;">🔄 重运行</button>
-                </div>
-            `).join('');
-        }
-
-        // 重运行测试
-        async function rerunTest(index) {
-            const item = testHistory[index];
-            if (!item) return;
-
-            if (item.runners.length === 1) {
-                await startSingleRunner(item.runners[0]);
             } else {
-                await startAllEnabledTests();
+                // 新增模式
+                const newCase = {
+                    id: Date.now(),
+                    name,
+                    runner,
+                    url,
+                    repeatCount,
+                    description,
+                    tags,
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                };
+                testCases.push(newCase);
+                showToast('用例添加成功', 'success');
             }
+
+            saveToStorage();
+            renderCases();
+            closeModal();
         }
 
-        // 清空测试历史
-        function clearTestHistory() {
-            if (confirm('确定要清空所有测试历史吗？')) {
-                testHistory = [];
-                localStorage.setItem('testHistory', JSON.stringify(testHistory));
-                renderTestHistory();
-                showToast('测试历史已清空', 'info');
-            }
+        // 删除用例
+        function deleteCase(id) {
+            if (!confirm('确定要删除这个测试用例吗？')) return;
+
+            testCases = testCases.filter(tc => tc.id !== id);
+            selectedCases.delete(id);
+            saveToStorage();
+            renderCases();
+            showToast('用例已删除', 'success');
         }
 
-        // 运行所有启用的测试
-        async function startAllEnabledTests() {
-            const startBtn = document.getElementById('start-all-btn');
+        // 运行单个用例
+        async function runCase(id) {
+            const testCase = testCases.find(tc => tc.id === id);
+            if (!testCase || currentRunning) return;
 
-            if (!currentConfig) {
-                showToast('❌ 配置未加载，请先加载配置', 'error');
-                return;
-            }
+            currentRunning = testCase.id;
+            testCase.status = 'running';
+            renderCases();
 
-            // 检查哪些runner被启用
-            const enabledRunners = [];
-            if (currentConfig.runners.Initialization?.enabled) enabledRunners.push('Initialization');
-            if (currentConfig.runners.Runtime?.enabled) enabledRunners.push('Runtime');
-            if (currentConfig.runners.MemoryLeak?.enabled) enabledRunners.push('MemoryLeak');
-
-            if (enabledRunners.length === 0) {
-                showToast('❌ 没有启用任何测试类型，请至少启用一个', 'warning');
-                return;
-            }
-
-            // 验证所有启用的runner
-            for (const runner of enabledRunners) {
-                const validation = validateSpecificRunner(runner);
-                if (!validation.valid) {
-                    showToast(`❌ ${runner} 配置错误：${validation.errors.join(', ')}`, 'error');
-                    return;
-                }
-            }
-
-            setButtonLoading(startBtn, true);
-            resetProgress();
+            document.getElementById('status-card').style.display = 'block';
+            document.getElementById('current-case-name').textContent = testCase.name;
+            document.getElementById('current-status').textContent = '运行中';
+            document.getElementById('current-status').className = 'status-badge status-running';
 
             try {
-                // 按顺序运行每个启用的runner
-                for (let i = 0; i < enabledRunners.length; i++) {
-                    const runner = enabledRunners[i];
-                    showToast(`🚀 启动测试 ${i + 1}/${enabledRunners.length}: ${runner}`, 'info');
-
-                    await runSingleRunnerAsync(runner);
-
-                    // 等待测试完成
-                    await waitForTestCompletion();
-
-                    if (i < enabledRunners.length - 1) {
-                        showToast(`✅ ${runner} 完成，准备运行下一个测试...`, 'success');
-                        await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒
-                    }
-                }
-
-                addToHistory(enabledRunners, 'completed');
-                showToast(`🎉 所有测试完成！共运行 ${enabledRunners.length} 个测试`, 'success');
-            } catch (error) {
-                addToHistory(enabledRunners, 'error');
-                showToast('❌ 测试执行失败: ' + error.message, 'error');
-            } finally {
-                setButtonLoading(startBtn, false);
-            }
-        }
-
-        // 验证特定runner
-        function validateSpecificRunner(runner) {
-            if (!currentConfig || !currentConfig.runners[runner]) {
-                return { valid: false, errors: ['配置未找到'] };
-            }
-
-            const errors = [];
-            const runnerConfig = currentConfig.runners[runner];
-
-            if (!runnerConfig.testCases || runnerConfig.testCases.length === 0) {
-                errors.push('没有配置测试用例');
-            } else {
-                runnerConfig.testCases.forEach((tc, index) => {
-                    if (!tc.target || !isValidURL(tc.target)) {
-                        errors.push(`测试用例 #${index + 1} URL无效`);
-                    }
-                });
-            }
-
-            return { valid: errors.length === 0, errors };
-        }
-
-        // 等待测试完成
-        function waitForTestCompletion() {
-            return new Promise((resolve) => {
-                const checkStatus = setInterval(() => {
-                    if (benchmarkStatus !== 'running') {
-                        clearInterval(checkStatus);
-                        resolve();
-                    }
-                }, 1000);
-            });
-        }
-
-        // 运行单个runner（异步）
-        async function runSingleRunnerAsync(runner) {
-            showTestQueue(runner);
-
-            const response = await fetch(`${API_BASE}/start`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ runner })
-            });
-
-            const data = await response.json();
-            if (!data.success) {
-                throw new Error(data.error || '启动失败');
-            }
-        }
-
-        // 快速启动单个runner
-        async function startSingleRunner(runner) {
-            if (!currentConfig || !currentConfig.runners[runner]) {
-                showToast(`❌ ${runner} 配置未找到`, 'error');
-                return;
-            }
-
-            const validation = validateSpecificRunner(runner);
-            if (!validation.valid) {
-                showToast(`❌ ${runner} 配置错误：${validation.errors.join(', ')}`, 'error');
-                return;
-            }
-
-            const btn = document.getElementById(`quick-${runner.toLowerCase().replace('memoryleak', 'memory').replace('initialization', 'init')}`);
-            if (btn) setButtonLoading(btn, true);
-
-            resetProgress();
-
-            try {
-                await runSingleRunnerAsync(runner);
-                addToHistory([runner], 'running');
-                showToast(`✅ ${runner} 测试已启动`, 'success');
-            } catch (error) {
-                showToast('❌ 启动失败: ' + error.message, 'error');
-            } finally {
-                if (btn) setButtonLoading(btn, false);
-            }
-        }
-
-        // 快速预设测试
-        async function quickPreset(presetKey) {
-            const preset = CONFIG_PRESETS[presetKey];
-            if (!preset) {
-                showToast('❌ 预设不存在', 'error');
-                return;
-            }
-
-            // 应用预设配置
-            currentConfig = JSON.parse(JSON.stringify(preset.config));
-
-            try {
-                // 保存配置
-                const response = await fetch(`${API_BASE}/dynamic-config`, {
+                const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentConfig)
+                    body: JSON.stringify({
+                        runner: testCase.runner,
+                        config: {
+                            mode: 'headless',
+                            runners: {
+                                [testCase.runner]: {
+                                    repeatCount: testCase.repeatCount,
+                                    urls: [testCase.url]
+                                }
+                            }
+                        }
+                    })
                 });
 
-                const data = await response.json();
-                if (data.success) {
-                    await loadQuickConfig();
-                    showToast(`✅ 已应用预设: ${preset.name}`, 'success');
+                const result = await response.json();
 
-                    // 自动运行测试
-                    setTimeout(() => startAllEnabledTests(), 500);
-                } else {
-                    showToast('❌ 应用预设失败', 'error');
+                if (!result.success) {
+                    throw new Error(result.message || '启动测试失败');
                 }
+
+                appendOutput(`[系统] 测试用例 "${testCase.name}" 已启动`);
             } catch (error) {
-                showToast('❌ 应用预设失败: ' + error.message, 'error');
+                testCase.status = 'error';
+                currentRunning = null;
+                renderCases();
+                showToast('运行失败: ' + error.message, 'error');
+                appendOutput(`[错误] ${error.message}`);
             }
         }
 
-        // Toggle runner启用状态
-        function toggleRunner(runner, enabled) {
-            if (!currentConfig) return;
+        // 运行选中的用例
+        async function runSelectedCases() {
+            if (selectedCases.size === 0 || currentRunning) return;
 
-            if (!currentConfig.runners[runner]) {
-                currentConfig.runners[runner] = {
-                    enabled: false,
-                    testCases: []
-                };
+            runningQueue = Array.from(selectedCases);
+            showToast(`准备运行 ${runningQueue.length} 个用例`, 'success');
+
+            await runNextInQueue();
+        }
+
+        async function runNextInQueue() {
+            if (runningQueue.length === 0) {
+                showToast('所有用例运行完成', 'success');
+                return;
             }
 
-            currentConfig.runners[runner].enabled = enabled;
-            showToast(enabled ? `✅ ${runner} 已启用` : `⚠️ ${runner} 已禁用`, enabled ? 'success' : 'warning');
+            const id = runningQueue.shift();
+            await runCase(id);
         }
 
         // 停止测试
-        async function stopBenchmark() {
-            const stopBtn = document.getElementById('stop-btn');
-            setButtonLoading(stopBtn, true);
-
+        async function stopTest() {
             try {
-                const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
-                const data = await response.json();
+                const response = await fetch('/api/stop', { method: 'POST' });
+                const result = await response.json();
 
-                if (data.success) {
-                    showToast('测试已停止', 'warning');
-                    // WebSocket 会自动推送更新
-                } else {
-                    showToast(data.error || '停止失败', 'error');
+                if (result.success) {
+                    showToast('测试已停止', 'success');
+                    if (currentRunning) {
+                        const testCase = testCases.find(tc => tc.id === currentRunning);
+                        if (testCase) testCase.status = 'idle';
+                        currentRunning = null;
+                        renderCases();
+                    }
                 }
             } catch (error) {
-                showToast('停止测试失败: ' + error.message, 'error');
-            } finally {
-                setButtonLoading(stopBtn, false);
+                showToast('停止失败', 'error');
             }
         }
 
-        // 强制重置状态
-        async function resetStatus() {
-            if (!confirm('确定要强制重置所有状态吗？这将终止所有正在运行的测试。')) {
-                return;
-            }
+        // 更新状态
+        function updateStatus(status, runner) {
+            document.getElementById('current-status').textContent = getStatusText(status);
+            document.getElementById('current-status').className = `status-badge status-${status}`;
 
-            try {
-                const response = await fetch(`${API_BASE}/reset`, { method: 'POST' });
-                const data = await response.json();
+            if (status === 'completed' || status === 'error') {
+                if (currentRunning) {
+                    const testCase = testCases.find(tc => tc.id === currentRunning);
+                    if (testCase) {
+                        testCase.status = status;
+                        if (status === 'completed') {
+                            completedToday++;
+                            saveCompletedToday();
+                        }
+                    }
+                    currentRunning = null;
+                    renderCases();
 
-                if (data.success) {
-                    showToast('状态已重置', 'success');
-                    // WebSocket 会自动推送更新
-                } else {
-                    showToast('重置失败', 'error');
+                    // 如果有队列，继续运行下一个
+                    if (runningQueue.length > 0) {
+                        setTimeout(() => runNextInQueue(), 2000);
+                    }
                 }
-            } catch (error) {
-                showToast('重置失败: ' + error.message, 'error');
             }
         }
 
-        // 刷新状态
-        async function refreshStatus() {
-            try {
-                const response = await fetch(`${API_BASE}/status`);
-                const data = await response.json();
-                updateUI(data);
-            } catch (error) {
-                console.error('获取状态失败:', error);
-            }
+        function updateProgress(current, total) {
+            document.getElementById('progress-text').textContent = `${current}/${total}`;
+            const percent = (current / total) * 100;
+            document.getElementById('progress-fill').style.width = percent + '%';
         }
 
-        // 更新UI
-        function updateUI(data) {
-            const badge = document.getElementById('status-badge');
-            const startBtn = document.getElementById('start-btn');
-            const stopBtn = document.getElementById('stop-btn');
+        // 输出日志
+        function appendOutput(text) {
             const output = document.getElementById('output');
-            const runnerSelect = document.getElementById('runner-select');
-            const currentRunner = document.getElementById('current-runner');
-
-            badge.className = `status-badge status-${data.status}`;
-            badge.textContent = data.status.toUpperCase();
-
-            startBtn.disabled = data.status === 'running';
-            stopBtn.disabled = data.status !== 'running';
-            runnerSelect.disabled = data.status === 'running';
-
-            if (data.currentRunner) {
-                currentRunner.textContent = `(${data.currentRunner})`;
-            } else {
-                currentRunner.textContent = '';
-            }
-
-            output.textContent = data.output || '暂无输出...';
+            const timestamp = new Date().toLocaleTimeString('zh-CN');
+            output.textContent += `\n[${timestamp}] ${text}`;
             output.scrollTop = output.scrollHeight;
-
-            // 更新进度、指标和队列
-            if (data.output) {
-                updateProgress(data.output);
-                updateMetrics(data.output);
-                updateQueueFromOutput(data.output);
-            }
-
-            // 如果测试完成或出错，重置进度和队列
-            if (data.status === 'completed' || data.status === 'error' || data.status === 'idle') {
-                if (progressStartTime > 0) {
-                    setTimeout(resetProgress, 3000); // 3秒后重置进度条
-                    setTimeout(hideTestQueue, 3000); // 3秒后隐藏队列
-                }
-            }
         }
 
-        // WebSocket 已经替代轮询，这些函数保留为空以防旧代码调用
-        function startStatusPolling() {
-            // WebSocket 自动推送，不需要轮询
+        function clearOutput() {
+            document.getElementById('output').textContent = '等待测试运行...';
         }
 
-        function stopStatusPolling() {
-            // WebSocket 自动推送，不需要轮询
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('case-modal').classList.remove('active');
         }
 
-        // 加载报告列表
-        async function loadReports() {
-            try {
-                const response = await fetch(`${API_BASE}/reports`);
-                const reports = await response.json();
-                const reportsDiv = document.getElementById('reports');
-
-                if (reports.length === 0) {
-                    reportsDiv.innerHTML = '<p class="loading">暂无测试报告</p>';
-                    return;
-                }
-
-                const list = document.createElement('ul');
-                list.className = 'reports-list';
-
-                reports.forEach(report => {
-                    const li = document.createElement('li');
-                    const date = new Date(report.modified).toLocaleString('zh-CN');
-                    const size = formatFileSize(report.size);
-                    li.innerHTML = `
-                        <a href="${report.path}" target="_blank">${report.name}</a>
-                        <span class="report-date">${date}</span>
-                        <span class="report-size">${size}</span>
-                        <button class="btn-danger btn-small" onclick="deleteReport('${report.name}', event)">🗑️ 删除</button>
-                    `;
-                    list.appendChild(li);
-                });
-
-                reportsDiv.innerHTML = '';
-                reportsDiv.appendChild(list);
-            } catch (error) {
-                document.getElementById('reports').innerHTML =
-                    '<p class="loading">加载报告失败</p>';
-            }
+        // 导出用例
+        function exportCases() {
+            const dataStr = JSON.stringify(testCases, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `test-cases-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            showToast('用例已导出', 'success');
         }
 
-        // 格式化文件大小
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 B';
-            const k = 1024;
-            const sizes = ['B', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-        }
-
-        // 删除报告
-        async function deleteReport(filename, event) {
-            event.preventDefault();
-            event.stopPropagation();
-
-            if (!confirm(`确定要删除报告 "${filename}" 吗？`)) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE}/reports/${filename}`, {
-                    method: 'DELETE'
-                });
-                const data = await response.json();
-
-                if (data.success) {
-                    showToast('报告已删除', 'success');
-                    await loadReports();
-                } else {
-                    showToast('删除失败', 'error');
-                }
-            } catch (error) {
-                showToast('删除失败: ' + error.message, 'error');
-            }
-        }
-
-        // 深色模式切换
-        function toggleTheme() {
-            document.body.classList.toggle('dark-mode');
-            const btn = document.querySelector('.theme-toggle');
-            const isDark = document.body.classList.contains('dark-mode');
-            btn.textContent = isDark ? '☀️' : '🌙';
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-        }
-
-        // 初始化主题
-        function initTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            if (savedTheme === 'dark') {
-                document.body.classList.add('dark-mode');
-                const btn = document.querySelector('.theme-toggle');
-                if (btn) btn.textContent = '☀️';
-            }
-        }
-
-        // 进度追踪
-        let progressStartTime = 0;
-        let progressData = {
-            current: 0,
-            total: 0,
-            percentage: 0
-        };
-
-        function updateProgress(output) {
-            // 尝试从输出中解析进度信息
-            // 匹配类似 "Progress: 1/3" 或 "Test 2 of 5" 的模式
-            const patterns = [
-                /(?:Progress|测试进度):\s*(\d+)\s*\/\s*(\d+)/i,
-                /Test\s+(\d+)\s+of\s+(\d+)/i,
-                /测试\s*(\d+)\s*\/\s*(\d+)/i,
-                /\[(\d+)\/(\d+)\]/
-            ];
-
-            let matched = false;
-            for (const pattern of patterns) {
-                const match = output.match(pattern);
-                if (match) {
-                    progressData.current = parseInt(match[1]);
-                    progressData.total = parseInt(match[2]);
-                    progressData.percentage = Math.round((progressData.current / progressData.total) * 100);
-                    matched = true;
-                    break;
-                }
-            }
-
-            // 如果匹配到进度，显示进度条
-            const progressContainer = document.getElementById('progress-container');
-            const progressFill = document.getElementById('progress-fill');
-            const progressCurrent = document.getElementById('progress-current');
-            const progressEta = document.getElementById('progress-eta');
-            const progressElapsed = document.getElementById('progress-elapsed');
-
-            if (matched && progressData.total > 0) {
-                progressContainer.classList.add('active');
-                progressFill.style.width = progressData.percentage + '%';
-                progressFill.textContent = progressData.percentage + '%';
-                progressCurrent.textContent = `${progressData.current}/${progressData.total}`;
-
-                // 计算已用时间
-                if (progressStartTime === 0) {
-                    progressStartTime = Date.now();
-                }
-                const elapsed = Math.floor((Date.now() - progressStartTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                progressElapsed.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-                // 计算预计剩余时间
-                if (progressData.current > 0) {
-                    const avgTimePerTest = elapsed / progressData.current;
-                    const remainingTests = progressData.total - progressData.current;
-                    const etaSeconds = Math.floor(avgTimePerTest * remainingTests);
-                    const etaMinutes = Math.floor(etaSeconds / 60);
-                    const etaSecs = etaSeconds % 60;
-                    progressEta.textContent = `${String(etaMinutes).padStart(2, '0')}:${String(etaSecs).padStart(2, '0')}`;
-                } else {
-                    progressEta.textContent = '计算中...';
-                }
-            } else if (benchmarkStatus === 'idle' || benchmarkStatus === 'completed' || benchmarkStatus === 'error') {
-                // 测试未运行或已完成时隐藏进度条
-                progressContainer.classList.remove('active');
-            }
-        }
-
-        function resetProgress() {
-            progressStartTime = 0;
-            progressData = { current: 0, total: 0, percentage: 0 };
-            const progressContainer = document.getElementById('progress-container');
-            progressContainer.classList.remove('active');
-        }
-
-        // 性能指标提取和显示
-        function updateMetrics(output) {
-            const metricsContainer = document.getElementById('metrics-container');
-
-            // 提取 CPU 使用率
-            const cpuMatch = output.match(/CPU[:\s]+(\d+\.?\d*)%?/i);
-            if (cpuMatch) {
-                document.getElementById('metric-cpu').textContent = cpuMatch[1] + '%';
-                metricsContainer.style.display = 'block';
-            }
-
-            // 提取内存使用
-            const memoryMatches = [
-                output.match(/Memory[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
-                output.match(/Heap[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
-                output.match(/(\d+\.?\d*)\s*(MB|GB).*memory/i)
-            ];
-            for (const match of memoryMatches) {
-                if (match) {
-                    document.getElementById('metric-memory').textContent = match[1] + ' ' + match[2];
-                    metricsContainer.style.display = 'block';
-                    break;
-                }
-            }
-
-            // 提取 FPS
-            const fpsMatch = output.match(/FPS[:\s]+(\d+\.?\d*)/i);
-            if (fpsMatch) {
-                document.getElementById('metric-fps').textContent = fpsMatch[1];
-                metricsContainer.style.display = 'block';
-            }
-
-            // 提取加载时间
-            const loadMatches = [
-                output.match(/Load[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
-                output.match(/Loading time[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
-                output.match(/Initialization[:\s]+(\d+\.?\d*)\s*(ms|s)/i)
-            ];
-            for (const match of loadMatches) {
-                if (match) {
-                    let value = parseFloat(match[1]);
-                    let unit = match[2];
-                    if (unit === 's') {
-                        value = (value * 1000).toFixed(0);
-                        unit = 'ms';
-                    }
-                    document.getElementById('metric-load').textContent = value + ' ' + unit;
-                    metricsContainer.style.display = 'block';
-                    break;
-                }
-            }
-
-            // 如果测试结束，隐藏指标卡片
-            if (benchmarkStatus === 'completed' || benchmarkStatus === 'error' || benchmarkStatus === 'idle') {
-                setTimeout(() => {
-                    metricsContainer.style.display = 'none';
-                    // 重置指标显示
-                    document.getElementById('metric-cpu').textContent = '--';
-                    document.getElementById('metric-memory').textContent = '--';
-                    document.getElementById('metric-fps').textContent = '--';
-                    document.getElementById('metric-load').textContent = '--';
-                }, 5000);
-            }
-        }
-
-        // 测试队列管理
-        function showTestQueue(runner) {
-            if (!currentConfig || !currentConfig.runners[runner]) return;
-
-            const testCases = currentConfig.runners[runner].testCases || [];
-            if (testCases.length === 0) return;
-
-            const queueContainer = document.getElementById('queue-container');
-            const queueList = document.getElementById('queue-list');
-
-            queueList.innerHTML = '';
-
-            testCases.forEach((tc, index) => {
-                const item = document.createElement('div');
-                item.className = 'queue-item';
-                item.id = `queue-item-${index}`;
-                item.innerHTML = `
-                    <div>
-                        <strong>${index + 1}. ${tc.description || '未命名测试'}</strong>
-                        <div style="font-size: 0.85em; color: #666; margin-top: 3px;">${tc.target}</div>
-                    </div>
-                    <span class="queue-status" id="queue-status-${index}">⏳ 等待中</span>
-                `;
-                queueList.appendChild(item);
-            });
-
-            queueContainer.classList.add('active');
-        }
-
-        function updateQueueItem(index, status) {
-            const item = document.getElementById(`queue-item-${index}`);
-            const statusSpan = document.getElementById(`queue-status-${index}`);
-
-            if (!item || !statusSpan) return;
-
-            item.classList.remove('pending', 'running', 'completed', 'error');
-
-            switch(status) {
-                case 'running':
-                    item.classList.add('running');
-                    statusSpan.textContent = '▶️ 运行中';
-                    break;
-                case 'completed':
-                    item.classList.add('completed');
-                    statusSpan.textContent = '✅ 完成';
-                    break;
-                case 'error':
-                    item.classList.add('error');
-                    statusSpan.textContent = '❌ 失败';
-                    break;
-                default:
-                    statusSpan.textContent = '⏳ 等待中';
-            }
-        }
-
-        function hideTestQueue() {
-            const queueContainer = document.getElementById('queue-container');
-            setTimeout(() => {
-                queueContainer.classList.remove('active');
-            }, 3000); // 3秒后隐藏队列
-        }
-
-        function updateQueueFromOutput(output) {
-            // 尝试从输出中检测当前运行的测试
-            // 匹配 "Testing: description" 或类似的模式
-            const testPatterns = [
-                /Testing:\s*(.+)/i,
-                /测试:\s*(.+)/i,
-                /Running test:\s*(.+)/i
-            ];
-
-            for (const pattern of testPatterns) {
-                const match = output.match(pattern);
-                if (match && currentConfig) {
-                    const runner = currentRunner;
-                    if (runner && currentConfig.runners[runner]) {
-                        const testCases = currentConfig.runners[runner].testCases || [];
-                        testCases.forEach((tc, index) => {
-                            if (match[1].includes(tc.description)) {
-                                updateQueueItem(index, 'running');
-                            }
-                        });
-                    }
-                }
-            }
-
-            // 检测测试完成
-            if (output.includes('✓') || output.includes('passed') || output.includes('成功')) {
-                // 标记最近运行的测试为完成
-                if (progressData.current > 0) {
-                    updateQueueItem(progressData.current - 1, 'completed');
-                }
-            }
-        }
-
-        // 监听 runner 选择变化，显示对应的快速配置
-        document.addEventListener('DOMContentLoaded', () => {
-            const runnerSelect = document.getElementById('runner-select');
-            runnerSelect.addEventListener('change', updateQuickConfigVisibility);
-            updateQuickConfigVisibility(); // 初始化显示
-            initTheme(); // 初始化主题
-        });
-
-        function updateQuickConfigVisibility() {
-            const runner = document.getElementById('runner-select').value;
-
-            // 隐藏所有配置
-            document.getElementById('init-quick-config').style.display = 'none';
-            document.getElementById('runtime-quick-config').style.display = 'none';
-            document.getElementById('memory-quick-config').style.display = 'none';
-
-            // 显示选中的配置
-            if (runner === 'Initialization') {
-                document.getElementById('init-quick-config').style.display = 'block';
-            } else if (runner === 'Runtime') {
-                document.getElementById('runtime-quick-config').style.display = 'block';
-            } else if (runner === 'MemoryLeak') {
-                document.getElementById('memory-quick-config').style.display = 'block';
-            }
-        }
-
-        // 加载快速配置（统一面板）
-        async function loadQuickConfig() {
-            try {
-                const response = await fetch(`${API_BASE}/dynamic-config`);
-                currentConfig = await response.json();
-
-                // 设置启用状态
-                document.getElementById('enable-init').checked = currentConfig.runners.Initialization?.enabled || false;
-                document.getElementById('enable-runtime').checked = currentConfig.runners.Runtime?.enabled || false;
-                document.getElementById('enable-memory').checked = currentConfig.runners.MemoryLeak?.enabled || false;
-
-                // 设置Runtime参数
-                document.getElementById('runtime-duration').value = currentConfig.runners.Runtime?.durationMs || 60000;
-                document.getElementById('runtime-delay').value = currentConfig.runners.Runtime?.delayMs || 10000;
-
-                // 设置MemoryLeak参数
-                document.getElementById('memory-interval').value = currentConfig.runners.MemoryLeak?.intervalMs || 60000;
-                document.getElementById('memory-iterations').value = currentConfig.runners.MemoryLeak?.iterations || 3;
-
-                // 渲染测试用例
-                renderTestCases('Initialization', currentConfig.runners.Initialization?.testCases || []);
-                renderTestCases('Runtime', currentConfig.runners.Runtime?.testCases || []);
-                renderTestCases('MemoryLeak', currentConfig.runners.MemoryLeak?.testCases || []);
-
-                renderTestHistory();
-            } catch (error) {
-                showToast('加载配置失败: ' + error.message, 'error');
-            }
-        }
-
-        // 渲染测试用例（统一面板）
-        function renderTestCases(runner, testCases) {
-            const containerId = `${runner.toLowerCase().replace('memoryleak', 'memory').replace('initialization', 'init')}-test-cases-unified`;
-            const container = document.getElementById(containerId);
-            if (!container) return;
-
-            container.innerHTML = '';
-
-            if (testCases.length === 0) {
-                container.innerHTML = '<p style="font-size: 0.85em; color: #999; margin: 8px 0;">暂无测试用例</p>';
-                return;
-            }
-
-            testCases.forEach((tc, index) => {
-                const div = document.createElement('div');
-                div.style.cssText = 'background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border: 1px solid #ddd;';
-                div.innerHTML = `
-                    <input type="text" placeholder="URL" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target"
-                           style="width: 100%; padding: 4px 6px; margin-bottom: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85em;"
-                           oninput="validateURL(this)">
-                    <div style="display: flex; gap: 4px;">
-                        <input type="text" placeholder="描述" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description"
-                               style="flex: 1; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85em;">
-                        <button class="btn-danger btn-small" onclick="removeTestCase('${runner}', ${index})" style="padding: 4px 8px;">🗑️</button>
-                    </div>
-                    <div class="error-message" data-error-for="${runner}-${index}-target" style="font-size: 0.75em; margin-top: 2px;"></div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // 添加测试用例（统一面板）
-        function addTestCase(runner) {
-            if (!currentConfig) return;
-
-            if (!currentConfig.runners[runner].testCases) {
-                currentConfig.runners[runner].testCases = [];
-            }
-
-            currentConfig.runners[runner].testCases.push({
-                target: '',
-                description: ''
-            });
-
-            renderTestCases(runner, currentConfig.runners[runner].testCases);
-        }
-
-        // 删除测试用例（统一面板）
-        function removeTestCase(runner, index) {
-            if (!currentConfig) return;
-
-            currentConfig.runners[runner].testCases.splice(index, 1);
-            renderTestCases(runner, currentConfig.runners[runner].testCases);
-        }
-
-        // 渲染测试用例列表
-        function renderQuickTestCases(runner, testCases) {
-            const containerId = runner === 'Initialization' ? 'init-test-cases-quick' :
-                               runner === 'Runtime' ? 'runtime-test-cases-quick' :
-                               'memory-test-cases-quick';
-
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-
-            testCases.forEach((tc, index) => {
-                const div = document.createElement('div');
-                div.className = 'test-case-item';
-                div.innerHTML = `
-                    <label>测试 URL</label>
-                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target" oninput="validateURL(this)">
-                    <div class="error-message" data-error-for="${runner}-${index}-target"></div>
-                    <label>描述</label>
-                    <input type="text" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description">
-                    <button class="btn-danger btn-small" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        // 增强的URL验证，支持多种协议和格式检查
-        function validateURL(input) {
-            const url = input.value.trim();
-            const runner = input.dataset.runner;
-            const index = input.dataset.index;
-            const errorDiv = document.querySelector(`[data-error-for="${runner}-${index}-target"]`);
-
-            if (!url) {
-                input.classList.remove('error');
-                if (errorDiv) errorDiv.textContent = '';
-                return;
-            }
-
-            // 检查URL格式
-            if (!isValidURL(url)) {
-                input.classList.add('error');
-                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效，应以 http:// 或 https:// 开头';
-                return;
-            }
-
-            // 检查是否是B站相关域名（提示）
-            try {
-                const urlObj = new URL(url);
-                if (!urlObj.hostname.includes('bilibili.com')) {
-                    input.classList.add('warning');
-                    input.classList.remove('error');
-                    if (errorDiv) {
-                        errorDiv.style.color = '#ff9800';
-                        errorDiv.textContent = 'ℹ️ 提示：建议使用B站域名以获得最佳测试效果';
-                    }
-                } else {
-                    input.classList.remove('error', 'warning');
-                    if (errorDiv) {
-                        errorDiv.style.color = '#4caf50';
-                        errorDiv.textContent = '✓ URL 格式正确';
-                    }
-                }
-            } catch (e) {
-                input.classList.add('error');
-                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效';
-            }
-        }
-
-        // 验证配置完整性
-        function validateCurrentConfig() {
-            if (!currentConfig) return { valid: false, errors: ['配置未加载'] };
-
-            const errors = [];
-            const warnings = [];
-            const runner = document.getElementById('runner-select').value;
-
-            if (!currentConfig.runners[runner]) {
-                errors.push(`未找到 ${runner} 的配置`);
-                return { valid: false, errors, warnings };
-            }
-
-            const runnerConfig = currentConfig.runners[runner];
-
-            if (!runnerConfig.enabled) {
-                errors.push(`${runner} 未启用`);
-            }
-
-            if (!runnerConfig.testCases || runnerConfig.testCases.length === 0) {
-                errors.push(`${runner} 没有配置测试用例`);
-            } else {
-                runnerConfig.testCases.forEach((tc, index) => {
-                    if (!tc.target) {
-                        errors.push(`测试用例 #${index + 1} 缺少 URL`);
-                    } else if (!isValidURL(tc.target)) {
-                        errors.push(`测试用例 #${index + 1} URL 格式无效: ${tc.target}`);
-                    }
-                    if (!tc.description) {
-                        warnings.push(`测试用例 #${index + 1} 缺少描述`);
-                    }
-                });
-            }
-
-            // Runner特定验证
-            if (runner === 'Runtime') {
-                if (!runnerConfig.durationMs || runnerConfig.durationMs < 1000) {
-                    errors.push('Runtime 运行时长至少为 1000ms (1秒)');
-                }
-                if (runnerConfig.delayMs < 0) {
-                    errors.push('Runtime 延迟时间不能为负数');
-                }
-            }
-
-            if (runner === 'MemoryLeak') {
-                if (!runnerConfig.iterations || runnerConfig.iterations < 2) {
-                    errors.push('MemoryLeak 迭代次数至少为 2');
-                }
-                if (!runnerConfig.intervalMs || runnerConfig.intervalMs < 1000) {
-                    errors.push('MemoryLeak 迭代间隔至少为 1000ms (1秒)');
-                }
-            }
-
-            return {
-                valid: errors.length === 0,
-                errors,
-                warnings
-            };
-        }
-
-        // 显示验证结果
-        function showValidationResult(result) {
-            if (result.errors.length > 0) {
-                const errorMsg = '配置验证失败：\n' + result.errors.map(e => '• ' + e).join('\n');
-                showToast(errorMsg, 'error');
-                return false;
-            }
-
-            if (result.warnings.length > 0) {
-                const warningMsg = '配置警告：\n' + result.warnings.map(w => '• ' + w).join('\n');
-                showToast(warningMsg, 'warning');
-            }
-
-            return true;
-        }
-
-        // 添加测试用例
-        function addQuickTestCase(runner) {
-            if (!currentConfig) return;
-
-            const runnerKey = runner;
-            if (!currentConfig.runners[runnerKey].testCases) {
-                currentConfig.runners[runnerKey].testCases = [];
-            }
-
-            currentConfig.runners[runnerKey].testCases.push({
-                target: '',
-                description: ''
-            });
-
-            renderQuickTestCases(runner, currentConfig.runners[runnerKey].testCases);
-        }
-
-        // 删除测试用例
-        function removeQuickTestCase(runner, index) {
-            if (!currentConfig) return;
-
-            currentConfig.runners[runner].testCases.splice(index, 1);
-            renderQuickTestCases(runner, currentConfig.runners[runner].testCases);
-        }
-
-        // 保存快速配置（统一面板）
-        async function saveQuickConfig() {
-            if (!currentConfig) {
-                showToast('请先加载配置', 'warning');
-                return;
-            }
-
-            try {
-                // 收集表单中的修改
-                const inputs = document.querySelectorAll('input[data-runner]');
-                inputs.forEach(input => {
-                    const runner = input.dataset.runner;
-                    const index = parseInt(input.dataset.index);
-                    const field = input.dataset.field;
-
-                    if (currentConfig.runners[runner] && currentConfig.runners[runner].testCases[index]) {
-                        currentConfig.runners[runner].testCases[index][field] = input.value;
-                    }
-                });
-
-                // 收集启用状态
-                currentConfig.runners.Initialization.enabled = document.getElementById('enable-init').checked;
-                currentConfig.runners.Runtime.enabled = document.getElementById('enable-runtime').checked;
-                currentConfig.runners.MemoryLeak.enabled = document.getElementById('enable-memory').checked;
-
-                // 收集 Runtime 参数
-                currentConfig.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration').value);
-                currentConfig.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay').value);
-
-                // 收集 MemoryLeak 参数
-                currentConfig.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval').value);
-                currentConfig.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations').value);
-
-                // 发送到后端
-                const response = await fetch(`${API_BASE}/dynamic-config`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentConfig)
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    showToast('✅ 配置保存成功！', 'success');
-                } else {
-                    showToast('❌ 保存失败: ' + (data.error || '未知错误'), 'error');
-                }
-            } catch (error) {
-                showToast('❌ 保存配置失败: ' + error.message, 'error');
-            }
-        }
-
-        // 导出配置
-        function exportConfig() {
-            if (!currentConfig) {
-                showToast('请先加载配置', 'warning');
-                return;
-            }
-
-            const blob = new Blob([JSON.stringify(currentConfig, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `benchmark-config-${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('配置已导出', 'success');
-        }
-
-        // 应用配置预设
-        async function applyPreset(presetKey) {
-            const preset = CONFIG_PRESETS[presetKey];
-            if (!preset) {
-                showToast('未找到该预设', 'error');
-                return;
-            }
-
-            try {
-                // 深拷贝预设配置
-                currentConfig = JSON.parse(JSON.stringify(preset.config));
-
-                // 保存到服务器
-                const response = await fetch(`${API_BASE}/dynamic-config`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(currentConfig)
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    showToast(`已应用预设: ${preset.name}`, 'success');
-                    // 重新加载配置到UI
-                    await loadQuickConfig();
-                } else {
-                    showToast('应用预设失败', 'error');
-                }
-            } catch (error) {
-                showToast('应用预设失败: ' + error.message, 'error');
-            }
-        }
-
-        // 导入配置
-        function importConfig() {
+        // 导入用例
+        function importCases() {
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'application/json';
-            input.onchange = async (e) => {
+            input.onchange = (e) => {
                 const file = e.target.files[0];
-                if (!file) return;
-
-                try {
-                    const text = await file.text();
-                    currentConfig = JSON.parse(text);
-                    await loadQuickConfig();
-                    showToast('配置已导入', 'success');
-                } catch (error) {
-                    showToast('导入失败: ' + error.message, 'error');
-                }
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target.result);
+                        if (Array.isArray(imported)) {
+                            testCases = imported;
+                            saveToStorage();
+                            renderCases();
+                            showToast(`成功导入 ${imported.length} 个用例`, 'success');
+                        } else {
+                            throw new Error('格式错误');
+                        }
+                    } catch (error) {
+                        showToast('导入失败：' + error.message, 'error');
+                    }
+                };
+                reader.readAsText(file);
             };
             input.click();
         }
 
-        // 键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + Enter: 运行所有启用的测试
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                const startBtn = document.getElementById('start-all-btn');
-                if (!startBtn.disabled) {
-                    startAllEnabledTests();
+        // 加载预设用例
+        function loadPresetCases() {
+            const presets = [
+                {
+                    id: Date.now(),
+                    name: 'B站首页-初始化性能',
+                    runner: 'Initialization',
+                    url: 'https://www.bilibili.com',
+                    repeatCount: 3,
+                    description: '测试B站首页的加载和初始化性能',
+                    tags: ['bilibili', '首页', '初始化'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 1,
+                    name: 'B站视频页-运行时性能',
+                    runner: 'Runtime',
+                    url: 'https://www.bilibili.com/video/BV1xx411c7mD',
+                    repeatCount: 3,
+                    description: '测试视频播放页面的运行时性能',
+                    tags: ['bilibili', '视频', '运行时'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 2,
+                    name: 'B站动态页-内存泄漏检测',
+                    runner: 'MemoryLeak',
+                    url: 'https://t.bilibili.com',
+                    repeatCount: 5,
+                    description: '检测动态页面是否存在内存泄漏',
+                    tags: ['bilibili', '动态', '内存'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
                 }
-            }
+            ];
 
-            // Ctrl/Cmd + 1: 运行Initialization
-            if ((e.ctrlKey || e.metaKey) && e.key === '1') {
-                e.preventDefault();
-                startSingleRunner('Initialization');
-            }
-
-            // Ctrl/Cmd + 2: 运行Runtime
-            if ((e.ctrlKey || e.metaKey) && e.key === '2') {
-                e.preventDefault();
-                startSingleRunner('Runtime');
-            }
-
-            // Ctrl/Cmd + 3: 运行MemoryLeak
-            if ((e.ctrlKey || e.metaKey) && e.key === '3') {
-                e.preventDefault();
-                startSingleRunner('MemoryLeak');
-            }
-
-            // Ctrl/Cmd + S: 保存配置
-            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-                e.preventDefault();
-                saveQuickConfig();
-            }
-
-            // Escape: 停止测试
-            if (e.key === 'Escape') {
-                const stopBtn = document.getElementById('stop-btn');
-                if (!stopBtn.disabled) {
-                    e.preventDefault();
-                    stopBenchmark();
-                }
-            }
-
-            // Ctrl/Cmd + R: 刷新状态
-            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
-                e.preventDefault();
-                refreshStatus();
-                showToast('状态已刷新', 'info');
-            }
-
-            // Ctrl/Cmd + L: 重新加载配置
-            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
-                e.preventDefault();
-                loadQuickConfig();
-                showToast('配置已重新加载', 'info');
-            }
-
-            // Ctrl/Cmd + D: 切换深色模式
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                toggleTheme();
-            }
-
-            // Ctrl/Cmd + E: 导出配置
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                exportConfig();
-            }
-
-            // Ctrl/Cmd + /: 显示快捷键帮助
-            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
-                e.preventDefault();
-                showKeyboardShortcuts();
-            }
-        });
-
-        // 显示快捷键帮助
-        function showKeyboardShortcuts() {
-            const shortcuts = `
-<strong>⌨️ 键盘快捷键</strong>
-
-📋 测试控制：
-• Ctrl/Cmd + Enter - 运行所有启用的测试
-• Ctrl/Cmd + 1 - 运行 Initialization
-• Ctrl/Cmd + 2 - 运行 Runtime
-• Ctrl/Cmd + 3 - 运行 MemoryLeak
-• Escape - 停止测试
-
-⚙️ 配置管理：
-• Ctrl/Cmd + S - 保存配置
-• Ctrl/Cmd + L - 重新加载配置
-• Ctrl/Cmd + E - 导出配置
-
-🎨 其他：
-• Ctrl/Cmd + R - 刷新状态
-• Ctrl/Cmd + D - 切换深色模式
-• Ctrl/Cmd + / - 显示快捷键帮助
-            `.trim();
-
-            // 创建一个临时的模态框显示快捷键
-            const modal = document.createElement('div');
-            modal.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: white;
-                padding: 30px;
-                border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-                z-index: 10001;
-                max-width: 500px;
-                white-space: pre-line;
-            `;
-
-            if (document.body.classList.contains('dark-mode')) {
-                modal.style.background = '#2d2d2d';
-                modal.style.color = '#e0e0e0';
-            }
-
-            modal.innerHTML = shortcuts + '<br><br><button onclick="this.parentElement.remove()" class="btn-primary" style="width: 100%;">关闭 (点击任意位置)</button>';
-
-            modal.onclick = (e) => {
-                if (e.target === modal || e.target.tagName === 'BUTTON') {
-                    modal.remove();
-                }
-            };
-
-            document.body.appendChild(modal);
-
-            // 3秒后自动关闭
-            setTimeout(() => modal.remove(), 10000);
+            testCases = [...testCases, ...presets];
+            saveToStorage();
+            renderCases();
+            showToast('已加载 3 个预设用例', 'success');
         }
 
-        // 页面关闭时清理 WebSocket
-        window.addEventListener('beforeunload', () => {
-            if (ws) {
-                ws.close();
+        // 工具函数
+        function saveToStorage() {
+            localStorage.setItem('testCases', JSON.stringify(testCases));
+        }
+
+        function saveCompletedToday() {
+            localStorage.setItem('completedToday', completedToday.toString());
+            localStorage.setItem('completedDate', new Date().toDateString());
+            updateStats();
+        }
+
+        function loadCompletedToday() {
+            const savedDate = localStorage.getItem('completedDate');
+            const today = new Date().toDateString();
+
+            if (savedDate === today) {
+                completedToday = parseInt(localStorage.getItem('completedToday') || '0');
+            } else {
+                completedToday = 0;
+                localStorage.setItem('completedDate', today);
+                localStorage.setItem('completedToday', '0');
             }
-            if (reconnectInterval) {
-                clearInterval(reconnectInterval);
+            updateStats();
+        }
+
+        function isValidURL(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'idle': '空闲',
+                'running': '运行中',
+                'completed': '已完成',
+                'error': '失败'
+            };
+            return statusMap[status] || status;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('case-modal').addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                closeModal();
             }
         });
 
-        // 页面可见性变化时重连 WebSocket
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                // 页面恢复可见时，确保 WebSocket 已连接
-                connectWebSocket();
+        // 快捷键支持
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + N: 新建用例
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                showAddCaseModal();
+            }
+
+            // Esc: 关闭模态框
+            if (e.key === 'Escape') {
+                closeModal();
             }
         });
 
-        // 页面加载时初始化
-        window.onload = async () => {
-            // 连接 WebSocket（会自动接收状态更新）
-            connectWebSocket();
-
-            // 初始化用例库
-            initDefaultCaseLibrary();
-            renderCaseLibrary();
-
-            // 加载其他数据
-            await loadReports();
-            await loadQuickConfig();
-            renderTestHistory();
+        // 页面卸载时清理
+        window.onbeforeunload = () => {
+            if (ws) ws.close();
+            if (reconnectTimer) clearTimeout(reconnectTimer);
         };
     </script>
 </body>
