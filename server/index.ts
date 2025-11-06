@@ -5,12 +5,96 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { WebSocketServer, WebSocket } from 'ws';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
+
+// API密钥管理
+let apiKeys: string[] = [];
+const apiKeysFile = path.join(__dirname, '../api-keys.json');
+
+// Webhook配置
+let webhookUrl = '';
+const webhookConfigFile = path.join(__dirname, '../webhook-config.json');
+
+// 加载API密钥
+async function loadApiKeys() {
+    try {
+        const data = await fs.readFile(apiKeysFile, 'utf-8');
+        apiKeys = JSON.parse(data);
+    } catch {
+        apiKeys = [];
+    }
+}
+
+// 保存API密钥
+async function saveApiKeys() {
+    await fs.writeFile(apiKeysFile, JSON.stringify(apiKeys, null, 2));
+}
+
+// 加载Webhook配置
+async function loadWebhookConfig() {
+    try {
+        const data = await fs.readFile(webhookConfigFile, 'utf-8');
+        const config = JSON.parse(data);
+        webhookUrl = config.webhookUrl || '';
+    } catch {
+        webhookUrl = '';
+    }
+}
+
+// 保存Webhook配置
+async function saveWebhookConfig() {
+    await fs.writeFile(webhookConfigFile, JSON.stringify({ webhookUrl }, null, 2));
+}
+
+// 生成新的API密钥
+function generateApiKey(): string {
+    return 'bm_' + crypto.randomBytes(24).toString('hex');
+}
+
+// 验证API密钥中间件
+function validateApiKey(req: express.Request, res: express.Response, next: express.NextFunction) {
+    const apiKey = req.headers['x-api-key'] as string;
+
+    if (!apiKey) {
+        return res.status(401).json({ error: 'Missing API key. Include X-API-Key header.' });
+    }
+
+    if (!apiKeys.includes(apiKey)) {
+        return res.status(403).json({ error: 'Invalid API key' });
+    }
+
+    next();
+}
+
+// 发送Webhook通知
+async function sendWebhook(event: string, data: any) {
+    if (!webhookUrl) return;
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'BenchmarkWebRunner/1.0'
+            },
+            body: JSON.stringify({
+                event,
+                timestamp: new Date().toISOString(),
+                data
+            })
+        });
+
+        console.log(`Webhook sent: ${event}, status: ${response.status}`);
+    } catch (error) {
+        console.error('Webhook error:', error);
+    }
+}
 
 // 存储当前运行的benchmark进程
 let currentBenchmark: ReturnType<typeof exec> | null = null;
@@ -372,6 +456,15 @@ app.post('/api/start', async (req, res) => {
         currentBenchmark.on('close', (code) => {
             console.log(`Benchmark process exited with code ${code}`);
             benchmarkStatus = code === 0 ? 'completed' : 'error';
+
+            // 发送Webhook通知
+            sendWebhook('test_completed', {
+                runner: currentRunner,
+                status: benchmarkStatus,
+                exitCode: code,
+                output: benchmarkOutput.slice(-1000) // 最后1000字符
+            });
+
             currentBenchmark = null;
             currentRunner = '';
             if (killTimeout) {
@@ -528,6 +621,285 @@ app.get('/api/health', (req, res) => {
     });
 });
 
+// ========== API密钥管理 ==========
+
+// 获取所有API密钥（仅显示前8位）
+app.get('/api/keys', async (req, res) => {
+    res.json({
+        keys: apiKeys.map(key => ({
+            preview: key.substring(0, 12) + '...',
+            fullKey: key
+        })),
+        count: apiKeys.length
+    });
+});
+
+// 生成新的API密钥
+app.post('/api/keys/generate', async (req, res) => {
+    const newKey = generateApiKey();
+    apiKeys.push(newKey);
+    await saveApiKeys();
+
+    res.json({
+        success: true,
+        apiKey: newKey,
+        message: 'API密钥已生成，请妥善保存'
+    });
+});
+
+// 删除API密钥
+app.delete('/api/keys/:key', async (req, res) => {
+    const { key } = req.params;
+    const index = apiKeys.indexOf(key);
+
+    if (index === -1) {
+        return res.status(404).json({ error: 'API密钥不存在' });
+    }
+
+    apiKeys.splice(index, 1);
+    await saveApiKeys();
+
+    res.json({ success: true, message: 'API密钥已删除' });
+});
+
+// ========== Webhook配置 ==========
+
+// 获取Webhook配置
+app.get('/api/webhook', async (req, res) => {
+    res.json({
+        webhookUrl: webhookUrl || '',
+        enabled: !!webhookUrl
+    });
+});
+
+// 设置Webhook URL
+app.post('/api/webhook', async (req, res) => {
+    const { url } = req.body;
+
+    if (url && !url.startsWith('http')) {
+        return res.status(400).json({ error: 'Webhook URL必须以http://或https://开头' });
+    }
+
+    webhookUrl = url || '';
+    await saveWebhookConfig();
+
+    res.json({
+        success: true,
+        webhookUrl,
+        message: webhookUrl ? 'Webhook已配置' : 'Webhook已禁用'
+    });
+});
+
+// 测试Webhook
+app.post('/api/webhook/test', async (req, res) => {
+    if (!webhookUrl) {
+        return res.status(400).json({ error: 'Webhook未配置' });
+    }
+
+    try {
+        await sendWebhook('test_event', {
+            message: 'This is a test webhook from Benchmark Web Runner',
+            timestamp: new Date().toISOString()
+        });
+
+        res.json({ success: true, message: 'Webhook测试请求已发送' });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Webhook测试失败',
+            details: (error as Error).message
+        });
+    }
+});
+
+// ========== 外部API接口（需要API密钥） ==========
+
+// API: 启动测试
+app.post('/api/v1/test/start', validateApiKey, async (req, res) => {
+    if (currentBenchmark) {
+        return res.status(400).json({ error: 'A test is already running' });
+    }
+
+    const { runner, config } = req.body;
+
+    if (!runner) {
+        return res.status(400).json({ error: 'Missing runner parameter' });
+    }
+
+    const validRunners = ['Initialization', 'Runtime', 'MemoryLeak'];
+    if (!validRunners.includes(runner)) {
+        return res.status(400).json({
+            error: `Invalid runner. Must be one of: ${validRunners.join(', ')}`
+        });
+    }
+
+    try {
+        // 如果提供了配置，先保存
+        if (config) {
+            const jsonConfigPath = path.join(__dirname, '../benchmark.dynamic.json');
+            await fs.writeFile(jsonConfigPath, JSON.stringify(config, null, 2), 'utf-8');
+
+            const tsConfig = generateConfig(config);
+            const tsConfigPath = path.join(__dirname, '../benchmark.config.mts');
+            await fs.writeFile(tsConfigPath, tsConfig, 'utf-8');
+        }
+
+        // 读取配置并验证
+        const configPath = path.join(__dirname, '../benchmark.dynamic.json');
+        let fullConfig;
+
+        try {
+            const configContent = await fs.readFile(configPath, 'utf-8');
+            fullConfig = JSON.parse(configContent);
+        } catch (error) {
+            return res.status(400).json({
+                error: 'Configuration file not found or invalid'
+            });
+        }
+
+        const validation = validateConfig(fullConfig, runner);
+        if (!validation.valid) {
+            return res.status(400).json({ error: validation.error });
+        }
+
+        await ensureReportsDir();
+
+        const tempConfig = {
+            mode: fullConfig.mode,
+            runners: { [runner]: fullConfig.runners[runner] }
+        };
+
+        const tempConfigCode = generateConfig(tempConfig);
+        const tempConfigPath = path.join(__dirname, '../benchmark.config.mts');
+        await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
+
+        benchmarkStatus = 'running';
+        benchmarkOutput = '';
+        currentRunner = runner;
+
+        broadcastStatus();
+
+        // 发送Webhook通知
+        sendWebhook('test_started', {
+            runner,
+            startTime: new Date().toISOString()
+        });
+
+        const command = 'npx @bilibili-player/benchmark';
+        currentBenchmark = exec(command, { cwd: path.join(__dirname, '..') });
+
+        currentBenchmark.stdout?.on('data', (data) => {
+            appendOutput(data.toString());
+        });
+
+        currentBenchmark.stderr?.on('data', (data) => {
+            appendOutput(data.toString());
+        });
+
+        currentBenchmark.on('close', (code) => {
+            benchmarkStatus = code === 0 ? 'completed' : 'error';
+
+            sendWebhook('test_completed', {
+                runner: currentRunner,
+                status: benchmarkStatus,
+                exitCode: code
+            });
+
+            currentBenchmark = null;
+            currentRunner = '';
+            broadcastStatus();
+        });
+
+        res.json({
+            success: true,
+            message: `Test started: ${runner}`,
+            runner,
+            status: 'running'
+        });
+    } catch (error) {
+        benchmarkStatus = 'error';
+        currentBenchmark = null;
+        currentRunner = '';
+
+        res.status(500).json({
+            error: 'Failed to start test',
+            details: (error as Error).message
+        });
+    }
+});
+
+// API: 获取测试状态
+app.get('/api/v1/test/status', validateApiKey, (req, res) => {
+    res.json({
+        status: benchmarkStatus,
+        runner: currentRunner,
+        hasProcess: currentBenchmark !== null,
+        output: benchmarkOutput.slice(-5000) // 最后5000字符
+    });
+});
+
+// API: 停止测试
+app.post('/api/v1/test/stop', validateApiKey, (req, res) => {
+    if (!currentBenchmark) {
+        return res.status(400).json({ error: 'No test is running' });
+    }
+
+    forceKillProcess(currentBenchmark);
+    benchmarkStatus = 'idle';
+    appendOutput('\n\n⚠️ Test stopped via API\n');
+
+    setTimeout(() => {
+        currentBenchmark = null;
+        currentRunner = '';
+        broadcastStatus();
+    }, 1000);
+
+    res.json({ success: true, message: 'Test stopping...' });
+});
+
+// API: 获取报告列表
+app.get('/api/v1/reports', validateApiKey, async (req, res) => {
+    try {
+        const reportsDir = path.join(__dirname, '../benchmark_report');
+        await ensureReportsDir();
+
+        let files: string[];
+        try {
+            files = await fs.readdir(reportsDir);
+        } catch (error) {
+            return res.json({ reports: [], count: 0 });
+        }
+
+        const reports = await Promise.all(
+            files.filter(f => f.endsWith('.html') || f.endsWith('.json'))
+                .map(async (file) => {
+                    try {
+                        const stat = await fs.stat(path.join(reportsDir, file));
+                        return {
+                            name: file,
+                            url: `${req.protocol}://${req.get('host')}/reports/${file}`,
+                            modified: stat.mtime,
+                            size: stat.size
+                        };
+                    } catch {
+                        return null;
+                    }
+                })
+        );
+
+        const validReports = reports.filter(r => r !== null);
+
+        res.json({
+            reports: validReports.sort((a, b) => b!.modified.getTime() - a!.modified.getTime()),
+            count: validReports.length
+        });
+    } catch (error) {
+        res.status(500).json({
+            error: 'Failed to list reports',
+            details: (error as Error).message
+        });
+    }
+});
+
 // 启动服务器，带端口冲突处理
 const server = app.listen(PORT, async () => {
     console.log(`\n🚀 Benchmark Web Server running at http://localhost:${PORT}`);
@@ -535,10 +907,16 @@ const server = app.listen(PORT, async () => {
     console.log(`   - Config: http://localhost:${PORT}/config.html`);
     console.log(`   - API Status: http://localhost:${PORT}/api/status`);
     console.log(`   - Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`   - WebSocket: ws://localhost:${PORT}\n`);
+    console.log(`   - WebSocket: ws://localhost:${PORT}`);
+    console.log(`   - API Docs: http://localhost:${PORT}/api.html\n`);
 
-    // 启动时确保报告目录存在
+    // 启动时加载配置
     await ensureReportsDir();
+    await loadApiKeys();
+    await loadWebhookConfig();
+
+    console.log(`📡 API Keys: ${apiKeys.length} active`);
+    console.log(`🔔 Webhook: ${webhookUrl ? 'Enabled' : 'Disabled'}\n`);
 }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`\n❌ Error: Port ${PORT} is already in use.`);

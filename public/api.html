@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API 管理 & 文档</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e57373;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #90a4ae;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        input[type="text"], input[type="url"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+
+        .api-key-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .endpoint {
+            background: #f0f7ff;
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .method.post { background: #4caf50; color: white; }
+        .method.get { background: #2196f3; color: white; }
+        .method.delete { background: #f44336; color: white; }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .toast.success { border-left: 4px solid #81c784; }
+        .toast.error { border-left: 4px solid #e57373; }
+        .toast.warning { border-left: 4px solid #ffa726; }
+        .toast.info { border-left: 4px solid #64b5f6; }
+    </style>
+</head>
+<body>
+    <div class="toast-container" id="toast-container"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🔌 API 管理 & 文档</h1>
+            <p>外部接口集成与自动化</p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="/" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">🏠 控制台</a>
+            <a href="/config.html" style="padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 0 5px; display: inline-block;">⚙️ 配置管理</a>
+        </div>
+
+        <!-- API密钥管理 -->
+        <div class="card">
+            <h2>🔑 API 密钥管理</h2>
+            <p style="color: #666; margin-bottom: 15px;">生成和管理API密钥，用于外部系统调用接口</p>
+
+            <div id="api-keys-list" style="margin-bottom: 15px;">
+                <p style="color: #999;">加载中...</p>
+            </div>
+
+            <button class="btn-primary" onclick="generateApiKey()">➕ 生成新密钥</button>
+        </div>
+
+        <!-- Webhook配置 -->
+        <div class="card">
+            <h2>🔔 Webhook 配置</h2>
+            <p style="color: #666; margin-bottom: 15px;">配置Webhook URL，测试完成时自动发送通知</p>
+
+            <label style="display: block; margin-bottom: 5px; font-weight: 500;">Webhook URL</label>
+            <input type="url" id="webhook-url" placeholder="https://your-server.com/webhook" style="margin-bottom: 10px;">
+
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-primary" onclick="saveWebhook()">💾 保存配置</button>
+                <button class="btn-secondary" onclick="testWebhook()">🧪 测试Webhook</button>
+            </div>
+
+            <div style="margin-top: 15px; padding: 12px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px; font-size: 0.9em;">
+                💡 <strong>提示：</strong>Webhook将在测试开始和完成时发送POST请求到指定URL，包含测试状态和结果信息。
+            </div>
+        </div>
+
+        <!-- API文档 -->
+        <div class="card">
+            <h2>📚 API 接口文档</h2>
+            <p style="color: #666; margin-bottom: 15px;">所有API接口都需要在请求头中包含 <code>X-API-Key</code></p>
+
+            <!-- 启动测试 -->
+            <div class="endpoint">
+                <div style="margin-bottom: 10px;">
+                    <span class="method post">POST</span>
+                    <code>/api/v1/test/start</code>
+                </div>
+                <p style="margin-bottom: 10px;"><strong>描述：</strong>启动测试</p>
+                <p style="margin-bottom: 10px;"><strong>请求体：</strong></p>
+                <pre>{
+  "runner": "Runtime",
+  "config": {  // 可选，不提供则使用当前配置
+    "mode": { "anonymous": true, "headless": true },
+    "runners": {
+      "Runtime": {
+        "enabled": true,
+        "durationMs": 60000,
+        "delayMs": 5000,
+        "testCases": [
+          {
+            "target": "https://www.bilibili.com",
+            "description": "B站首页"
+          }
+        ]
+      }
+    }
+  }
+}</pre>
+                <p style="margin-top: 10px;"><strong>cURL 示例：</strong></p>
+                <pre>curl -X POST http://localhost:3000/api/v1/test/start \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"runner":"Runtime"}'</pre>
+            </div>
+
+            <!-- 获取状态 -->
+            <div class="endpoint">
+                <div style="margin-bottom: 10px;">
+                    <span class="method get">GET</span>
+                    <code>/api/v1/test/status</code>
+                </div>
+                <p style="margin-bottom: 10px;"><strong>描述：</strong>获取当前测试状态</p>
+                <p style="margin-bottom: 10px;"><strong>cURL 示例：</strong></p>
+                <pre>curl -X GET http://localhost:3000/api/v1/test/status \
+  -H "X-API-Key: YOUR_API_KEY"</pre>
+            </div>
+
+            <!-- 停止测试 -->
+            <div class="endpoint">
+                <div style="margin-bottom: 10px;">
+                    <span class="method post">POST</span>
+                    <code>/api/v1/test/stop</code>
+                </div>
+                <p style="margin-bottom: 10px;"><strong>描述：</strong>停止当前测试</p>
+                <p style="margin-bottom: 10px;"><strong>cURL 示例：</strong></p>
+                <pre>curl -X POST http://localhost:3000/api/v1/test/stop \
+  -H "X-API-Key: YOUR_API_KEY"</pre>
+            </div>
+
+            <!-- 获取报告 -->
+            <div class="endpoint">
+                <div style="margin-bottom: 10px;">
+                    <span class="method get">GET</span>
+                    <code>/api/v1/reports</code>
+                </div>
+                <p style="margin-bottom: 10px;"><strong>描述：</strong>获取所有测试报告列表</p>
+                <p style="margin-bottom: 10px;"><strong>cURL 示例：</strong></p>
+                <pre>curl -X GET http://localhost:3000/api/v1/reports \
+  -H "X-API-Key: YOUR_API_KEY"</pre>
+            </div>
+        </div>
+
+        <!-- Webhook事件 -->
+        <div class="card">
+            <h2>🔔 Webhook 事件</h2>
+            <p style="color: #666; margin-bottom: 15px;">Webhook将发送以下事件通知</p>
+
+            <div class="endpoint">
+                <p style="margin-bottom: 10px;"><strong>test_started</strong> - 测试开始时</p>
+                <pre>{
+  "event": "test_started",
+  "timestamp": "2025-11-06T10:30:00.000Z",
+  "data": {
+    "runner": "Runtime",
+    "startTime": "2025-11-06T10:30:00.000Z"
+  }
+}</pre>
+            </div>
+
+            <div class="endpoint">
+                <p style="margin-bottom: 10px;"><strong>test_completed</strong> - 测试完成时</p>
+                <pre>{
+  "event": "test_completed",
+  "timestamp": "2025-11-06T10:35:00.000Z",
+  "data": {
+    "runner": "Runtime",
+    "status": "completed",
+    "exitCode": 0,
+    "output": "... (最后1000字符)"
+  }
+}</pre>
+            </div>
+        </div>
+
+        <!-- CI/CD集成示例 -->
+        <div class="card">
+            <h2>🔄 CI/CD 集成示例</h2>
+
+            <h3 style="margin: 15px 0 10px 0;">GitHub Actions</h3>
+            <pre>name: Performance Test
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Benchmark Test
+        run: |
+          curl -X POST ${{ secrets.BENCHMARK_URL }}/api/v1/test/start \
+            -H "X-API-Key: ${{ secrets.BENCHMARK_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"runner":"Runtime"}'
+
+          # 等待测试完成
+          while true; do
+            STATUS=$(curl -s -H "X-API-Key: ${{ secrets.BENCHMARK_API_KEY }}" \
+              ${{ secrets.BENCHMARK_URL }}/api/v1/test/status | jq -r '.status')
+            if [ "$STATUS" != "running" ]; then break; fi
+            sleep 10
+          done
+
+          echo "Test completed with status: $STATUS"</pre>
+
+            <h3 style="margin: 15px 0 10px 0;">Jenkins Pipeline</h3>
+            <pre>pipeline {
+    agent any
+    environment {
+        API_KEY = credentials('benchmark-api-key')
+        BENCHMARK_URL = 'http://benchmark-server:3000'
+    }
+    stages {
+        stage('Performance Test') {
+            steps {
+                script {
+                    sh """
+                        curl -X POST ${BENCHMARK_URL}/api/v1/test/start \
+                            -H "X-API-Key: ${API_KEY}" \
+                            -H "Content-Type: application/json" \
+                            -d '{"runner":"Runtime"}'
+                    """
+                }
+            }
+        }
+    }
+}</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = `${window.location.origin}/api`;
+
+        // Toast通知
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 加载API密钥列表
+        async function loadApiKeys() {
+            try {
+                const response = await fetch(`${API_BASE}/keys`);
+                const data = await response.json();
+
+                const container = document.getElementById('api-keys-list');
+
+                if (data.keys.length === 0) {
+                    container.innerHTML = '<p style="color: #999;">暂无API密钥，点击下方按钮生成</p>';
+                    return;
+                }
+
+                container.innerHTML = data.keys.map(key => `
+                    <div class="api-key-item">
+                        <div>
+                            <code style="font-weight: 600;">${key.preview}</code>
+                            <button class="btn-secondary btn-small" onclick="copyToClipboard('${key.fullKey}')" style="margin-left: 10px;">📋 复制完整密钥</button>
+                        </div>
+                        <button class="btn-danger btn-small" onclick="deleteApiKey('${key.fullKey}')">🗑️ 删除</button>
+                    </div>
+                `).join('');
+            } catch (error) {
+                showToast('加载API密钥失败: ' + error.message, 'error');
+            }
+        }
+
+        // 生成新API密钥
+        async function generateApiKey() {
+            try {
+                const response = await fetch(`${API_BASE}/keys/generate`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ API密钥已生成', 'success');
+                    await loadApiKeys();
+
+                    // 显示完整密钥
+                    alert(`新的API密钥（请妥善保存）：\n\n${data.apiKey}`);
+                } else {
+                    showToast('生成失败', 'error');
+                }
+            } catch (error) {
+                showToast('生成失败: ' + error.message, 'error');
+            }
+        }
+
+        // 删除API密钥
+        async function deleteApiKey(key) {
+            if (!confirm('确定要删除这个API密钥吗？使用该密钥的应用将无法继续访问。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/keys/${key}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ API密钥已删除', 'success');
+                    await loadApiKeys();
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 已复制到剪贴板', 'success');
+            }).catch(() => {
+                showToast('❌ 复制失败', 'error');
+            });
+        }
+
+        // 加载Webhook配置
+        async function loadWebhookConfig() {
+            try {
+                const response = await fetch(`${API_BASE}/webhook`);
+                const data = await response.json();
+
+                document.getElementById('webhook-url').value = data.webhookUrl || '';
+            } catch (error) {
+                console.error('加载Webhook配置失败:', error);
+            }
+        }
+
+        // 保存Webhook配置
+        async function saveWebhook() {
+            const url = document.getElementById('webhook-url').value.trim();
+
+            try {
+                const response = await fetch(`${API_BASE}/webhook`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Webhook配置已保存', 'success');
+                } else {
+                    showToast('❌ 保存失败', 'error');
+                }
+            } catch (error) {
+                showToast('❌ 保存失败: ' + error.message, 'error');
+            }
+        }
+
+        // 测试Webhook
+        async function testWebhook() {
+            try {
+                const response = await fetch(`${API_BASE}/webhook/test`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('✅ Webhook测试请求已发送，请检查您的服务器日志', 'success');
+                } else {
+                    showToast('❌ ' + data.error, 'error');
+                }
+            } catch (error) {
+                showToast('❌ 测试失败: ' + error.message, 'error');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = async () => {
+            await loadApiKeys();
+            await loadWebhookConfig();
+        };
+    </script>
+</body>
+</html>

@@ -633,48 +633,83 @@
         </div>
 
         <div class="card">
-            <h2>控制面板</h2>
-            <div style="margin-bottom: 15px;">
-                <strong>当前状态:</strong>
-                <span id="status-badge" class="status-badge status-idle">IDLE</span>
-                <span id="current-runner" style="margin-left: 10px; color: #666;"></span>
+            <h2>🚀 快速启动</h2>
+
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <div>
+                        <strong>当前状态:</strong>
+                        <span id="status-badge" class="status-badge status-idle">IDLE</span>
+                        <span id="current-runner" style="margin-left: 10px; color: #666;"></span>
+                    </div>
+                </div>
+
+                <!-- 主要操作按钮 -->
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                    <button id="start-all-btn" class="btn-primary" onclick="startAllEnabledTests()" style="font-size: 1.1em; padding: 15px 24px;">
+                        🚀 运行所有启用的测试
+                    </button>
+                    <button id="stop-btn" class="btn-danger" onclick="stopBenchmark()" disabled>
+                        ⏹️ 停止测试
+                    </button>
+                    <button class="btn-warning" onclick="resetStatus()">
+                        🔧 重置
+                    </button>
+                </div>
+
+                <!-- 单个runner快速启动 -->
+                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #666;">⚡ 单项测试快速启动</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <button class="btn-secondary" onclick="startSingleRunner('Initialization')" id="quick-init">
+                            🚀 Initialization
+                        </button>
+                        <button class="btn-secondary" onclick="startSingleRunner('Runtime')" id="quick-runtime">
+                            ⏱️ Runtime
+                        </button>
+                        <button class="btn-secondary" onclick="startSingleRunner('MemoryLeak')" id="quick-memory">
+                            🔍 MemoryLeak
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 快速预设 -->
+                <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #2e7d32;">✨ 一键预设测试</h4>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px;">
+                        <button class="btn-primary" onclick="quickPreset('quick-test')" style="padding: 10px; font-size: 0.9em;">
+                            ⚡ 1分钟快测
+                        </button>
+                        <button class="btn-primary" onclick="quickPreset('standard-test')" style="padding: 10px; font-size: 0.9em;">
+                            📊 标准测试
+                        </button>
+                        <button class="btn-primary" onclick="quickPreset('full-test')" style="padding: 10px; font-size: 0.9em;">
+                            🚀 完整测试
+                        </button>
+                        <button class="btn-primary" onclick="quickPreset('memory-focus')" style="padding: 10px; font-size: 0.9em;">
+                            🔍 内存专项
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 测试历史 -->
+                <div style="background: #fff3e0; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #e65100; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📜 最近运行</span>
+                        <button class="btn-secondary btn-small" onclick="clearTestHistory()">清空历史</button>
+                    </h4>
+                    <div id="test-history" style="max-height: 100px; overflow-y: auto;">
+                        <p style="color: #999; font-size: 0.9em; margin: 0;">暂无测试历史</p>
+                    </div>
+                </div>
             </div>
-            <div style="margin-bottom: 15px;">
-                <strong>选择测试模式:</strong>
-                <select id="runner-select" style="margin-left: 10px; padding: 8px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 1em; background: white;">
-                    <option value="Initialization">Initialization - 初始化性能测试</option>
-                    <option value="Runtime" selected>Runtime - 运行时性能测试</option>
-                    <option value="MemoryLeak">MemoryLeak - 内存泄漏测试</option>
-                </select>
-            </div>
-            <div class="button-group">
-                <button id="start-btn" class="btn-primary" onclick="startBenchmark()">
-                    ▶️ 启动测试
-                </button>
-                <button id="stop-btn" class="btn-danger" onclick="stopBenchmark()" disabled>
-                    ⏹️ 停止测试
-                </button>
-                <button class="btn-secondary" onclick="refreshStatus()">
-                    🔄 刷新状态
-                </button>
-                <button class="btn-warning" onclick="resetStatus()">
-                    🔧 强制重置
-                </button>
-            </div>
-            <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px; font-size: 0.9em;">
-                <strong>测试模式说明:</strong>
-                <ul style="margin: 10px 0 0 20px; line-height: 1.8;">
-                    <li><strong>Initialization:</strong> 测试页面初始化加载性能</li>
-                    <li><strong>Runtime:</strong> 测试页面运行时长时间性能表现</li>
-                    <li><strong>MemoryLeak:</strong> 检测页面内存泄漏问题</li>
-                </ul>
-            </div>
+
             <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;">
                 <div>
                     <strong>💡 快捷键：</strong>
-                    <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
+                    <span style="color: #1976d2;">Ctrl+Enter: 运行全部 | Ctrl+1/2/3: 单项测试 | Ctrl+S: 保存配置</span>
                 </div>
-                <button onclick="showKeyboardShortcuts()" class="btn-secondary btn-small" style="margin: 0;">⌨️ 查看全部</button>
+                <button onclick="showKeyboardShortcuts()" class="btn-secondary btn-small" style="margin: 0;">⌨️ 全部</button>
             </div>
 
             <!-- 测试队列显示 -->
@@ -684,86 +719,145 @@
             </div>
         </div>
 
+        <div class="card" style="border: 2px solid #9c27b0;">
+            <h2 style="color: #9c27b0; display: flex; justify-content: space-between; align-items: center;">
+                <span>📚 用例库</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary btn-small" onclick="toggleCaseLibrary()">
+                        <span id="library-toggle-text">📖 展开</span>
+                    </button>
+                    <button class="btn-secondary btn-small" onclick="exportCaseLibrary()">📤 导出</button>
+                    <button class="btn-secondary btn-small" onclick="importCaseLibrary()">📥 导入</button>
+                </div>
+            </h2>
+
+            <div id="case-library-panel" style="display: none;">
+                <!-- 添加新用例 -->
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #9c27b0;">➕ 添加新用例到库</h4>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; align-items: end;">
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">URL</label>
+                            <input type="text" id="new-case-url" placeholder="https://www.bilibili.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">描述</label>
+                            <input type="text" id="new-case-description" placeholder="B站首页" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">标签</label>
+                            <input type="text" id="new-case-tags" placeholder="首页,基础" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <button class="btn-primary" onclick="addToCaseLibrary()" style="padding: 8px 16px;">➕ 添加</button>
+                    </div>
+                </div>
+
+                <!-- 用例库列表 -->
+                <div style="background: #fafafa; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #666; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 已保存的用例 (<span id="library-count">0</span>)</span>
+                        <button class="btn-secondary btn-small" onclick="clearCaseLibrary()">🗑️ 清空库</button>
+                    </h4>
+                    <div id="case-library-list" style="max-height: 400px; overflow-y: auto;">
+                        <p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px; font-size: 0.9em;">
+                    💡 <strong>提示：</strong>将常用的测试URL保存到用例库，配置时可以快速添加到任意runner。支持标签分类和批量导入导出。
+                </div>
+            </div>
+        </div>
+
         <div class="card" style="border: 2px solid #667eea;">
-            <h2 style="color: #667eea;">⚙️ 快速配置</h2>
-
-            <!-- 配置预设选择器 -->
-            <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #667eea;">
-                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.1em;">✨ 配置预设</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;" id="preset-buttons">
-                    <button class="btn-primary" onclick="applyPreset('quick-test')" style="text-align: left; padding: 15px;">
-                        <strong style="display: block; margin-bottom: 5px;">⚡ 快速测试</strong>
-                        <small style="opacity: 0.9;">1分钟完成，快速验证</small>
-                    </button>
-                    <button class="btn-primary" onclick="applyPreset('standard-test')" style="text-align: left; padding: 15px;">
-                        <strong style="display: block; margin-bottom: 5px;">📊 标准测试</strong>
-                        <small style="opacity: 0.9;">5分钟，标准性能测试</small>
-                    </button>
-                    <button class="btn-primary" onclick="applyPreset('full-test')" style="text-align: left; padding: 15px;">
-                        <strong style="display: block; margin-bottom: 5px;">🚀 完整测试</strong>
-                        <small style="opacity: 0.9;">所有模式，全面检测</small>
-                    </button>
-                    <button class="btn-primary" onclick="applyPreset('memory-focus')" style="text-align: left; padding: 15px;">
-                        <strong style="display: block; margin-bottom: 5px;">🔍 内存专项</strong>
-                        <small style="opacity: 0.9;">专注检测内存泄漏</small>
-                    </button>
+            <h2 style="color: #667eea; display: flex; justify-content: space-between; align-items: center;">
+                <span>⚙️ 统一配置面板</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary btn-small" onclick="loadQuickConfig()">🔄 重载</button>
+                    <button class="btn-secondary btn-small" onclick="exportConfig()">📤 导出</button>
+                    <button class="btn-secondary btn-small" onclick="importConfig()">📥 导入</button>
+                    <button class="btn-primary btn-small" onclick="saveQuickConfig()">💾 保存</button>
                 </div>
-                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 0.9em; color: #666;">
-                    💡 <strong>提示：</strong>点击预设按钮一键应用配置，然后可在下方微调参数
-                </div>
-            </div>
+            </h2>
 
-            <!-- Initialization 配置 -->
-            <div id="init-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h3 style="margin-bottom: 10px; color: #333;">🚀 Initialization 配置</h3>
-                <div id="init-test-cases-quick"></div>
-                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('Initialization')">➕ 添加测试用例</button>
-            </div>
+            <!-- 统一的runner配置 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-bottom: 20px;">
 
-            <!-- Runtime 配置 -->
-            <div id="runtime-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h3 style="margin-bottom: 10px; color: #333;">⏱️ Runtime 配置</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">运行时长 (毫秒)</label>
-                        <input type="number" id="runtime-duration-quick" value="60000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                <!-- Initialization -->
+                <div class="runner-config-card" style="background: #f0f7ff; border: 2px solid #667eea; border-radius: 8px; padding: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 1em; color: #667eea;">🚀 Initialization</h3>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="enable-init" onchange="toggleRunner('Initialization', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
+                        </label>
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">延迟时间 (毫秒)</label>
-                        <input type="number" id="runtime-delay-quick" value="10000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">测试页面初始化加载性能</p>
+                    <div id="init-test-cases-unified"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('Initialization')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Initialization')">📚 从库添加</button>
                     </div>
                 </div>
-                <div id="runtime-test-cases-quick"></div>
-                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('Runtime')">➕ 添加测试用例</button>
-            </div>
 
-            <!-- MemoryLeak 配置 -->
-            <div id="memory-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-                <h3 style="margin-bottom: 10px; color: #333;">🔍 MemoryLeak 配置</h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">迭代间隔 (毫秒)</label>
-                        <input type="number" id="memory-interval-quick" value="60000" step="1000" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                <!-- Runtime -->
+                <div class="runner-config-card" style="background: #fff8f0; border: 2px solid #ff9800; border-radius: 8px; padding: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 1em; color: #ff9800;">⏱️ Runtime</h3>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="enable-runtime" onchange="toggleRunner('Runtime', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
+                        </label>
                     </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 5px; color: #555; font-weight: 500;">迭代次数</label>
-                        <input type="number" id="memory-iterations-quick" value="3" min="2" max="10" style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 6px;">
+                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">测试页面长时间运行性能</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                        <div>
+                            <label style="font-size: 0.85em; color: #555;">时长(ms)</label>
+                            <input type="number" id="runtime-duration" value="60000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555;">延迟(ms)</label>
+                            <input type="number" id="runtime-delay" value="10000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div id="runtime-test-cases-unified"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('Runtime')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Runtime')">📚 从库添加</button>
                     </div>
                 </div>
-                <div id="memory-test-cases-quick"></div>
-                <button class="btn-secondary" style="margin-top: 10px; padding: 8px 16px; font-size: 0.9em;" onclick="addQuickTestCase('MemoryLeak')">➕ 添加测试用例</button>
+
+                <!-- MemoryLeak -->
+                <div class="runner-config-card" style="background: #f0fff4; border: 2px solid #4caf50; border-radius: 8px; padding: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 1em; color: #4caf50;">🔍 MemoryLeak</h3>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="enable-memory" onchange="toggleRunner('MemoryLeak', this.checked)" style="width: 20px; height: 20px; cursor: pointer;">
+                            <span style="margin-left: 5px; font-size: 0.9em;">启用</span>
+                        </label>
+                    </div>
+                    <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">检测页面内存泄漏问题</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                        <div>
+                            <label style="font-size: 0.85em; color: #555;">间隔(ms)</label>
+                            <input type="number" id="memory-interval" value="60000" step="1000" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555;">迭代次数</label>
+                            <input type="number" id="memory-iterations" value="3" min="2" max="10" style="width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                    </div>
+                    <div id="memory-test-cases-unified"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('MemoryLeak')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('MemoryLeak')">📚 从库添加</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="button-group" style="margin-top: 15px;">
-                <button class="btn-primary" onclick="saveQuickConfig()">💾 保存配置</button>
-                <button class="btn-secondary" onclick="loadQuickConfig()">🔄 重新加载</button>
-                <button class="btn-secondary" onclick="exportConfig()">📤 导出配置</button>
-                <button class="btn-secondary" onclick="importConfig()">📥 导入配置</button>
-            </div>
-
-            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
+            <div style="padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
                 <strong style="color: #1565c0;">💡 提示：</strong>
-                <span style="color: #1565c0;">在这里快速配置，或前往 <a href="/config.html" style="color: #1565c0; font-weight: 600;">配置管理页面</a> 进行高级配置。</span>
+                <span style="color: #1565c0;">勾选启用需要运行的测试类型，配置后点击"保存配置"，然后使用上方"运行所有启用的测试"按钮一键执行。也可前往 <a href="/config.html" style="color: #1565c0; font-weight: 600;">配置管理页面</a> 进行高级配置。</span>
             </div>
         </div>
 
@@ -1026,45 +1120,571 @@
             }
         }
 
-        // 启动测试
-        async function startBenchmark() {
-            const startBtn = document.getElementById('start-btn');
+        // 测试历史
+        let testHistory = JSON.parse(localStorage.getItem('testHistory') || '[]');
 
-            // 前端配置验证
-            const validation = validateCurrentConfig();
-            if (!showValidationResult(validation)) {
-                return; // 验证失败，不启动
+        // 用例库
+        let caseLibrary = JSON.parse(localStorage.getItem('caseLibrary') || '[]');
+
+        // 初始化预设用例
+        function initDefaultCaseLibrary() {
+            if (caseLibrary.length === 0) {
+                caseLibrary = [
+                    { url: 'https://www.bilibili.com', description: 'B站首页', tags: ['首页', '基础'] },
+                    { url: 'https://live.bilibili.com', description: 'B站直播', tags: ['直播', '基础'] },
+                    { url: 'https://www.bilibili.com/video/BV1xx411c7XZ', description: '视频播放页', tags: ['视频', '播放器'] },
+                    { url: 'https://search.bilibili.com/all?keyword=test', description: '搜索页面', tags: ['搜索'] },
+                    { url: 'https://space.bilibili.com/1', description: '用户空间', tags: ['空间'] }
+                ];
+                saveCaseLibrary();
+            }
+        }
+
+        // 保存用例库到localStorage
+        function saveCaseLibrary() {
+            localStorage.setItem('caseLibrary', JSON.stringify(caseLibrary));
+            renderCaseLibrary();
+        }
+
+        // 切换用例库面板
+        function toggleCaseLibrary() {
+            const panel = document.getElementById('case-library-panel');
+            const toggleText = document.getElementById('library-toggle-text');
+
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                toggleText.textContent = '📕 收起';
+            } else {
+                panel.style.display = 'none';
+                toggleText.textContent = '📖 展开';
+            }
+        }
+
+        // 添加用例到库
+        function addToCaseLibrary() {
+            const url = document.getElementById('new-case-url').value.trim();
+            const description = document.getElementById('new-case-description').value.trim();
+            const tagsStr = document.getElementById('new-case-tags').value.trim();
+
+            if (!url) {
+                showToast('❌ 请输入URL', 'error');
+                return;
+            }
+
+            if (!isValidURL(url)) {
+                showToast('❌ URL格式无效', 'error');
+                return;
+            }
+
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            const newCase = {
+                id: Date.now(),
+                url,
+                description: description || url,
+                tags,
+                addedAt: new Date().toLocaleString('zh-CN')
+            };
+
+            caseLibrary.unshift(newCase);
+            saveCaseLibrary();
+
+            // 清空输入框
+            document.getElementById('new-case-url').value = '';
+            document.getElementById('new-case-description').value = '';
+            document.getElementById('new-case-tags').value = '';
+
+            showToast('✅ 用例已添加到库', 'success');
+        }
+
+        // 渲染用例库
+        function renderCaseLibrary() {
+            const container = document.getElementById('case-library-list');
+            const count = document.getElementById('library-count');
+
+            count.textContent = caseLibrary.length;
+
+            if (caseLibrary.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>';
+                return;
+            }
+
+            container.innerHTML = caseLibrary.map((item, index) => `
+                <div style="background: white; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #9c27b0;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #333; font-size: 0.95em; margin-bottom: 3px;">${item.description}</div>
+                            <div style="color: #666; font-size: 0.85em; word-break: break-all;">${item.url}</div>
+                            ${item.tags && item.tags.length > 0 ? `
+                                <div style="margin-top: 6px;">
+                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="display: flex; gap: 4px; margin-left: 10px;">
+                            <button class="btn-secondary btn-small" onclick="editCaseInLibrary(${index})" style="padding: 4px 8px;">✏️</button>
+                            <button class="btn-danger btn-small" onclick="removeCaseFromLibrary(${index})" style="padding: 4px 8px;">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75em; color: #999;">添加时间: ${item.addedAt}</div>
+                </div>
+            `).join('');
+        }
+
+        // 编辑用例
+        function editCaseInLibrary(index) {
+            const item = caseLibrary[index];
+            if (!item) return;
+
+            const url = prompt('编辑URL:', item.url);
+            if (url === null) return;
+
+            if (!isValidURL(url)) {
+                showToast('❌ URL格式无效', 'error');
+                return;
+            }
+
+            const description = prompt('编辑描述:', item.description) || url;
+            const tagsStr = prompt('编辑标签（逗号分隔）:', item.tags.join(',')) || '';
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            caseLibrary[index] = {
+                ...item,
+                url,
+                description,
+                tags
+            };
+
+            saveCaseLibrary();
+            showToast('✅ 用例已更新', 'success');
+        }
+
+        // 从库中删除用例
+        function removeCaseFromLibrary(index) {
+            if (confirm('确定要删除这个用例吗？')) {
+                caseLibrary.splice(index, 1);
+                saveCaseLibrary();
+                showToast('✅ 用例已删除', 'info');
+            }
+        }
+
+        // 清空用例库
+        function clearCaseLibrary() {
+            if (confirm('确定要清空整个用例库吗？这将删除所有保存的用例。')) {
+                caseLibrary = [];
+                saveCaseLibrary();
+                showToast('✅ 用例库已清空', 'info');
+            }
+        }
+
+        // 导出用例库
+        function exportCaseLibrary() {
+            if (caseLibrary.length === 0) {
+                showToast('❌ 用例库为空，无法导出', 'warning');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(caseLibrary, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `case-library-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ 用例库已导出', 'success');
+        }
+
+        // 导入用例库
+        function importCaseLibrary() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    const imported = JSON.parse(text);
+
+                    if (!Array.isArray(imported)) {
+                        showToast('❌ 导入失败：格式错误', 'error');
+                        return;
+                    }
+
+                    // 合并模式还是替换模式
+                    const merge = confirm('是否与现有用例库合并？\n\n点击"确定"合并，点击"取消"替换现有用例库。');
+
+                    if (merge) {
+                        // 去重合并
+                        const existingUrls = new Set(caseLibrary.map(c => c.url));
+                        const newCases = imported.filter(c => !existingUrls.has(c.url));
+                        caseLibrary = [...caseLibrary, ...newCases];
+                        showToast(`✅ 成功导入 ${newCases.length} 个新用例`, 'success');
+                    } else {
+                        caseLibrary = imported;
+                        showToast(`✅ 用例库已替换，共 ${imported.length} 个用例`, 'success');
+                    }
+
+                    saveCaseLibrary();
+                } catch (error) {
+                    showToast('❌ 导入失败: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        // 显示用例库选择器（从库中添加到runner）
+        function showLibrarySelector(runner) {
+            if (caseLibrary.length === 0) {
+                showToast('❌ 用例库为空，请先添加用例', 'warning');
+                // 自动展开用例库
+                if (document.getElementById('case-library-panel').style.display === 'none') {
+                    toggleCaseLibrary();
+                }
+                return;
+            }
+
+            // 创建选择器模态框
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10002;
+                padding: 20px;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: ${document.body.classList.contains('dark-mode') ? '#2d2d2d' : 'white'};
+                color: ${document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333'};
+                padding: 25px;
+                border-radius: 12px;
+                max-width: 600px;
+                width: 100%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            let selectedCases = new Set();
+
+            content.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #9c27b0;">📚 从用例库添加到 ${runner}</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">选择要添加的用例（可多选）：</p>
+                <div id="library-selector-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+                    ${caseLibrary.map((item, index) => `
+                        <label style="display: block; padding: 10px; margin-bottom: 8px; background: ${document.body.classList.contains('dark-mode') ? '#3d3d3d' : '#f5f5f5'}; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.borderColor='#9c27b0'" onmouseout="this.style.borderColor='transparent'">
+                            <input type="checkbox" value="${index}" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-weight: 600;">${item.description}</span>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px; word-break: break-all;">${item.url}</div>
+                            ${item.tags && item.tags.length > 0 ? `
+                                <div style="margin-top: 6px;">
+                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </label>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="this.closest('[style*=fixed]').remove()">取消</button>
+                    <button class="btn-primary" id="confirm-add-btn">添加选中的用例</button>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // 点击背景关闭
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+
+            // 确认添加
+            document.getElementById('confirm-add-btn').onclick = () => {
+                const checkboxes = content.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    showToast('❌ 请至少选择一个用例', 'warning');
+                    return;
+                }
+
+                checkboxes.forEach(checkbox => {
+                    const index = parseInt(checkbox.value);
+                    const item = caseLibrary[index];
+                    if (item) {
+                        addTestCaseFromLibrary(runner, item);
+                    }
+                });
+
+                modal.remove();
+                showToast(`✅ 已添加 ${checkboxes.length} 个用例到 ${runner}`, 'success');
+            };
+        }
+
+        // 从库中添加用例到runner
+        function addTestCaseFromLibrary(runner, item) {
+            if (!currentConfig) return;
+
+            if (!currentConfig.runners[runner].testCases) {
+                currentConfig.runners[runner].testCases = [];
+            }
+
+            currentConfig.runners[runner].testCases.push({
+                target: item.url,
+                description: item.description
+            });
+
+            renderTestCases(runner, currentConfig.runners[runner].testCases);
+        }
+
+        // 添加到测试历史
+        function addToHistory(runners, status) {
+            const historyItem = {
+                runners: Array.isArray(runners) ? runners : [runners],
+                time: new Date().toLocaleString('zh-CN'),
+                status: status || 'running'
+            };
+            testHistory.unshift(historyItem);
+            if (testHistory.length > 5) testHistory.pop(); // 只保留最近5条
+            localStorage.setItem('testHistory', JSON.stringify(testHistory));
+            renderTestHistory();
+        }
+
+        // 渲染测试历史
+        function renderTestHistory() {
+            const container = document.getElementById('test-history');
+            if (testHistory.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 0.9em; margin: 0;">暂无测试历史</p>';
+                return;
+            }
+
+            container.innerHTML = testHistory.map((item, index) => `
+                <div style="padding: 8px; background: white; margin-bottom: 5px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid ${item.status === 'completed' ? '#4caf50' : item.status === 'error' ? '#f44336' : '#ff9800'};">
+                    <div style="flex: 1;">
+                        <div style="font-size: 0.85em; font-weight: 600; color: #333;">${item.runners.join(' + ')}</div>
+                        <div style="font-size: 0.75em; color: #999;">${item.time}</div>
+                    </div>
+                    <button class="btn-secondary btn-small" onclick="rerunTest(${index})" style="padding: 4px 8px;">🔄 重运行</button>
+                </div>
+            `).join('');
+        }
+
+        // 重运行测试
+        async function rerunTest(index) {
+            const item = testHistory[index];
+            if (!item) return;
+
+            if (item.runners.length === 1) {
+                await startSingleRunner(item.runners[0]);
+            } else {
+                await startAllEnabledTests();
+            }
+        }
+
+        // 清空测试历史
+        function clearTestHistory() {
+            if (confirm('确定要清空所有测试历史吗？')) {
+                testHistory = [];
+                localStorage.setItem('testHistory', JSON.stringify(testHistory));
+                renderTestHistory();
+                showToast('测试历史已清空', 'info');
+            }
+        }
+
+        // 运行所有启用的测试
+        async function startAllEnabledTests() {
+            const startBtn = document.getElementById('start-all-btn');
+
+            if (!currentConfig) {
+                showToast('❌ 配置未加载，请先加载配置', 'error');
+                return;
+            }
+
+            // 检查哪些runner被启用
+            const enabledRunners = [];
+            if (currentConfig.runners.Initialization?.enabled) enabledRunners.push('Initialization');
+            if (currentConfig.runners.Runtime?.enabled) enabledRunners.push('Runtime');
+            if (currentConfig.runners.MemoryLeak?.enabled) enabledRunners.push('MemoryLeak');
+
+            if (enabledRunners.length === 0) {
+                showToast('❌ 没有启用任何测试类型，请至少启用一个', 'warning');
+                return;
+            }
+
+            // 验证所有启用的runner
+            for (const runner of enabledRunners) {
+                const validation = validateSpecificRunner(runner);
+                if (!validation.valid) {
+                    showToast(`❌ ${runner} 配置错误：${validation.errors.join(', ')}`, 'error');
+                    return;
+                }
             }
 
             setButtonLoading(startBtn, true);
-
-            // 重置进度
             resetProgress();
 
             try {
-                const runner = document.getElementById('runner-select').value;
+                // 按顺序运行每个启用的runner
+                for (let i = 0; i < enabledRunners.length; i++) {
+                    const runner = enabledRunners[i];
+                    showToast(`🚀 启动测试 ${i + 1}/${enabledRunners.length}: ${runner}`, 'info');
 
-                // 显示测试队列
-                showTestQueue(runner);
+                    await runSingleRunnerAsync(runner);
 
-                const response = await fetch(`${API_BASE}/start`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ runner })
-                });
-                const data = await response.json();
+                    // 等待测试完成
+                    await waitForTestCompletion();
 
-                if (data.success) {
-                    showToast(`✅ 测试已启动：${runner}`, 'success');
-                    // WebSocket 会自动推送更新，不需要轮询
-                } else {
-                    showToast('❌ ' + (data.error || '启动失败'), 'error');
+                    if (i < enabledRunners.length - 1) {
+                        showToast(`✅ ${runner} 完成，准备运行下一个测试...`, 'success');
+                        await new Promise(resolve => setTimeout(resolve, 2000)); // 等待2秒
+                    }
                 }
+
+                addToHistory(enabledRunners, 'completed');
+                showToast(`🎉 所有测试完成！共运行 ${enabledRunners.length} 个测试`, 'success');
             } catch (error) {
-                showToast('❌ 启动测试失败: ' + error.message, 'error');
+                addToHistory(enabledRunners, 'error');
+                showToast('❌ 测试执行失败: ' + error.message, 'error');
             } finally {
                 setButtonLoading(startBtn, false);
             }
+        }
+
+        // 验证特定runner
+        function validateSpecificRunner(runner) {
+            if (!currentConfig || !currentConfig.runners[runner]) {
+                return { valid: false, errors: ['配置未找到'] };
+            }
+
+            const errors = [];
+            const runnerConfig = currentConfig.runners[runner];
+
+            if (!runnerConfig.testCases || runnerConfig.testCases.length === 0) {
+                errors.push('没有配置测试用例');
+            } else {
+                runnerConfig.testCases.forEach((tc, index) => {
+                    if (!tc.target || !isValidURL(tc.target)) {
+                        errors.push(`测试用例 #${index + 1} URL无效`);
+                    }
+                });
+            }
+
+            return { valid: errors.length === 0, errors };
+        }
+
+        // 等待测试完成
+        function waitForTestCompletion() {
+            return new Promise((resolve) => {
+                const checkStatus = setInterval(() => {
+                    if (benchmarkStatus !== 'running') {
+                        clearInterval(checkStatus);
+                        resolve();
+                    }
+                }, 1000);
+            });
+        }
+
+        // 运行单个runner（异步）
+        async function runSingleRunnerAsync(runner) {
+            showTestQueue(runner);
+
+            const response = await fetch(`${API_BASE}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ runner })
+            });
+
+            const data = await response.json();
+            if (!data.success) {
+                throw new Error(data.error || '启动失败');
+            }
+        }
+
+        // 快速启动单个runner
+        async function startSingleRunner(runner) {
+            if (!currentConfig || !currentConfig.runners[runner]) {
+                showToast(`❌ ${runner} 配置未找到`, 'error');
+                return;
+            }
+
+            const validation = validateSpecificRunner(runner);
+            if (!validation.valid) {
+                showToast(`❌ ${runner} 配置错误：${validation.errors.join(', ')}`, 'error');
+                return;
+            }
+
+            const btn = document.getElementById(`quick-${runner.toLowerCase().replace('memoryleak', 'memory').replace('initialization', 'init')}`);
+            if (btn) setButtonLoading(btn, true);
+
+            resetProgress();
+
+            try {
+                await runSingleRunnerAsync(runner);
+                addToHistory([runner], 'running');
+                showToast(`✅ ${runner} 测试已启动`, 'success');
+            } catch (error) {
+                showToast('❌ 启动失败: ' + error.message, 'error');
+            } finally {
+                if (btn) setButtonLoading(btn, false);
+            }
+        }
+
+        // 快速预设测试
+        async function quickPreset(presetKey) {
+            const preset = CONFIG_PRESETS[presetKey];
+            if (!preset) {
+                showToast('❌ 预设不存在', 'error');
+                return;
+            }
+
+            // 应用预设配置
+            currentConfig = JSON.parse(JSON.stringify(preset.config));
+
+            try {
+                // 保存配置
+                const response = await fetch(`${API_BASE}/dynamic-config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    await loadQuickConfig();
+                    showToast(`✅ 已应用预设: ${preset.name}`, 'success');
+
+                    // 自动运行测试
+                    setTimeout(() => startAllEnabledTests(), 500);
+                } else {
+                    showToast('❌ 应用预设失败', 'error');
+                }
+            } catch (error) {
+                showToast('❌ 应用预设失败: ' + error.message, 'error');
+            }
+        }
+
+        // Toggle runner启用状态
+        function toggleRunner(runner, enabled) {
+            if (!currentConfig) return;
+
+            if (!currentConfig.runners[runner]) {
+                currentConfig.runners[runner] = {
+                    enabled: false,
+                    testCases: []
+                };
+            }
+
+            currentConfig.runners[runner].enabled = enabled;
+            showToast(enabled ? `✅ ${runner} 已启用` : `⚠️ ${runner} 已禁用`, enabled ? 'success' : 'warning');
         }
 
         // 停止测试
@@ -1523,28 +2143,89 @@
             }
         }
 
-        // 加载快速配置
+        // 加载快速配置（统一面板）
         async function loadQuickConfig() {
             try {
                 const response = await fetch(`${API_BASE}/dynamic-config`);
                 currentConfig = await response.json();
 
-                // 渲染 Initialization 配置
-                renderQuickTestCases('Initialization', currentConfig.runners.Initialization.testCases || []);
+                // 设置启用状态
+                document.getElementById('enable-init').checked = currentConfig.runners.Initialization?.enabled || false;
+                document.getElementById('enable-runtime').checked = currentConfig.runners.Runtime?.enabled || false;
+                document.getElementById('enable-memory').checked = currentConfig.runners.MemoryLeak?.enabled || false;
 
-                // 渲染 Runtime 配置
-                document.getElementById('runtime-duration-quick').value = currentConfig.runners.Runtime.durationMs || 60000;
-                document.getElementById('runtime-delay-quick').value = currentConfig.runners.Runtime.delayMs || 10000;
-                renderQuickTestCases('Runtime', currentConfig.runners.Runtime.testCases || []);
+                // 设置Runtime参数
+                document.getElementById('runtime-duration').value = currentConfig.runners.Runtime?.durationMs || 60000;
+                document.getElementById('runtime-delay').value = currentConfig.runners.Runtime?.delayMs || 10000;
 
-                // 渲染 MemoryLeak 配置
-                document.getElementById('memory-interval-quick').value = currentConfig.runners.MemoryLeak.intervalMs || 60000;
-                document.getElementById('memory-iterations-quick').value = currentConfig.runners.MemoryLeak.iterations || 3;
-                renderQuickTestCases('MemoryLeak', currentConfig.runners.MemoryLeak.testCases || []);
+                // 设置MemoryLeak参数
+                document.getElementById('memory-interval').value = currentConfig.runners.MemoryLeak?.intervalMs || 60000;
+                document.getElementById('memory-iterations').value = currentConfig.runners.MemoryLeak?.iterations || 3;
 
+                // 渲染测试用例
+                renderTestCases('Initialization', currentConfig.runners.Initialization?.testCases || []);
+                renderTestCases('Runtime', currentConfig.runners.Runtime?.testCases || []);
+                renderTestCases('MemoryLeak', currentConfig.runners.MemoryLeak?.testCases || []);
+
+                renderTestHistory();
             } catch (error) {
                 showToast('加载配置失败: ' + error.message, 'error');
             }
+        }
+
+        // 渲染测试用例（统一面板）
+        function renderTestCases(runner, testCases) {
+            const containerId = `${runner.toLowerCase().replace('memoryleak', 'memory').replace('initialization', 'init')}-test-cases-unified`;
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (testCases.length === 0) {
+                container.innerHTML = '<p style="font-size: 0.85em; color: #999; margin: 8px 0;">暂无测试用例</p>';
+                return;
+            }
+
+            testCases.forEach((tc, index) => {
+                const div = document.createElement('div');
+                div.style.cssText = 'background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; border: 1px solid #ddd;';
+                div.innerHTML = `
+                    <input type="text" placeholder="URL" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target"
+                           style="width: 100%; padding: 4px 6px; margin-bottom: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85em;"
+                           oninput="validateURL(this)">
+                    <div style="display: flex; gap: 4px;">
+                        <input type="text" placeholder="描述" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description"
+                               style="flex: 1; padding: 4px 6px; border: 1px solid #ddd; border-radius: 3px; font-size: 0.85em;">
+                        <button class="btn-danger btn-small" onclick="removeTestCase('${runner}', ${index})" style="padding: 4px 8px;">🗑️</button>
+                    </div>
+                    <div class="error-message" data-error-for="${runner}-${index}-target" style="font-size: 0.75em; margin-top: 2px;"></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // 添加测试用例（统一面板）
+        function addTestCase(runner) {
+            if (!currentConfig) return;
+
+            if (!currentConfig.runners[runner].testCases) {
+                currentConfig.runners[runner].testCases = [];
+            }
+
+            currentConfig.runners[runner].testCases.push({
+                target: '',
+                description: ''
+            });
+
+            renderTestCases(runner, currentConfig.runners[runner].testCases);
+        }
+
+        // 删除测试用例（统一面板）
+        function removeTestCase(runner, index) {
+            if (!currentConfig) return;
+
+            currentConfig.runners[runner].testCases.splice(index, 1);
+            renderTestCases(runner, currentConfig.runners[runner].testCases);
         }
 
         // 渲染测试用例列表
@@ -1715,7 +2396,7 @@
             renderQuickTestCases(runner, currentConfig.runners[runner].testCases);
         }
 
-        // 保存快速配置
+        // 保存快速配置（统一面板）
         async function saveQuickConfig() {
             if (!currentConfig) {
                 showToast('请先加载配置', 'warning');
@@ -1724,24 +2405,29 @@
 
             try {
                 // 收集表单中的修改
-                const inputs = document.querySelectorAll('.test-case-item input[data-runner]');
+                const inputs = document.querySelectorAll('input[data-runner]');
                 inputs.forEach(input => {
                     const runner = input.dataset.runner;
                     const index = parseInt(input.dataset.index);
                     const field = input.dataset.field;
 
-                    if (currentConfig.runners[runner].testCases[index]) {
+                    if (currentConfig.runners[runner] && currentConfig.runners[runner].testCases[index]) {
                         currentConfig.runners[runner].testCases[index][field] = input.value;
                     }
                 });
 
+                // 收集启用状态
+                currentConfig.runners.Initialization.enabled = document.getElementById('enable-init').checked;
+                currentConfig.runners.Runtime.enabled = document.getElementById('enable-runtime').checked;
+                currentConfig.runners.MemoryLeak.enabled = document.getElementById('enable-memory').checked;
+
                 // 收集 Runtime 参数
-                currentConfig.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration-quick').value);
-                currentConfig.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay-quick').value);
+                currentConfig.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration').value);
+                currentConfig.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay').value);
 
                 // 收集 MemoryLeak 参数
-                currentConfig.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval-quick').value);
-                currentConfig.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations-quick').value);
+                currentConfig.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval').value);
+                currentConfig.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations').value);
 
                 // 发送到后端
                 const response = await fetch(`${API_BASE}/dynamic-config`, {
@@ -1752,12 +2438,12 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    showToast('配置保存成功！', 'success');
+                    showToast('✅ 配置保存成功！', 'success');
                 } else {
-                    showToast('保存失败: ' + (data.error || '未知错误'), 'error');
+                    showToast('❌ 保存失败: ' + (data.error || '未知错误'), 'error');
                 }
             } catch (error) {
-                showToast('保存配置失败: ' + error.message, 'error');
+                showToast('❌ 保存配置失败: ' + error.message, 'error');
             }
         }
 
@@ -1833,13 +2519,31 @@
 
         // 键盘快捷键
         document.addEventListener('keydown', (e) => {
-            // Ctrl/Cmd + Enter: 启动测试
+            // Ctrl/Cmd + Enter: 运行所有启用的测试
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
-                const startBtn = document.getElementById('start-btn');
+                const startBtn = document.getElementById('start-all-btn');
                 if (!startBtn.disabled) {
-                    startBenchmark();
+                    startAllEnabledTests();
                 }
+            }
+
+            // Ctrl/Cmd + 1: 运行Initialization
+            if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+                e.preventDefault();
+                startSingleRunner('Initialization');
+            }
+
+            // Ctrl/Cmd + 2: 运行Runtime
+            if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+                e.preventDefault();
+                startSingleRunner('Runtime');
+            }
+
+            // Ctrl/Cmd + 3: 运行MemoryLeak
+            if ((e.ctrlKey || e.metaKey) && e.key === '3') {
+                e.preventDefault();
+                startSingleRunner('MemoryLeak');
             }
 
             // Ctrl/Cmd + S: 保存配置
@@ -1895,13 +2599,21 @@
             const shortcuts = `
 <strong>⌨️ 键盘快捷键</strong>
 
-• Ctrl/Cmd + Enter - 启动测试
-• Ctrl/Cmd + S - 保存配置
+📋 测试控制：
+• Ctrl/Cmd + Enter - 运行所有启用的测试
+• Ctrl/Cmd + 1 - 运行 Initialization
+• Ctrl/Cmd + 2 - 运行 Runtime
+• Ctrl/Cmd + 3 - 运行 MemoryLeak
 • Escape - 停止测试
-• Ctrl/Cmd + R - 刷新状态
+
+⚙️ 配置管理：
+• Ctrl/Cmd + S - 保存配置
 • Ctrl/Cmd + L - 重新加载配置
-• Ctrl/Cmd + D - 切换深色模式
 • Ctrl/Cmd + E - 导出配置
+
+🎨 其他：
+• Ctrl/Cmd + R - 刷新状态
+• Ctrl/Cmd + D - 切换深色模式
 • Ctrl/Cmd + / - 显示快捷键帮助
             `.trim();
 
@@ -1963,9 +2675,14 @@
             // 连接 WebSocket（会自动接收状态更新）
             connectWebSocket();
 
+            // 初始化用例库
+            initDefaultCaseLibrary();
+            renderCaseLibrary();
+
             // 加载其他数据
             await loadReports();
             await loadQuickConfig();
+            renderTestHistory();
         };
     </script>
 </body>
