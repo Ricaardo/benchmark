@@ -548,8 +548,17 @@
             </div>
 
             <div class="form-group">
-                <label>测试URL *</label>
-                <input type="url" id="case-url" placeholder="https://www.bilibili.com">
+                <label>测试URL *（每行一个URL，支持多个）</label>
+                <textarea id="case-urls" placeholder="https://www.bilibili.com&#10;https://www.bilibili.com/video/BV1xx411c7mD&#10;https://t.bilibili.com" rows="4"></textarea>
+                <small style="color: #718096; font-size: 0.85em;">每行输入一个URL，可以添加多个测试地址</small>
+            </div>
+
+            <div class="form-group">
+                <label>运行模式</label>
+                <select id="case-mode">
+                    <option value="headless">Headless - 无头模式（后台运行，性能更好）</option>
+                    <option value="headed">Headed - 有头模式（显示浏览器界面）</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -654,19 +663,25 @@
                             <th><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>
                             <th>用例名称</th>
                             <th>类型</th>
-                            <th>测试URL</th>
+                            <th>URL数量</th>
+                            <th>模式</th>
                             <th>重复次数</th>
                             <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${testCases.map(testCase => `
+                        ${testCases.map(testCase => {
+                            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                            const mode = testCase.mode || 'headless';
+                            const urlsTitle = urls.join('\\n');
+                            return `
                             <tr>
                                 <td><input type="checkbox" onchange="toggleCaseSelection(${testCase.id}, this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
                                 <td><strong>${escapeHtml(testCase.name)}</strong></td>
                                 <td><span class="runner-tag runner-${testCase.runner.toLowerCase()}">${testCase.runner}</span></td>
-                                <td><div class="url-display" title="${escapeHtml(testCase.url)}">${escapeHtml(testCase.url)}</div></td>
+                                <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
+                                <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
                                 <td>${testCase.repeatCount}</td>
                                 <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
@@ -677,7 +692,8 @@
                                     </div>
                                 </td>
                             </tr>
-                        `).join('')}
+                        `;
+                        }).join('')}
                     </tbody>
                 </table>
             `;
@@ -725,7 +741,8 @@
             // 清空表单
             document.getElementById('case-name').value = '';
             document.getElementById('case-runner').value = 'Initialization';
-            document.getElementById('case-url').value = '';
+            document.getElementById('case-urls').value = '';
+            document.getElementById('case-mode').value = 'headless';
             document.getElementById('case-repeat').value = '3';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
@@ -744,7 +761,12 @@
 
             document.getElementById('case-name').value = testCase.name;
             document.getElementById('case-runner').value = testCase.runner;
-            document.getElementById('case-url').value = testCase.url;
+
+            // 处理URLs - 兼容旧格式（url）和新格式（urls数组）
+            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+            document.getElementById('case-urls').value = urls.join('\n');
+
+            document.getElementById('case-mode').value = testCase.mode || 'headless';
             document.getElementById('case-repeat').value = testCase.repeatCount;
             document.getElementById('case-description').value = testCase.description || '';
             document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
@@ -757,7 +779,8 @@
         function saveCase() {
             const name = document.getElementById('case-name').value.trim();
             const runner = document.getElementById('case-runner').value;
-            const url = document.getElementById('case-url').value.trim();
+            const urlsText = document.getElementById('case-urls').value.trim();
+            const mode = document.getElementById('case-mode').value;
             const repeatCount = parseInt(document.getElementById('case-repeat').value);
             const description = document.getElementById('case-description').value.trim();
             const tags = document.getElementById('case-tags').value.split(',').map(t => t.trim()).filter(t => t);
@@ -767,8 +790,20 @@
                 return;
             }
 
-            if (!url || !isValidURL(url)) {
-                showToast('请输入有效的URL', 'error');
+            // 解析多个URL
+            const urls = urlsText.split('\n')
+                .map(url => url.trim())
+                .filter(url => url.length > 0);
+
+            if (urls.length === 0) {
+                showToast('请至少输入一个URL', 'error');
+                return;
+            }
+
+            // 验证所有URL格式
+            const invalidUrls = urls.filter(url => !isValidURL(url));
+            if (invalidUrls.length > 0) {
+                showToast(`以下URL格式无效：\n${invalidUrls.join('\n')}`, 'error');
                 return;
             }
 
@@ -780,10 +815,13 @@
                 if (testCase) {
                     testCase.name = name;
                     testCase.runner = runner;
-                    testCase.url = url;
+                    testCase.urls = urls;
+                    testCase.mode = mode;
                     testCase.repeatCount = repeatCount;
                     testCase.description = description;
                     testCase.tags = tags;
+                    // 移除旧的url字段（如果存在）
+                    delete testCase.url;
                     showToast('用例更新成功', 'success');
                 }
             } else {
@@ -792,7 +830,8 @@
                     id: Date.now(),
                     name,
                     runner,
-                    url,
+                    urls,
+                    mode,
                     repeatCount,
                     description,
                     tags,
@@ -834,17 +873,25 @@
             document.getElementById('current-status').className = 'status-badge status-running';
 
             try {
+                // 获取URLs - 兼容旧格式
+                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                const mode = testCase.mode || 'headless';
+
+                if (urls.length === 0) {
+                    throw new Error('测试用例没有配置URL');
+                }
+
                 const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         runner: testCase.runner,
                         config: {
-                            mode: 'headless',
+                            mode: mode,
                             runners: {
                                 [testCase.runner]: {
                                     repeatCount: testCase.repeatCount,
-                                    urls: [testCase.url]
+                                    urls: urls
                                 }
                             }
                         }
@@ -858,6 +905,8 @@
                 }
 
                 appendOutput(`[系统] 测试用例 "${testCase.name}" 已启动`);
+                appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
+                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount} 次`);
             } catch (error) {
                 testCase.status = 'error';
                 currentRunning = null;
@@ -1001,9 +1050,10 @@
             const presets = [
                 {
                     id: Date.now(),
-                    name: 'B站首页-初始化性能',
+                    name: 'B站首页-初始化性能测试',
                     runner: 'Initialization',
-                    url: 'https://www.bilibili.com',
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
                     repeatCount: 3,
                     description: '测试B站首页的加载和初始化性能',
                     tags: ['bilibili', '首页', '初始化'],
@@ -1012,23 +1062,49 @@
                 },
                 {
                     id: Date.now() + 1,
-                    name: 'B站视频页-运行时性能',
+                    name: 'B站多页面-运行时性能',
                     runner: 'Runtime',
-                    url: 'https://www.bilibili.com/video/BV1xx411c7mD',
+                    urls: [
+                        'https://www.bilibili.com',
+                        'https://www.bilibili.com/video/BV1xx411c7mD',
+                        'https://t.bilibili.com'
+                    ],
+                    mode: 'headless',
                     repeatCount: 3,
-                    description: '测试视频播放页面的运行时性能',
-                    tags: ['bilibili', '视频', '运行时'],
+                    description: '测试B站多个页面的运行时性能',
+                    tags: ['bilibili', '多页面', '运行时'],
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 },
                 {
                     id: Date.now() + 2,
-                    name: 'B站动态页-内存泄漏检测',
+                    name: 'B站视频页-内存泄漏检测',
                     runner: 'MemoryLeak',
-                    url: 'https://t.bilibili.com',
+                    urls: [
+                        'https://www.bilibili.com/video/BV1xx411c7mD',
+                        'https://www.bilibili.com/video/BV1yy411c7mD'
+                    ],
+                    mode: 'headless',
                     repeatCount: 5,
-                    description: '检测动态页面是否存在内存泄漏',
-                    tags: ['bilibili', '动态', '内存'],
+                    description: '检测视频页面是否存在内存泄漏，测试多个视频页',
+                    tags: ['bilibili', '视频', '内存泄漏'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    name: 'B站全站扫描-有头模式',
+                    runner: 'Initialization',
+                    urls: [
+                        'https://www.bilibili.com',
+                        'https://www.bilibili.com/anime',
+                        'https://www.bilibili.com/guochuang',
+                        'https://www.bilibili.com/documentary'
+                    ],
+                    mode: 'headed',
+                    repeatCount: 2,
+                    description: '使用有头模式测试B站多个频道页面，可观察浏览器执行过程',
+                    tags: ['bilibili', '全站', '有头模式'],
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 }
@@ -1037,7 +1113,7 @@
             testCases = [...testCases, ...presets];
             saveToStorage();
             renderCases();
-            showToast('已加载 3 个预设用例', 'success');
+            showToast('已加载 4 个预设用例', 'success');
         }
 
         // 工具函数
