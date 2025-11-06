@@ -326,9 +326,163 @@
             padding: 20px;
             color: #999;
         }
+
+        /* 进度条样式 */
+        .progress-container {
+            margin-top: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+        }
+
+        .progress-container.active {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #1e1e1e;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 10px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: #d4d4d4;
+            font-size: 0.9em;
+        }
+
+        .progress-info strong {
+            color: #fff;
+        }
+
+        /* 深色模式 */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .card {
+            background: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .card h2 {
+            color: #fff;
+            border-bottom-color: #667eea;
+        }
+
+        body.dark-mode .output-box {
+            background: #1a1a1a;
+            color: #d4d4d4;
+        }
+
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        body.dark-mode .test-case-item {
+            background: #3d3d3d;
+            border-color: #555;
+        }
+
+        /* 深色模式切换按钮 */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(45, 45, 45, 0.9);
+        }
+
+        /* 队列状态样式 */
+        .queue-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .queue-container.active {
+            display: block;
+        }
+
+        body.dark-mode .queue-container {
+            background: #2d2d2d;
+        }
+
+        .queue-item {
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .queue-item {
+            background: #3d3d3d;
+        }
+
+        .queue-item.completed {
+            border-left-color: #81c784;
+            opacity: 0.7;
+        }
+
+        .queue-item.error {
+            border-left-color: #e57373;
+        }
+
+        .queue-item.running {
+            border-left-color: #ffd54f;
+            animation: pulse 2s infinite;
+        }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="切换深色模式">🌙</button>
     <div class="toast-container" id="toast-container"></div>
 
     <div class="container">
@@ -382,6 +536,12 @@
             <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em;">
                 <strong>💡 快捷键：</strong>
                 <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
+            </div>
+
+            <!-- 测试队列显示 -->
+            <div class="queue-container" id="queue-container">
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1em;">📋 测试队列</h3>
+                <div id="queue-list"></div>
             </div>
         </div>
 
@@ -470,6 +630,25 @@
 
         <div class="card">
             <h2>实时输出</h2>
+
+            <!-- 进度条 -->
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                </div>
+                <div class="progress-info">
+                    <div>
+                        <strong>当前进度:</strong> <span id="progress-current">0/0</span>
+                    </div>
+                    <div>
+                        <strong>预计剩余:</strong> <span id="progress-eta">计算中...</span>
+                    </div>
+                    <div>
+                        <strong>已用时间:</strong> <span id="progress-elapsed">00:00</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="output" class="output-box">等待启动测试...</div>
         </div>
 
@@ -689,8 +868,15 @@
             const startBtn = document.getElementById('start-btn');
             setButtonLoading(startBtn, true);
 
+            // 重置进度
+            resetProgress();
+
             try {
                 const runner = document.getElementById('runner-select').value;
+
+                // 显示测试队列
+                showTestQueue(runner);
+
                 const response = await fetch(`${API_BASE}/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -789,6 +975,21 @@
 
             output.textContent = data.output || '暂无输出...';
             output.scrollTop = output.scrollHeight;
+
+            // 更新进度
+            if (data.output) {
+                updateProgress(data.output);
+                // 更新测试队列状态
+                updateQueueFromOutput(data.output);
+            }
+
+            // 如果测试完成或出错，重置进度和队列
+            if (data.status === 'completed' || data.status === 'error' || data.status === 'idle') {
+                if (progressStartTime > 0) {
+                    setTimeout(resetProgress, 3000); // 3秒后重置进度条
+                    setTimeout(hideTestQueue, 3000); // 3秒后隐藏队列
+                }
+            }
         }
 
         // WebSocket 已经替代轮询，这些函数保留为空以防旧代码调用
@@ -871,11 +1072,202 @@
             }
         }
 
+        // 深色模式切换
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.querySelector('.theme-toggle');
+            const isDark = document.body.classList.contains('dark-mode');
+            btn.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // 初始化主题
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                const btn = document.querySelector('.theme-toggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        }
+
+        // 进度追踪
+        let progressStartTime = 0;
+        let progressData = {
+            current: 0,
+            total: 0,
+            percentage: 0
+        };
+
+        function updateProgress(output) {
+            // 尝试从输出中解析进度信息
+            // 匹配类似 "Progress: 1/3" 或 "Test 2 of 5" 的模式
+            const patterns = [
+                /(?:Progress|测试进度):\s*(\d+)\s*\/\s*(\d+)/i,
+                /Test\s+(\d+)\s+of\s+(\d+)/i,
+                /测试\s*(\d+)\s*\/\s*(\d+)/i,
+                /\[(\d+)\/(\d+)\]/
+            ];
+
+            let matched = false;
+            for (const pattern of patterns) {
+                const match = output.match(pattern);
+                if (match) {
+                    progressData.current = parseInt(match[1]);
+                    progressData.total = parseInt(match[2]);
+                    progressData.percentage = Math.round((progressData.current / progressData.total) * 100);
+                    matched = true;
+                    break;
+                }
+            }
+
+            // 如果匹配到进度，显示进度条
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressCurrent = document.getElementById('progress-current');
+            const progressEta = document.getElementById('progress-eta');
+            const progressElapsed = document.getElementById('progress-elapsed');
+
+            if (matched && progressData.total > 0) {
+                progressContainer.classList.add('active');
+                progressFill.style.width = progressData.percentage + '%';
+                progressFill.textContent = progressData.percentage + '%';
+                progressCurrent.textContent = `${progressData.current}/${progressData.total}`;
+
+                // 计算已用时间
+                if (progressStartTime === 0) {
+                    progressStartTime = Date.now();
+                }
+                const elapsed = Math.floor((Date.now() - progressStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                progressElapsed.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                // 计算预计剩余时间
+                if (progressData.current > 0) {
+                    const avgTimePerTest = elapsed / progressData.current;
+                    const remainingTests = progressData.total - progressData.current;
+                    const etaSeconds = Math.floor(avgTimePerTest * remainingTests);
+                    const etaMinutes = Math.floor(etaSeconds / 60);
+                    const etaSecs = etaSeconds % 60;
+                    progressEta.textContent = `${String(etaMinutes).padStart(2, '0')}:${String(etaSecs).padStart(2, '0')}`;
+                } else {
+                    progressEta.textContent = '计算中...';
+                }
+            } else if (benchmarkStatus === 'idle' || benchmarkStatus === 'completed' || benchmarkStatus === 'error') {
+                // 测试未运行或已完成时隐藏进度条
+                progressContainer.classList.remove('active');
+            }
+        }
+
+        function resetProgress() {
+            progressStartTime = 0;
+            progressData = { current: 0, total: 0, percentage: 0 };
+            const progressContainer = document.getElementById('progress-container');
+            progressContainer.classList.remove('active');
+        }
+
+        // 测试队列管理
+        function showTestQueue(runner) {
+            if (!currentConfig || !currentConfig.runners[runner]) return;
+
+            const testCases = currentConfig.runners[runner].testCases || [];
+            if (testCases.length === 0) return;
+
+            const queueContainer = document.getElementById('queue-container');
+            const queueList = document.getElementById('queue-list');
+
+            queueList.innerHTML = '';
+
+            testCases.forEach((tc, index) => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.id = `queue-item-${index}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${index + 1}. ${tc.description || '未命名测试'}</strong>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 3px;">${tc.target}</div>
+                    </div>
+                    <span class="queue-status" id="queue-status-${index}">⏳ 等待中</span>
+                `;
+                queueList.appendChild(item);
+            });
+
+            queueContainer.classList.add('active');
+        }
+
+        function updateQueueItem(index, status) {
+            const item = document.getElementById(`queue-item-${index}`);
+            const statusSpan = document.getElementById(`queue-status-${index}`);
+
+            if (!item || !statusSpan) return;
+
+            item.classList.remove('pending', 'running', 'completed', 'error');
+
+            switch(status) {
+                case 'running':
+                    item.classList.add('running');
+                    statusSpan.textContent = '▶️ 运行中';
+                    break;
+                case 'completed':
+                    item.classList.add('completed');
+                    statusSpan.textContent = '✅ 完成';
+                    break;
+                case 'error':
+                    item.classList.add('error');
+                    statusSpan.textContent = '❌ 失败';
+                    break;
+                default:
+                    statusSpan.textContent = '⏳ 等待中';
+            }
+        }
+
+        function hideTestQueue() {
+            const queueContainer = document.getElementById('queue-container');
+            setTimeout(() => {
+                queueContainer.classList.remove('active');
+            }, 3000); // 3秒后隐藏队列
+        }
+
+        function updateQueueFromOutput(output) {
+            // 尝试从输出中检测当前运行的测试
+            // 匹配 "Testing: description" 或类似的模式
+            const testPatterns = [
+                /Testing:\s*(.+)/i,
+                /测试:\s*(.+)/i,
+                /Running test:\s*(.+)/i
+            ];
+
+            for (const pattern of testPatterns) {
+                const match = output.match(pattern);
+                if (match && currentConfig) {
+                    const runner = currentRunner;
+                    if (runner && currentConfig.runners[runner]) {
+                        const testCases = currentConfig.runners[runner].testCases || [];
+                        testCases.forEach((tc, index) => {
+                            if (match[1].includes(tc.description)) {
+                                updateQueueItem(index, 'running');
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 检测测试完成
+            if (output.includes('✓') || output.includes('passed') || output.includes('成功')) {
+                // 标记最近运行的测试为完成
+                if (progressData.current > 0) {
+                    updateQueueItem(progressData.current - 1, 'completed');
+                }
+            }
+        }
+
         // 监听 runner 选择变化，显示对应的快速配置
         document.addEventListener('DOMContentLoaded', () => {
             const runnerSelect = document.getElementById('runner-select');
             runnerSelect.addEventListener('change', updateQuickConfigVisibility);
             updateQuickConfigVisibility(); // 初始化显示
+            initTheme(); // 初始化主题
         });
 
         function updateQuickConfigVisibility() {
