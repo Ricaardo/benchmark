@@ -4,3 +4,5 @@ dist/
 .DS_Store
 benchmark.dynamic.json
 benchmark_report/
+api-keys.json
+webhook-config.json
