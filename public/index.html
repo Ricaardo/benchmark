@@ -388,6 +388,32 @@
         <div class="card" style="border: 2px solid #667eea;">
             <h2 style="color: #667eea;">⚙️ 快速配置</h2>
 
+            <!-- 配置预设选择器 -->
+            <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #667eea;">
+                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.1em;">✨ 配置预设</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;" id="preset-buttons">
+                    <button class="btn-primary" onclick="applyPreset('quick-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">⚡ 快速测试</strong>
+                        <small style="opacity: 0.9;">1分钟完成，快速验证</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('standard-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">📊 标准测试</strong>
+                        <small style="opacity: 0.9;">5分钟，标准性能测试</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('full-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">🚀 完整测试</strong>
+                        <small style="opacity: 0.9;">所有模式，全面检测</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('memory-focus')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">🔍 内存专项</strong>
+                        <small style="opacity: 0.9;">专注检测内存泄漏</small>
+                    </button>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 0.9em; color: #666;">
+                    💡 <strong>提示：</strong>点击预设按钮一键应用配置，然后可在下方微调参数
+                </div>
+            </div>
+
             <!-- Initialization 配置 -->
             <div id="init-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
                 <h3 style="margin-bottom: 10px; color: #333;">🚀 Initialization 配置</h3>
@@ -456,8 +482,154 @@
     <script>
         // 使用相对路径，动态获取 API 地址
         const API_BASE = `${window.location.origin}/api`;
-        let statusInterval;
+        const WS_URL = `ws://${window.location.host}`;
+        let ws = null;
+        let reconnectInterval = null;
         let currentConfig = null;
+
+        // 配置预设模板
+        const CONFIG_PRESETS = {
+            'quick-test': {
+                name: '⚡ 快速测试（1分钟）',
+                description: '快速验证功能，1分钟完成',
+                config: {
+                    mode: { anonymous: true, headless: true },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 60000,
+                            delayMs: 5000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                    }
+                }
+            },
+            'standard-test': {
+                name: '📊 标准测试（5分钟）',
+                description: '标准性能测试，包含Runtime',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 300000,
+                            delayMs: 10000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' },
+                                { target: 'https://live.bilibili.com', description: 'B站直播' }
+                            ]
+                        },
+                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                    }
+                }
+            },
+            'full-test': {
+                name: '🚀 完整测试（所有模式）',
+                description: '包含所有测试类型，全面检测',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: {
+                            enabled: true,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 180000,
+                            delayMs: 10000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        MemoryLeak: {
+                            enabled: true,
+                            intervalMs: 60000,
+                            iterations: 3,
+                            onPageTesting: '',
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        }
+                    }
+                }
+            },
+            'memory-focus': {
+                name: '🔍 内存泄漏专项',
+                description: '专注检测内存泄漏问题',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000 },
+                        MemoryLeak: {
+                            enabled: true,
+                            intervalMs: 90000,
+                            iterations: 5,
+                            onPageTesting: '',
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' },
+                                { target: 'https://live.bilibili.com', description: 'B站直播' }
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+
+        // WebSocket 连接管理
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return; // 已经连接
+            }
+
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                // 清除重连定时器
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+
+                    if (message.type === 'status') {
+                        // 实时更新UI
+                        updateUI(message.data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                ws = null;
+
+                // 自动重连
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(() => {
+                        console.log('Attempting to reconnect...');
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+        }
 
         // Toast 通知系统
         function showToast(message, type = 'info') {
@@ -528,7 +700,7 @@
 
                 if (data.success) {
                     showToast(`测试已启动：${runner}`, 'success');
-                    startStatusPolling();
+                    // WebSocket 会自动推送更新，不需要轮询
                 } else {
                     showToast(data.error || '启动失败', 'error');
                 }
@@ -550,8 +722,7 @@
 
                 if (data.success) {
                     showToast('测试已停止', 'warning');
-                    stopStatusPolling();
-                    await refreshStatus();
+                    // WebSocket 会自动推送更新
                 } else {
                     showToast(data.error || '停止失败', 'error');
                 }
@@ -574,8 +745,7 @@
 
                 if (data.success) {
                     showToast('状态已重置', 'success');
-                    stopStatusPolling();
-                    await refreshStatus();
+                    // WebSocket 会自动推送更新
                 } else {
                     showToast('重置失败', 'error');
                 }
@@ -621,19 +791,13 @@
             output.scrollTop = output.scrollHeight;
         }
 
-        // 开始轮询状态
+        // WebSocket 已经替代轮询，这些函数保留为空以防旧代码调用
         function startStatusPolling() {
-            if (!statusInterval) {
-                statusInterval = setInterval(refreshStatus, 1000);
-            }
+            // WebSocket 自动推送，不需要轮询
         }
 
-        // 停止轮询状态
         function stopStatusPolling() {
-            if (statusInterval) {
-                clearInterval(statusInterval);
-                statusInterval = null;
-            }
+            // WebSocket 自动推送，不需要轮询
         }
 
         // 加载报告列表
@@ -884,6 +1048,38 @@
             showToast('配置已导出', 'success');
         }
 
+        // 应用配置预设
+        async function applyPreset(presetKey) {
+            const preset = CONFIG_PRESETS[presetKey];
+            if (!preset) {
+                showToast('未找到该预设', 'error');
+                return;
+            }
+
+            try {
+                // 深拷贝预设配置
+                currentConfig = JSON.parse(JSON.stringify(preset.config));
+
+                // 保存到服务器
+                const response = await fetch(`${API_BASE}/dynamic-config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast(`已应用预设: ${preset.name}`, 'success');
+                    // 重新加载配置到UI
+                    await loadQuickConfig();
+                } else {
+                    showToast('应用预设失败', 'error');
+                }
+            } catch (error) {
+                showToast('应用预设失败: ' + error.message, 'error');
+            }
+        }
+
         // 导入配置
         function importConfig() {
             const input = document.createElement('input');
@@ -923,37 +1119,32 @@
             }
         });
 
-        // 页面关闭时清理
+        // 页面关闭时清理 WebSocket
         window.addEventListener('beforeunload', () => {
-            stopStatusPolling();
+            if (ws) {
+                ws.close();
+            }
+            if (reconnectInterval) {
+                clearInterval(reconnectInterval);
+            }
         });
 
-        // 页面可见性变化时暂停/恢复轮询
+        // 页面可见性变化时重连 WebSocket
         document.addEventListener('visibilitychange', () => {
-            if (document.hidden) {
-                stopStatusPolling();
-            } else {
-                refreshStatus().then(() => {
-                    // 如果测试正在运行，恢复轮询
-                    const badge = document.getElementById('status-badge');
-                    if (badge.textContent === 'RUNNING') {
-                        startStatusPolling();
-                    }
-                });
+            if (!document.hidden) {
+                // 页面恢复可见时，确保 WebSocket 已连接
+                connectWebSocket();
             }
         });
 
         // 页面加载时初始化
         window.onload = async () => {
-            await refreshStatus();
+            // 连接 WebSocket（会自动接收状态更新）
+            connectWebSocket();
+
+            // 加载其他数据
             await loadReports();
             await loadQuickConfig();
-
-            // 如果测试正在运行，自动开始轮询
-            const badge = document.getElementById('status-badge');
-            if (badge.textContent === 'RUNNING') {
-                startStatusPolling();
-            }
         };
     </script>
 </body>

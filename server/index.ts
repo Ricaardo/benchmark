@@ -4,6 +4,7 @@ import { exec, ChildProcess } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
+import { WebSocketServer, WebSocket } from 'ws';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,30 @@ let benchmarkOutput = '';
 let currentRunner = '';
 let isStarting = false; // 并发控制标志
 let killTimeout: NodeJS.Timeout | null = null;
+
+// WebSocket 连接池
+const wsClients = new Set<WebSocket>();
+
+// 广播状态更新到所有 WebSocket 客户端
+function broadcastStatus() {
+    const statusData = {
+        type: 'status',
+        data: {
+            status: benchmarkStatus,
+            output: benchmarkOutput,
+            hasProcess: currentBenchmark !== null,
+            currentRunner
+        }
+    };
+
+    const message = JSON.stringify(statusData);
+
+    wsClients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(message);
+        }
+    });
+}
 
 // 输出缓冲区配置
 const MAX_OUTPUT_LINES = 10000; // 最多保留10000行输出
@@ -40,6 +65,9 @@ function appendOutput(data: string) {
                 benchmarkOutput.slice(-MAX_OUTPUT_CHARS);
         }
     }
+
+    // 实时广播输出更新
+    broadcastStatus();
 }
 
 // 验证URL格式
@@ -322,6 +350,9 @@ app.post('/api/start', async (req, res) => {
         benchmarkOutput = ''; // 清空之前的输出
         currentRunner = runner;
 
+        // 广播状态更新
+        broadcastStatus();
+
         // 执行benchmark命令
         const command = 'npx @bilibili-player/benchmark';
         currentBenchmark = exec(command, {
@@ -347,6 +378,8 @@ app.post('/api/start', async (req, res) => {
                 clearTimeout(killTimeout);
                 killTimeout = null;
             }
+            // 广播状态更新
+            broadcastStatus();
         });
 
         currentBenchmark.on('error', (error) => {
@@ -355,6 +388,8 @@ app.post('/api/start', async (req, res) => {
             benchmarkStatus = 'error';
             currentBenchmark = null;
             currentRunner = '';
+            // 广播状态更新
+            broadcastStatus();
         });
 
         isStarting = false;
@@ -385,6 +420,7 @@ app.post('/api/stop', (req, res) => {
     setTimeout(() => {
         currentBenchmark = null;
         currentRunner = '';
+        broadcastStatus();
     }, 1000);
 
     res.json({ success: true, message: 'Benchmark stopping...' });
@@ -406,6 +442,9 @@ app.post('/api/reset', (req, res) => {
         clearTimeout(killTimeout);
         killTimeout = null;
     }
+
+    // 广播状态更新
+    broadcastStatus();
 
     res.json({ success: true, message: 'Status reset successfully' });
 });
@@ -495,7 +534,8 @@ const server = app.listen(PORT, async () => {
     console.log(`   - View UI: http://localhost:${PORT}`);
     console.log(`   - Config: http://localhost:${PORT}/config.html`);
     console.log(`   - API Status: http://localhost:${PORT}/api/status`);
-    console.log(`   - Health Check: http://localhost:${PORT}/api/health\n`);
+    console.log(`   - Health Check: http://localhost:${PORT}/api/health`);
+    console.log(`   - WebSocket: ws://localhost:${PORT}\n`);
 
     // 启动时确保报告目录存在
     await ensureReportsDir();
@@ -514,6 +554,58 @@ const server = app.listen(PORT, async () => {
         process.exit(1);
     }
 });
+
+// 创建 WebSocket 服务器
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws: WebSocket) => {
+    console.log('WebSocket client connected');
+
+    // 添加到连接池
+    wsClients.add(ws);
+
+    // 立即发送当前状态
+    const statusData = {
+        type: 'status',
+        data: {
+            status: benchmarkStatus,
+            output: benchmarkOutput,
+            hasProcess: currentBenchmark !== null,
+            currentRunner
+        }
+    };
+    ws.send(JSON.stringify(statusData));
+
+    // 处理客户端消息（可选）
+    ws.on('message', (message: Buffer) => {
+        try {
+            const data = JSON.parse(message.toString());
+            console.log('Received message from client:', data);
+
+            // 可以在这里处理客户端发送的命令
+            // 例如：{ type: 'ping' } -> 回复 { type: 'pong' }
+            if (data.type === 'ping') {
+                ws.send(JSON.stringify({ type: 'pong' }));
+            }
+        } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+        }
+    });
+
+    // 处理连接关闭
+    ws.on('close', () => {
+        console.log('WebSocket client disconnected');
+        wsClients.delete(ws);
+    });
+
+    // 处理错误
+    ws.on('error', (error) => {
+        console.error('WebSocket error:', error);
+        wsClients.delete(ws);
+    });
+});
+
+console.log('WebSocket server initialized');
 
 // 优雅关闭
 process.on('SIGTERM', () => {
