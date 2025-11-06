@@ -267,9 +267,77 @@
             margin-bottom: 5px;
             color: #1976d2;
         }
+
+        /* Toast通知系统 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #81c784;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e57373;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ffa726;
+        }
+
+        .toast.info {
+            border-left: 4px solid #64b5f6;
+        }
+
+        .toast-icon {
+            font-size: 1.5em;
+        }
+
+        .toast-message {
+            flex: 1;
+            color: #333;
+        }
+
+        .form-group input.error, .form-group textarea.error {
+            border-color: #e57373;
+        }
+
+        .error-message {
+            color: #e57373;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
+    <div class="toast-container" id="toast-container"></div>
     <div class="container">
         <div class="header">
             <h1>⚙️ Benchmark 配置管理</h1>
@@ -416,7 +484,8 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3000/api';
+        // 使用相对路径，动态获取 API 地址
+        const API_BASE = `${window.location.origin}/api`;
         let config = {
             mode: { anonymous: true, headless: false },
             runners: {
@@ -425,6 +494,43 @@
                 MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
             }
         };
+
+        // Toast 通知系统
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // URL验证
+        function isValidURL(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
 
         // 切换 Runner 启用状态
         function toggleRunner(type) {
@@ -517,7 +623,7 @@
                                    config.runners.MemoryLeak.enabled;
 
                 if (!hasEnabled) {
-                    alert('请至少启用一个测试模式！');
+                    showToast('请至少启用一个测试模式！', 'warning');
                     return;
                 }
 
@@ -529,12 +635,12 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    alert('✅ 配置保存成功！benchmark.config.mts 已更新。');
+                    showToast('配置保存成功！benchmark.config.mts 已更新', 'success');
                 } else {
-                    alert('❌ 保存失败');
+                    showToast('保存失败', 'error');
                 }
             } catch (error) {
-                alert('❌ 保存失败: ' + error.message);
+                showToast('保存失败: ' + error.message, 'error');
             }
         }
 
@@ -585,6 +691,84 @@
                 lastCase.querySelector('.test-description').value = tc.description;
             });
         }
+
+        // 导出配置
+        function exportConfig() {
+            if (!config) {
+                showToast('请先加载配置', 'warning');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `benchmark-config-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('配置已导出', 'success');
+        }
+
+        // 导入配置
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    config = JSON.parse(text);
+                    await loadConfig();
+                    showToast('配置已导入', 'success');
+                } catch (error) {
+                    showToast('导入失败: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        // 添加导出/导入按钮到页面
+        document.addEventListener('DOMContentLoaded', () => {
+            const actions = document.querySelector('.actions');
+            if (actions) {
+                const exportBtn = document.createElement('button');
+                exportBtn.className = 'btn-secondary';
+                exportBtn.textContent = '📤 导出配置';
+                exportBtn.onclick = exportConfig;
+
+                const importBtn = document.createElement('button');
+                importBtn.className = 'btn-secondary';
+                importBtn.textContent = '📥 导入配置';
+                importBtn.onclick = importConfig;
+
+                actions.appendChild(exportBtn);
+                actions.appendChild(importBtn);
+            }
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + S: 保存配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveConfig();
+            }
+
+            // Ctrl/Cmd + E: 导出配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportConfig();
+            }
+
+            // Ctrl/Cmd + I: 导入配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                importConfig();
+            }
+        });
 
         // 页面加载时自动加载配置
         window.onload = loadConfig;

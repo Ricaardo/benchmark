@@ -88,6 +88,7 @@
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         button {
@@ -98,6 +99,7 @@
             cursor: pointer;
             transition: all 0.3s;
             font-weight: 600;
+            position: relative;
         }
 
         .btn-primary {
@@ -122,6 +124,15 @@
             box-shadow: 0 5px 15px rgba(229, 115, 115, 0.4);
         }
 
+        .btn-warning {
+            background: #ffa726;
+            color: white;
+        }
+
+        .btn-warning:hover:not(:disabled) {
+            background: #fb8c00;
+        }
+
         .btn-secondary {
             background: #90a4ae;
             color: white;
@@ -131,9 +142,32 @@
             background: #78909c;
         }
 
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+        }
+
+        button.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            right: 8px;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .output-box {
@@ -150,20 +184,106 @@
             margin-top: 15px;
         }
 
-        .config-editor {
-            width: 100%;
-            min-height: 300px;
-            font-family: 'Courier New', monospace;
-            padding: 15px;
-            border: 2px solid #e0e0e0;
+        .test-case-item {
+            background: white;
+            padding: 12px;
             border-radius: 6px;
-            font-size: 0.9em;
-            resize: vertical;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
         }
 
-        .config-editor:focus {
-            outline: none;
-            border-color: #667eea;
+        .test-case-item input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .test-case-item input.error {
+            border-color: #e57373;
+        }
+
+        .test-case-item input.warning {
+            border-color: #ff9800;
+        }
+
+        .test-case-item label {
+            display: block;
+            margin-top: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+
+        .test-case-item button {
+            margin-top: 8px;
+            padding: 6px 12px;
+            font-size: 0.85em;
+        }
+
+        .error-message {
+            color: #e57373;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        /* Toast通知系统 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+        }
+
+        .toast {
+            background: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 10px;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #81c784;
+        }
+
+        .toast.error {
+            border-left: 4px solid #e57373;
+        }
+
+        .toast.warning {
+            border-left: 4px solid #ffa726;
+        }
+
+        .toast.info {
+            border-left: 4px solid #64b5f6;
+        }
+
+        .toast-icon {
+            font-size: 1.5em;
+        }
+
+        .toast-message {
+            flex: 1;
+            color: #333;
         }
 
         .reports-list {
@@ -186,6 +306,7 @@
             color: #667eea;
             text-decoration: none;
             font-weight: 500;
+            flex: 1;
         }
 
         .reports-list a:hover {
@@ -195,6 +316,13 @@
         .report-date {
             color: #999;
             font-size: 0.85em;
+            margin-right: 10px;
+        }
+
+        .report-size {
+            color: #999;
+            font-size: 0.85em;
+            margin-right: 10px;
         }
 
         .loading {
@@ -203,39 +331,296 @@
             color: #999;
         }
 
-        .test-case-item {
-            background: white;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border: 1px solid #e0e0e0;
+        /* 进度条样式 */
+        .progress-container {
+            margin-top: 15px;
+            background: #2d2d2d;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
         }
 
-        .test-case-item input {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
-        .test-case-item label {
+        .progress-container.active {
             display: block;
-            margin-top: 8px;
-            color: #555;
-            font-weight: 500;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #1e1e1e;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 10px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.9em;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: #d4d4d4;
             font-size: 0.9em;
         }
 
-        .test-case-item button {
-            margin-top: 8px;
-            padding: 6px 12px;
-            font-size: 0.85em;
+        .progress-info strong {
+            color: #fff;
+        }
+
+        /* 深色模式 */
+        body.dark-mode {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+
+        body.dark-mode .card {
+            background: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .card h2 {
+            color: #fff;
+            border-bottom-color: #667eea;
+        }
+
+        body.dark-mode .output-box {
+            background: #1a1a1a;
+            color: #d4d4d4;
+        }
+
+        body.dark-mode input,
+        body.dark-mode select,
+        body.dark-mode textarea {
+            background: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        body.dark-mode .test-case-item {
+            background: #3d3d3d;
+            border-color: #555;
+        }
+
+        /* 深色模式切换按钮 */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        body.dark-mode .theme-toggle {
+            background: rgba(45, 45, 45, 0.9);
+        }
+
+        /* 队列状态样式 */
+        .queue-container {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .queue-container.active {
+            display: block;
+        }
+
+        body.dark-mode .queue-container {
+            background: #2d2d2d;
+        }
+
+        .queue-item {
+            padding: 10px;
+            background: white;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-mode .queue-item {
+            background: #3d3d3d;
+        }
+
+        .queue-item.completed {
+            border-left-color: #81c784;
+            opacity: 0.7;
+        }
+
+        .queue-item.error {
+            border-left-color: #e57373;
+        }
+
+        .queue-item.running {
+            border-left-color: #ffd54f;
+            animation: pulse 2s infinite;
+        }
+
+        /* 移动端响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .header p {
+                font-size: 0.9em;
+            }
+
+            .card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .button-group button {
+                width: 100%;
+                margin-bottom: 8px;
+            }
+
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+            }
+
+            .toast-container {
+                top: 60px;
+                right: 10px;
+                left: 10px;
+            }
+
+            .toast {
+                min-width: auto;
+                width: 100%;
+            }
+
+            /* 快速配置区域在移动端堆叠 */
+            [style*="grid-template-columns"] {
+                grid-template-columns: 1fr !important;
+            }
+
+            .progress-info {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .queue-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .reports-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            /* 导航按钮在移动端堆叠 */
+            [style*="text-align: center"] a {
+                display: block !important;
+                margin: 5px 0 !important;
+            }
+
+            .output-box {
+                font-size: 0.8em;
+                max-height: 300px;
+            }
+        }
+
+        /* 小屏幕手机 */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .card h2 {
+                font-size: 1.2em;
+            }
+
+            button {
+                padding: 10px 16px;
+                font-size: 0.9em;
+            }
+
+            .status-badge {
+                font-size: 0.75em;
+                padding: 6px 12px;
+            }
+
+            select, input {
+                font-size: 0.9em !important;
+            }
+        }
+
+        /* 平板横屏 */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                max-width: 100%;
+                padding: 0 20px;
+            }
+        }
+
+        /* 打印样式 */
+        @media print {
+            .theme-toggle,
+            .button-group,
+            .toast-container {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
         }
     </style>
 </head>
 <body>
+    <button class="theme-toggle" onclick="toggleTheme()" title="切换深色模式">🌙</button>
+    <div class="toast-container" id="toast-container"></div>
+
     <div class="container">
         <div class="header">
             <h1>🚀 Benchmark Web Runner</h1>
@@ -272,6 +657,9 @@
                 <button class="btn-secondary" onclick="refreshStatus()">
                     🔄 刷新状态
                 </button>
+                <button class="btn-warning" onclick="resetStatus()">
+                    🔧 强制重置
+                </button>
             </div>
             <div style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 6px; font-size: 0.9em;">
                 <strong>测试模式说明:</strong>
@@ -281,10 +669,49 @@
                     <li><strong>MemoryLeak:</strong> 检测页面内存泄漏问题</li>
                 </ul>
             </div>
+            <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #64b5f6; border-radius: 4px; font-size: 0.9em; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>💡 快捷键：</strong>
+                    <span style="color: #1976d2;">按下 Ctrl/Cmd + Enter 快速启动测试 | Ctrl/Cmd + S 保存配置</span>
+                </div>
+                <button onclick="showKeyboardShortcuts()" class="btn-secondary btn-small" style="margin: 0;">⌨️ 查看全部</button>
+            </div>
+
+            <!-- 测试队列显示 -->
+            <div class="queue-container" id="queue-container">
+                <h3 style="margin: 0 0 10px 0; color: #333; font-size: 1em;">📋 测试队列</h3>
+                <div id="queue-list"></div>
+            </div>
         </div>
 
         <div class="card" style="border: 2px solid #667eea;">
             <h2 style="color: #667eea;">⚙️ 快速配置</h2>
+
+            <!-- 配置预设选择器 -->
+            <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 2px solid #667eea;">
+                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 1.1em;">✨ 配置预设</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px;" id="preset-buttons">
+                    <button class="btn-primary" onclick="applyPreset('quick-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">⚡ 快速测试</strong>
+                        <small style="opacity: 0.9;">1分钟完成，快速验证</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('standard-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">📊 标准测试</strong>
+                        <small style="opacity: 0.9;">5分钟，标准性能测试</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('full-test')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">🚀 完整测试</strong>
+                        <small style="opacity: 0.9;">所有模式，全面检测</small>
+                    </button>
+                    <button class="btn-primary" onclick="applyPreset('memory-focus')" style="text-align: left; padding: 15px;">
+                        <strong style="display: block; margin-bottom: 5px;">🔍 内存专项</strong>
+                        <small style="opacity: 0.9;">专注检测内存泄漏</small>
+                    </button>
+                </div>
+                <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 0.9em; color: #666;">
+                    💡 <strong>提示：</strong>点击预设按钮一键应用配置，然后可在下方微调参数
+                </div>
+            </div>
 
             <!-- Initialization 配置 -->
             <div id="init-quick-config" style="display: none; background: #f5f5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
@@ -330,6 +757,8 @@
             <div class="button-group" style="margin-top: 15px;">
                 <button class="btn-primary" onclick="saveQuickConfig()">💾 保存配置</button>
                 <button class="btn-secondary" onclick="loadQuickConfig()">🔄 重新加载</button>
+                <button class="btn-secondary" onclick="exportConfig()">📤 导出配置</button>
+                <button class="btn-secondary" onclick="importConfig()">📥 导入配置</button>
             </div>
 
             <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-left: 4px solid #667eea; border-radius: 4px;">
@@ -339,7 +768,50 @@
         </div>
 
         <div class="card">
+            <h2>性能指标</h2>
+            <div id="metrics-container" style="display: none;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                    <div class="metric-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">CPU 使用率</div>
+                        <div id="metric-cpu" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">内存使用</div>
+                        <div id="metric-memory" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">FPS</div>
+                        <div id="metric-fps" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                    <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white; padding: 15px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.9em; opacity: 0.9; margin-bottom: 5px;">加载时间</div>
+                        <div id="metric-load" style="font-size: 2em; font-weight: bold;">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
             <h2>实时输出</h2>
+
+            <!-- 进度条 -->
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%">0%</div>
+                </div>
+                <div class="progress-info">
+                    <div>
+                        <strong>当前进度:</strong> <span id="progress-current">0/0</span>
+                    </div>
+                    <div>
+                        <strong>预计剩余:</strong> <span id="progress-eta">计算中...</span>
+                    </div>
+                    <div>
+                        <strong>已用时间:</strong> <span id="progress-elapsed">00:00</span>
+                    </div>
+                </div>
+            </div>
+
             <div id="output" class="output-box">等待启动测试...</div>
         </div>
 
@@ -350,43 +822,291 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:3000/api';
-        let statusInterval;
+        // 使用相对路径，动态获取 API 地址
+        const API_BASE = `${window.location.origin}/api`;
+        const WS_URL = `ws://${window.location.host}`;
+        let ws = null;
+        let reconnectInterval = null;
         let currentConfig = null;
+
+        // 配置预设模板
+        const CONFIG_PRESETS = {
+            'quick-test': {
+                name: '⚡ 快速测试（1分钟）',
+                description: '快速验证功能，1分钟完成',
+                config: {
+                    mode: { anonymous: true, headless: true },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 60000,
+                            delayMs: 5000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                    }
+                }
+            },
+            'standard-test': {
+                name: '📊 标准测试（5分钟）',
+                description: '标准性能测试，包含Runtime',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 300000,
+                            delayMs: 10000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' },
+                                { target: 'https://live.bilibili.com', description: 'B站直播' }
+                            ]
+                        },
+                        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                    }
+                }
+            },
+            'full-test': {
+                name: '🚀 完整测试（所有模式）',
+                description: '包含所有测试类型，全面检测',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: {
+                            enabled: true,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        Runtime: {
+                            enabled: true,
+                            durationMs: 180000,
+                            delayMs: 10000,
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        },
+                        MemoryLeak: {
+                            enabled: true,
+                            intervalMs: 60000,
+                            iterations: 3,
+                            onPageTesting: '',
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' }
+                            ]
+                        }
+                    }
+                }
+            },
+            'memory-focus': {
+                name: '🔍 内存泄漏专项',
+                description: '专注检测内存泄漏问题',
+                config: {
+                    mode: { anonymous: true, headless: false },
+                    runners: {
+                        Initialization: { enabled: false, testCases: [] },
+                        Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000 },
+                        MemoryLeak: {
+                            enabled: true,
+                            intervalMs: 90000,
+                            iterations: 5,
+                            onPageTesting: '',
+                            testCases: [
+                                { target: 'https://www.bilibili.com', description: 'B站首页' },
+                                { target: 'https://live.bilibili.com', description: 'B站直播' }
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+
+        // WebSocket 连接管理
+        function connectWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                return; // 已经连接
+            }
+
+            ws = new WebSocket(WS_URL);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+                // 清除重连定时器
+                if (reconnectInterval) {
+                    clearInterval(reconnectInterval);
+                    reconnectInterval = null;
+                }
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+
+                    if (message.type === 'status') {
+                        // 实时更新UI
+                        updateUI(message.data);
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                ws = null;
+
+                // 自动重连
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(() => {
+                        console.log('Attempting to reconnect...');
+                        connectWebSocket();
+                    }, 3000);
+                }
+            };
+        }
+
+        // Toast 通知系统
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type] || icons.info}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease-out reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // URL验证
+        function isValidURL(url) {
+            try {
+                new URL(url);
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
+        // 添加按钮加载状态
+        function setButtonLoading(button, loading) {
+            if (loading) {
+                button.disabled = true;
+                button.classList.add('loading');
+                button.dataset.originalText = button.textContent;
+                button.textContent = button.textContent.replace(/^[^\s]+\s/, '⏳ ');
+            } else {
+                button.disabled = false;
+                button.classList.remove('loading');
+                if (button.dataset.originalText) {
+                    button.textContent = button.dataset.originalText;
+                }
+            }
+        }
 
         // 启动测试
         async function startBenchmark() {
+            const startBtn = document.getElementById('start-btn');
+
+            // 前端配置验证
+            const validation = validateCurrentConfig();
+            if (!showValidationResult(validation)) {
+                return; // 验证失败，不启动
+            }
+
+            setButtonLoading(startBtn, true);
+
+            // 重置进度
+            resetProgress();
+
             try {
                 const runner = document.getElementById('runner-select').value;
+
+                // 显示测试队列
+                showTestQueue(runner);
+
                 const response = await fetch(`${API_BASE}/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ runner })
                 });
                 const data = await response.json();
+
                 if (data.success) {
-                    startStatusPolling();
+                    showToast(`✅ 测试已启动：${runner}`, 'success');
+                    // WebSocket 会自动推送更新，不需要轮询
                 } else {
-                    alert(data.error || '启动失败');
+                    showToast('❌ ' + (data.error || '启动失败'), 'error');
                 }
             } catch (error) {
-                alert('启动测试失败: ' + error.message);
+                showToast('❌ 启动测试失败: ' + error.message, 'error');
+            } finally {
+                setButtonLoading(startBtn, false);
             }
         }
 
         // 停止测试
         async function stopBenchmark() {
+            const stopBtn = document.getElementById('stop-btn');
+            setButtonLoading(stopBtn, true);
+
             try {
                 const response = await fetch(`${API_BASE}/stop`, { method: 'POST' });
                 const data = await response.json();
+
                 if (data.success) {
-                    stopStatusPolling();
-                    await refreshStatus();
+                    showToast('测试已停止', 'warning');
+                    // WebSocket 会自动推送更新
                 } else {
-                    alert(data.error || '停止失败');
+                    showToast(data.error || '停止失败', 'error');
                 }
             } catch (error) {
-                alert('停止测试失败: ' + error.message);
+                showToast('停止测试失败: ' + error.message, 'error');
+            } finally {
+                setButtonLoading(stopBtn, false);
+            }
+        }
+
+        // 强制重置状态
+        async function resetStatus() {
+            if (!confirm('确定要强制重置所有状态吗？这将终止所有正在运行的测试。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reset`, { method: 'POST' });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('状态已重置', 'success');
+                    // WebSocket 会自动推送更新
+                } else {
+                    showToast('重置失败', 'error');
+                }
+            } catch (error) {
+                showToast('重置失败: ' + error.message, 'error');
             }
         }
 
@@ -425,21 +1145,30 @@
 
             output.textContent = data.output || '暂无输出...';
             output.scrollTop = output.scrollHeight;
+
+            // 更新进度、指标和队列
+            if (data.output) {
+                updateProgress(data.output);
+                updateMetrics(data.output);
+                updateQueueFromOutput(data.output);
+            }
+
+            // 如果测试完成或出错，重置进度和队列
+            if (data.status === 'completed' || data.status === 'error' || data.status === 'idle') {
+                if (progressStartTime > 0) {
+                    setTimeout(resetProgress, 3000); // 3秒后重置进度条
+                    setTimeout(hideTestQueue, 3000); // 3秒后隐藏队列
+                }
+            }
         }
 
-        // 开始轮询状态
+        // WebSocket 已经替代轮询，这些函数保留为空以防旧代码调用
         function startStatusPolling() {
-            if (!statusInterval) {
-                statusInterval = setInterval(refreshStatus, 1000);
-            }
+            // WebSocket 自动推送，不需要轮询
         }
 
-        // 停止轮询状态
         function stopStatusPolling() {
-            if (statusInterval) {
-                clearInterval(statusInterval);
-                statusInterval = null;
-            }
+            // WebSocket 自动推送，不需要轮询
         }
 
         // 加载报告列表
@@ -460,9 +1189,12 @@
                 reports.forEach(report => {
                     const li = document.createElement('li');
                     const date = new Date(report.modified).toLocaleString('zh-CN');
+                    const size = formatFileSize(report.size);
                     li.innerHTML = `
                         <a href="${report.path}" target="_blank">${report.name}</a>
                         <span class="report-date">${date}</span>
+                        <span class="report-size">${size}</span>
+                        <button class="btn-danger btn-small" onclick="deleteReport('${report.name}', event)">🗑️ 删除</button>
                     `;
                     list.appendChild(li);
                 });
@@ -475,11 +1207,302 @@
             }
         }
 
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        // 删除报告
+        async function deleteReport(filename, event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            if (!confirm(`确定要删除报告 "${filename}" 吗？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/reports/${filename}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('报告已删除', 'success');
+                    await loadReports();
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除失败: ' + error.message, 'error');
+            }
+        }
+
+        // 深色模式切换
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const btn = document.querySelector('.theme-toggle');
+            const isDark = document.body.classList.contains('dark-mode');
+            btn.textContent = isDark ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        }
+
+        // 初始化主题
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                const btn = document.querySelector('.theme-toggle');
+                if (btn) btn.textContent = '☀️';
+            }
+        }
+
+        // 进度追踪
+        let progressStartTime = 0;
+        let progressData = {
+            current: 0,
+            total: 0,
+            percentage: 0
+        };
+
+        function updateProgress(output) {
+            // 尝试从输出中解析进度信息
+            // 匹配类似 "Progress: 1/3" 或 "Test 2 of 5" 的模式
+            const patterns = [
+                /(?:Progress|测试进度):\s*(\d+)\s*\/\s*(\d+)/i,
+                /Test\s+(\d+)\s+of\s+(\d+)/i,
+                /测试\s*(\d+)\s*\/\s*(\d+)/i,
+                /\[(\d+)\/(\d+)\]/
+            ];
+
+            let matched = false;
+            for (const pattern of patterns) {
+                const match = output.match(pattern);
+                if (match) {
+                    progressData.current = parseInt(match[1]);
+                    progressData.total = parseInt(match[2]);
+                    progressData.percentage = Math.round((progressData.current / progressData.total) * 100);
+                    matched = true;
+                    break;
+                }
+            }
+
+            // 如果匹配到进度，显示进度条
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressCurrent = document.getElementById('progress-current');
+            const progressEta = document.getElementById('progress-eta');
+            const progressElapsed = document.getElementById('progress-elapsed');
+
+            if (matched && progressData.total > 0) {
+                progressContainer.classList.add('active');
+                progressFill.style.width = progressData.percentage + '%';
+                progressFill.textContent = progressData.percentage + '%';
+                progressCurrent.textContent = `${progressData.current}/${progressData.total}`;
+
+                // 计算已用时间
+                if (progressStartTime === 0) {
+                    progressStartTime = Date.now();
+                }
+                const elapsed = Math.floor((Date.now() - progressStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                progressElapsed.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                // 计算预计剩余时间
+                if (progressData.current > 0) {
+                    const avgTimePerTest = elapsed / progressData.current;
+                    const remainingTests = progressData.total - progressData.current;
+                    const etaSeconds = Math.floor(avgTimePerTest * remainingTests);
+                    const etaMinutes = Math.floor(etaSeconds / 60);
+                    const etaSecs = etaSeconds % 60;
+                    progressEta.textContent = `${String(etaMinutes).padStart(2, '0')}:${String(etaSecs).padStart(2, '0')}`;
+                } else {
+                    progressEta.textContent = '计算中...';
+                }
+            } else if (benchmarkStatus === 'idle' || benchmarkStatus === 'completed' || benchmarkStatus === 'error') {
+                // 测试未运行或已完成时隐藏进度条
+                progressContainer.classList.remove('active');
+            }
+        }
+
+        function resetProgress() {
+            progressStartTime = 0;
+            progressData = { current: 0, total: 0, percentage: 0 };
+            const progressContainer = document.getElementById('progress-container');
+            progressContainer.classList.remove('active');
+        }
+
+        // 性能指标提取和显示
+        function updateMetrics(output) {
+            const metricsContainer = document.getElementById('metrics-container');
+
+            // 提取 CPU 使用率
+            const cpuMatch = output.match(/CPU[:\s]+(\d+\.?\d*)%?/i);
+            if (cpuMatch) {
+                document.getElementById('metric-cpu').textContent = cpuMatch[1] + '%';
+                metricsContainer.style.display = 'block';
+            }
+
+            // 提取内存使用
+            const memoryMatches = [
+                output.match(/Memory[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
+                output.match(/Heap[:\s]+(\d+\.?\d*)\s*(MB|GB)/i),
+                output.match(/(\d+\.?\d*)\s*(MB|GB).*memory/i)
+            ];
+            for (const match of memoryMatches) {
+                if (match) {
+                    document.getElementById('metric-memory').textContent = match[1] + ' ' + match[2];
+                    metricsContainer.style.display = 'block';
+                    break;
+                }
+            }
+
+            // 提取 FPS
+            const fpsMatch = output.match(/FPS[:\s]+(\d+\.?\d*)/i);
+            if (fpsMatch) {
+                document.getElementById('metric-fps').textContent = fpsMatch[1];
+                metricsContainer.style.display = 'block';
+            }
+
+            // 提取加载时间
+            const loadMatches = [
+                output.match(/Load[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
+                output.match(/Loading time[:\s]+(\d+\.?\d*)\s*(ms|s)/i),
+                output.match(/Initialization[:\s]+(\d+\.?\d*)\s*(ms|s)/i)
+            ];
+            for (const match of loadMatches) {
+                if (match) {
+                    let value = parseFloat(match[1]);
+                    let unit = match[2];
+                    if (unit === 's') {
+                        value = (value * 1000).toFixed(0);
+                        unit = 'ms';
+                    }
+                    document.getElementById('metric-load').textContent = value + ' ' + unit;
+                    metricsContainer.style.display = 'block';
+                    break;
+                }
+            }
+
+            // 如果测试结束，隐藏指标卡片
+            if (benchmarkStatus === 'completed' || benchmarkStatus === 'error' || benchmarkStatus === 'idle') {
+                setTimeout(() => {
+                    metricsContainer.style.display = 'none';
+                    // 重置指标显示
+                    document.getElementById('metric-cpu').textContent = '--';
+                    document.getElementById('metric-memory').textContent = '--';
+                    document.getElementById('metric-fps').textContent = '--';
+                    document.getElementById('metric-load').textContent = '--';
+                }, 5000);
+            }
+        }
+
+        // 测试队列管理
+        function showTestQueue(runner) {
+            if (!currentConfig || !currentConfig.runners[runner]) return;
+
+            const testCases = currentConfig.runners[runner].testCases || [];
+            if (testCases.length === 0) return;
+
+            const queueContainer = document.getElementById('queue-container');
+            const queueList = document.getElementById('queue-list');
+
+            queueList.innerHTML = '';
+
+            testCases.forEach((tc, index) => {
+                const item = document.createElement('div');
+                item.className = 'queue-item';
+                item.id = `queue-item-${index}`;
+                item.innerHTML = `
+                    <div>
+                        <strong>${index + 1}. ${tc.description || '未命名测试'}</strong>
+                        <div style="font-size: 0.85em; color: #666; margin-top: 3px;">${tc.target}</div>
+                    </div>
+                    <span class="queue-status" id="queue-status-${index}">⏳ 等待中</span>
+                `;
+                queueList.appendChild(item);
+            });
+
+            queueContainer.classList.add('active');
+        }
+
+        function updateQueueItem(index, status) {
+            const item = document.getElementById(`queue-item-${index}`);
+            const statusSpan = document.getElementById(`queue-status-${index}`);
+
+            if (!item || !statusSpan) return;
+
+            item.classList.remove('pending', 'running', 'completed', 'error');
+
+            switch(status) {
+                case 'running':
+                    item.classList.add('running');
+                    statusSpan.textContent = '▶️ 运行中';
+                    break;
+                case 'completed':
+                    item.classList.add('completed');
+                    statusSpan.textContent = '✅ 完成';
+                    break;
+                case 'error':
+                    item.classList.add('error');
+                    statusSpan.textContent = '❌ 失败';
+                    break;
+                default:
+                    statusSpan.textContent = '⏳ 等待中';
+            }
+        }
+
+        function hideTestQueue() {
+            const queueContainer = document.getElementById('queue-container');
+            setTimeout(() => {
+                queueContainer.classList.remove('active');
+            }, 3000); // 3秒后隐藏队列
+        }
+
+        function updateQueueFromOutput(output) {
+            // 尝试从输出中检测当前运行的测试
+            // 匹配 "Testing: description" 或类似的模式
+            const testPatterns = [
+                /Testing:\s*(.+)/i,
+                /测试:\s*(.+)/i,
+                /Running test:\s*(.+)/i
+            ];
+
+            for (const pattern of testPatterns) {
+                const match = output.match(pattern);
+                if (match && currentConfig) {
+                    const runner = currentRunner;
+                    if (runner && currentConfig.runners[runner]) {
+                        const testCases = currentConfig.runners[runner].testCases || [];
+                        testCases.forEach((tc, index) => {
+                            if (match[1].includes(tc.description)) {
+                                updateQueueItem(index, 'running');
+                            }
+                        });
+                    }
+                }
+            }
+
+            // 检测测试完成
+            if (output.includes('✓') || output.includes('passed') || output.includes('成功')) {
+                // 标记最近运行的测试为完成
+                if (progressData.current > 0) {
+                    updateQueueItem(progressData.current - 1, 'completed');
+                }
+            }
+        }
+
         // 监听 runner 选择变化，显示对应的快速配置
         document.addEventListener('DOMContentLoaded', () => {
             const runnerSelect = document.getElementById('runner-select');
             runnerSelect.addEventListener('change', updateQuickConfigVisibility);
             updateQuickConfigVisibility(); // 初始化显示
+            initTheme(); // 初始化主题
         });
 
         function updateQuickConfigVisibility() {
@@ -520,7 +1543,7 @@
                 renderQuickTestCases('MemoryLeak', currentConfig.runners.MemoryLeak.testCases || []);
 
             } catch (error) {
-                alert('加载配置失败: ' + error.message);
+                showToast('加载配置失败: ' + error.message, 'error');
             }
         }
 
@@ -538,13 +1561,133 @@
                 div.className = 'test-case-item';
                 div.innerHTML = `
                     <label>测试 URL</label>
-                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target">
+                    <input type="text" value="${tc.target || ''}" data-runner="${runner}" data-index="${index}" data-field="target" oninput="validateURL(this)">
+                    <div class="error-message" data-error-for="${runner}-${index}-target"></div>
                     <label>描述</label>
                     <input type="text" value="${tc.description || ''}" data-runner="${runner}" data-index="${index}" data-field="description">
-                    <button class="btn-danger" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
+                    <button class="btn-danger btn-small" onclick="removeQuickTestCase('${runner}', ${index})">🗑️ 删除</button>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        // 增强的URL验证，支持多种协议和格式检查
+        function validateURL(input) {
+            const url = input.value.trim();
+            const runner = input.dataset.runner;
+            const index = input.dataset.index;
+            const errorDiv = document.querySelector(`[data-error-for="${runner}-${index}-target"]`);
+
+            if (!url) {
+                input.classList.remove('error');
+                if (errorDiv) errorDiv.textContent = '';
+                return;
+            }
+
+            // 检查URL格式
+            if (!isValidURL(url)) {
+                input.classList.add('error');
+                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效，应以 http:// 或 https:// 开头';
+                return;
+            }
+
+            // 检查是否是B站相关域名（提示）
+            try {
+                const urlObj = new URL(url);
+                if (!urlObj.hostname.includes('bilibili.com')) {
+                    input.classList.add('warning');
+                    input.classList.remove('error');
+                    if (errorDiv) {
+                        errorDiv.style.color = '#ff9800';
+                        errorDiv.textContent = 'ℹ️ 提示：建议使用B站域名以获得最佳测试效果';
+                    }
+                } else {
+                    input.classList.remove('error', 'warning');
+                    if (errorDiv) {
+                        errorDiv.style.color = '#4caf50';
+                        errorDiv.textContent = '✓ URL 格式正确';
+                    }
+                }
+            } catch (e) {
+                input.classList.add('error');
+                if (errorDiv) errorDiv.textContent = '⚠️ URL 格式无效';
+            }
+        }
+
+        // 验证配置完整性
+        function validateCurrentConfig() {
+            if (!currentConfig) return { valid: false, errors: ['配置未加载'] };
+
+            const errors = [];
+            const warnings = [];
+            const runner = document.getElementById('runner-select').value;
+
+            if (!currentConfig.runners[runner]) {
+                errors.push(`未找到 ${runner} 的配置`);
+                return { valid: false, errors, warnings };
+            }
+
+            const runnerConfig = currentConfig.runners[runner];
+
+            if (!runnerConfig.enabled) {
+                errors.push(`${runner} 未启用`);
+            }
+
+            if (!runnerConfig.testCases || runnerConfig.testCases.length === 0) {
+                errors.push(`${runner} 没有配置测试用例`);
+            } else {
+                runnerConfig.testCases.forEach((tc, index) => {
+                    if (!tc.target) {
+                        errors.push(`测试用例 #${index + 1} 缺少 URL`);
+                    } else if (!isValidURL(tc.target)) {
+                        errors.push(`测试用例 #${index + 1} URL 格式无效: ${tc.target}`);
+                    }
+                    if (!tc.description) {
+                        warnings.push(`测试用例 #${index + 1} 缺少描述`);
+                    }
+                });
+            }
+
+            // Runner特定验证
+            if (runner === 'Runtime') {
+                if (!runnerConfig.durationMs || runnerConfig.durationMs < 1000) {
+                    errors.push('Runtime 运行时长至少为 1000ms (1秒)');
+                }
+                if (runnerConfig.delayMs < 0) {
+                    errors.push('Runtime 延迟时间不能为负数');
+                }
+            }
+
+            if (runner === 'MemoryLeak') {
+                if (!runnerConfig.iterations || runnerConfig.iterations < 2) {
+                    errors.push('MemoryLeak 迭代次数至少为 2');
+                }
+                if (!runnerConfig.intervalMs || runnerConfig.intervalMs < 1000) {
+                    errors.push('MemoryLeak 迭代间隔至少为 1000ms (1秒)');
+                }
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors,
+                warnings
+            };
+        }
+
+        // 显示验证结果
+        function showValidationResult(result) {
+            if (result.errors.length > 0) {
+                const errorMsg = '配置验证失败：\n' + result.errors.map(e => '• ' + e).join('\n');
+                showToast(errorMsg, 'error');
+                return false;
+            }
+
+            if (result.warnings.length > 0) {
+                const warningMsg = '配置警告：\n' + result.warnings.map(w => '• ' + w).join('\n');
+                showToast(warningMsg, 'warning');
+            }
+
+            return true;
         }
 
         // 添加测试用例
@@ -575,7 +1718,7 @@
         // 保存快速配置
         async function saveQuickConfig() {
             if (!currentConfig) {
-                alert('请先加载配置');
+                showToast('请先加载配置', 'warning');
                 return;
             }
 
@@ -609,18 +1752,218 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    alert('✅ 配置保存成功！');
+                    showToast('配置保存成功！', 'success');
                 } else {
-                    alert('❌ 保存失败: ' + (data.error || '未知错误'));
+                    showToast('保存失败: ' + (data.error || '未知错误'), 'error');
                 }
             } catch (error) {
-                alert('保存配置失败: ' + error.message);
+                showToast('保存配置失败: ' + error.message, 'error');
             }
         }
 
+        // 导出配置
+        function exportConfig() {
+            if (!currentConfig) {
+                showToast('请先加载配置', 'warning');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(currentConfig, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `benchmark-config-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('配置已导出', 'success');
+        }
+
+        // 应用配置预设
+        async function applyPreset(presetKey) {
+            const preset = CONFIG_PRESETS[presetKey];
+            if (!preset) {
+                showToast('未找到该预设', 'error');
+                return;
+            }
+
+            try {
+                // 深拷贝预设配置
+                currentConfig = JSON.parse(JSON.stringify(preset.config));
+
+                // 保存到服务器
+                const response = await fetch(`${API_BASE}/dynamic-config`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast(`已应用预设: ${preset.name}`, 'success');
+                    // 重新加载配置到UI
+                    await loadQuickConfig();
+                } else {
+                    showToast('应用预设失败', 'error');
+                }
+            } catch (error) {
+                showToast('应用预设失败: ' + error.message, 'error');
+            }
+        }
+
+        // 导入配置
+        function importConfig() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    currentConfig = JSON.parse(text);
+                    await loadQuickConfig();
+                    showToast('配置已导入', 'success');
+                } catch (error) {
+                    showToast('导入失败: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + Enter: 启动测试
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                const startBtn = document.getElementById('start-btn');
+                if (!startBtn.disabled) {
+                    startBenchmark();
+                }
+            }
+
+            // Ctrl/Cmd + S: 保存配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveQuickConfig();
+            }
+
+            // Escape: 停止测试
+            if (e.key === 'Escape') {
+                const stopBtn = document.getElementById('stop-btn');
+                if (!stopBtn.disabled) {
+                    e.preventDefault();
+                    stopBenchmark();
+                }
+            }
+
+            // Ctrl/Cmd + R: 刷新状态
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                refreshStatus();
+                showToast('状态已刷新', 'info');
+            }
+
+            // Ctrl/Cmd + L: 重新加载配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'l') {
+                e.preventDefault();
+                loadQuickConfig();
+                showToast('配置已重新加载', 'info');
+            }
+
+            // Ctrl/Cmd + D: 切换深色模式
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+
+            // Ctrl/Cmd + E: 导出配置
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault();
+                exportConfig();
+            }
+
+            // Ctrl/Cmd + /: 显示快捷键帮助
+            if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                e.preventDefault();
+                showKeyboardShortcuts();
+            }
+        });
+
+        // 显示快捷键帮助
+        function showKeyboardShortcuts() {
+            const shortcuts = `
+<strong>⌨️ 键盘快捷键</strong>
+
+• Ctrl/Cmd + Enter - 启动测试
+• Ctrl/Cmd + S - 保存配置
+• Escape - 停止测试
+• Ctrl/Cmd + R - 刷新状态
+• Ctrl/Cmd + L - 重新加载配置
+• Ctrl/Cmd + D - 切换深色模式
+• Ctrl/Cmd + E - 导出配置
+• Ctrl/Cmd + / - 显示快捷键帮助
+            `.trim();
+
+            // 创建一个临时的模态框显示快捷键
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 30px;
+                border-radius: 12px;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                z-index: 10001;
+                max-width: 500px;
+                white-space: pre-line;
+            `;
+
+            if (document.body.classList.contains('dark-mode')) {
+                modal.style.background = '#2d2d2d';
+                modal.style.color = '#e0e0e0';
+            }
+
+            modal.innerHTML = shortcuts + '<br><br><button onclick="this.parentElement.remove()" class="btn-primary" style="width: 100%;">关闭 (点击任意位置)</button>';
+
+            modal.onclick = (e) => {
+                if (e.target === modal || e.target.tagName === 'BUTTON') {
+                    modal.remove();
+                }
+            };
+
+            document.body.appendChild(modal);
+
+            // 3秒后自动关闭
+            setTimeout(() => modal.remove(), 10000);
+        }
+
+        // 页面关闭时清理 WebSocket
+        window.addEventListener('beforeunload', () => {
+            if (ws) {
+                ws.close();
+            }
+            if (reconnectInterval) {
+                clearInterval(reconnectInterval);
+            }
+        });
+
+        // 页面可见性变化时重连 WebSocket
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                // 页面恢复可见时，确保 WebSocket 已连接
+                connectWebSocket();
+            }
+        });
+
         // 页面加载时初始化
         window.onload = async () => {
-            await refreshStatus();
+            // 连接 WebSocket（会自动接收状态更新）
+            connectWebSocket();
+
+            // 加载其他数据
             await loadReports();
             await loadQuickConfig();
         };
