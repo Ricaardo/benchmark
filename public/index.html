@@ -719,6 +719,56 @@
             </div>
         </div>
 
+        <div class="card" style="border: 2px solid #9c27b0;">
+            <h2 style="color: #9c27b0; display: flex; justify-content: space-between; align-items: center;">
+                <span>📚 用例库</span>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-secondary btn-small" onclick="toggleCaseLibrary()">
+                        <span id="library-toggle-text">📖 展开</span>
+                    </button>
+                    <button class="btn-secondary btn-small" onclick="exportCaseLibrary()">📤 导出</button>
+                    <button class="btn-secondary btn-small" onclick="importCaseLibrary()">📥 导入</button>
+                </div>
+            </h2>
+
+            <div id="case-library-panel" style="display: none;">
+                <!-- 添加新用例 -->
+                <div style="background: #f3e5f5; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #9c27b0;">➕ 添加新用例到库</h4>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 8px; align-items: end;">
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">URL</label>
+                            <input type="text" id="new-case-url" placeholder="https://www.bilibili.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">描述</label>
+                            <input type="text" id="new-case-description" placeholder="B站首页" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.85em; color: #555; display: block; margin-bottom: 3px;">标签</label>
+                            <input type="text" id="new-case-tags" placeholder="首页,基础" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <button class="btn-primary" onclick="addToCaseLibrary()" style="padding: 8px 16px;">➕ 添加</button>
+                    </div>
+                </div>
+
+                <!-- 用例库列表 -->
+                <div style="background: #fafafa; padding: 15px; border-radius: 8px;">
+                    <h4 style="margin: 0 0 10px 0; font-size: 0.95em; color: #666; display: flex; justify-content: space-between; align-items: center;">
+                        <span>📋 已保存的用例 (<span id="library-count">0</span>)</span>
+                        <button class="btn-secondary btn-small" onclick="clearCaseLibrary()">🗑️ 清空库</button>
+                    </h4>
+                    <div id="case-library-list" style="max-height: 400px; overflow-y: auto;">
+                        <p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-left: 4px solid #ff9800; border-radius: 4px; font-size: 0.9em;">
+                    💡 <strong>提示：</strong>将常用的测试URL保存到用例库，配置时可以快速添加到任意runner。支持标签分类和批量导入导出。
+                </div>
+            </div>
+        </div>
+
         <div class="card" style="border: 2px solid #667eea;">
             <h2 style="color: #667eea; display: flex; justify-content: space-between; align-items: center;">
                 <span>⚙️ 统一配置面板</span>
@@ -744,7 +794,10 @@
                     </div>
                     <p style="font-size: 0.85em; color: #666; margin: 0 0 10px 0;">测试页面初始化加载性能</p>
                     <div id="init-test-cases-unified"></div>
-                    <button class="btn-secondary btn-small" onclick="addTestCase('Initialization')" style="width: 100%; margin-top: 8px;">➕ 添加测试URL</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('Initialization')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Initialization')">📚 从库添加</button>
+                    </div>
                 </div>
 
                 <!-- Runtime -->
@@ -768,7 +821,10 @@
                         </div>
                     </div>
                     <div id="runtime-test-cases-unified"></div>
-                    <button class="btn-secondary btn-small" onclick="addTestCase('Runtime')" style="width: 100%; margin-top: 8px;">➕ 添加测试URL</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('Runtime')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('Runtime')">📚 从库添加</button>
+                    </div>
                 </div>
 
                 <!-- MemoryLeak -->
@@ -792,7 +848,10 @@
                         </div>
                     </div>
                     <div id="memory-test-cases-unified"></div>
-                    <button class="btn-secondary btn-small" onclick="addTestCase('MemoryLeak')" style="width: 100%; margin-top: 8px;">➕ 添加测试URL</button>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px;">
+                        <button class="btn-secondary btn-small" onclick="addTestCase('MemoryLeak')">➕ 手动添加</button>
+                        <button class="btn-primary btn-small" onclick="showLibrarySelector('MemoryLeak')">📚 从库添加</button>
+                    </div>
                 </div>
             </div>
 
@@ -1063,6 +1122,329 @@
 
         // 测试历史
         let testHistory = JSON.parse(localStorage.getItem('testHistory') || '[]');
+
+        // 用例库
+        let caseLibrary = JSON.parse(localStorage.getItem('caseLibrary') || '[]');
+
+        // 初始化预设用例
+        function initDefaultCaseLibrary() {
+            if (caseLibrary.length === 0) {
+                caseLibrary = [
+                    { url: 'https://www.bilibili.com', description: 'B站首页', tags: ['首页', '基础'] },
+                    { url: 'https://live.bilibili.com', description: 'B站直播', tags: ['直播', '基础'] },
+                    { url: 'https://www.bilibili.com/video/BV1xx411c7XZ', description: '视频播放页', tags: ['视频', '播放器'] },
+                    { url: 'https://search.bilibili.com/all?keyword=test', description: '搜索页面', tags: ['搜索'] },
+                    { url: 'https://space.bilibili.com/1', description: '用户空间', tags: ['空间'] }
+                ];
+                saveCaseLibrary();
+            }
+        }
+
+        // 保存用例库到localStorage
+        function saveCaseLibrary() {
+            localStorage.setItem('caseLibrary', JSON.stringify(caseLibrary));
+            renderCaseLibrary();
+        }
+
+        // 切换用例库面板
+        function toggleCaseLibrary() {
+            const panel = document.getElementById('case-library-panel');
+            const toggleText = document.getElementById('library-toggle-text');
+
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                toggleText.textContent = '📕 收起';
+            } else {
+                panel.style.display = 'none';
+                toggleText.textContent = '📖 展开';
+            }
+        }
+
+        // 添加用例到库
+        function addToCaseLibrary() {
+            const url = document.getElementById('new-case-url').value.trim();
+            const description = document.getElementById('new-case-description').value.trim();
+            const tagsStr = document.getElementById('new-case-tags').value.trim();
+
+            if (!url) {
+                showToast('❌ 请输入URL', 'error');
+                return;
+            }
+
+            if (!isValidURL(url)) {
+                showToast('❌ URL格式无效', 'error');
+                return;
+            }
+
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            const newCase = {
+                id: Date.now(),
+                url,
+                description: description || url,
+                tags,
+                addedAt: new Date().toLocaleString('zh-CN')
+            };
+
+            caseLibrary.unshift(newCase);
+            saveCaseLibrary();
+
+            // 清空输入框
+            document.getElementById('new-case-url').value = '';
+            document.getElementById('new-case-description').value = '';
+            document.getElementById('new-case-tags').value = '';
+
+            showToast('✅ 用例已添加到库', 'success');
+        }
+
+        // 渲染用例库
+        function renderCaseLibrary() {
+            const container = document.getElementById('case-library-list');
+            const count = document.getElementById('library-count');
+
+            count.textContent = caseLibrary.length;
+
+            if (caseLibrary.length === 0) {
+                container.innerHTML = '<p style="color: #999; font-size: 0.9em; text-align: center; padding: 20px;">暂无保存的用例</p>';
+                return;
+            }
+
+            container.innerHTML = caseLibrary.map((item, index) => `
+                <div style="background: white; padding: 12px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #9c27b0;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 6px;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; color: #333; font-size: 0.95em; margin-bottom: 3px;">${item.description}</div>
+                            <div style="color: #666; font-size: 0.85em; word-break: break-all;">${item.url}</div>
+                            ${item.tags && item.tags.length > 0 ? `
+                                <div style="margin-top: 6px;">
+                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="display: flex; gap: 4px; margin-left: 10px;">
+                            <button class="btn-secondary btn-small" onclick="editCaseInLibrary(${index})" style="padding: 4px 8px;">✏️</button>
+                            <button class="btn-danger btn-small" onclick="removeCaseFromLibrary(${index})" style="padding: 4px 8px;">🗑️</button>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.75em; color: #999;">添加时间: ${item.addedAt}</div>
+                </div>
+            `).join('');
+        }
+
+        // 编辑用例
+        function editCaseInLibrary(index) {
+            const item = caseLibrary[index];
+            if (!item) return;
+
+            const url = prompt('编辑URL:', item.url);
+            if (url === null) return;
+
+            if (!isValidURL(url)) {
+                showToast('❌ URL格式无效', 'error');
+                return;
+            }
+
+            const description = prompt('编辑描述:', item.description) || url;
+            const tagsStr = prompt('编辑标签（逗号分隔）:', item.tags.join(',')) || '';
+            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            caseLibrary[index] = {
+                ...item,
+                url,
+                description,
+                tags
+            };
+
+            saveCaseLibrary();
+            showToast('✅ 用例已更新', 'success');
+        }
+
+        // 从库中删除用例
+        function removeCaseFromLibrary(index) {
+            if (confirm('确定要删除这个用例吗？')) {
+                caseLibrary.splice(index, 1);
+                saveCaseLibrary();
+                showToast('✅ 用例已删除', 'info');
+            }
+        }
+
+        // 清空用例库
+        function clearCaseLibrary() {
+            if (confirm('确定要清空整个用例库吗？这将删除所有保存的用例。')) {
+                caseLibrary = [];
+                saveCaseLibrary();
+                showToast('✅ 用例库已清空', 'info');
+            }
+        }
+
+        // 导出用例库
+        function exportCaseLibrary() {
+            if (caseLibrary.length === 0) {
+                showToast('❌ 用例库为空，无法导出', 'warning');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(caseLibrary, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `case-library-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ 用例库已导出', 'success');
+        }
+
+        // 导入用例库
+        function importCaseLibrary() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                try {
+                    const text = await file.text();
+                    const imported = JSON.parse(text);
+
+                    if (!Array.isArray(imported)) {
+                        showToast('❌ 导入失败：格式错误', 'error');
+                        return;
+                    }
+
+                    // 合并模式还是替换模式
+                    const merge = confirm('是否与现有用例库合并？\n\n点击"确定"合并，点击"取消"替换现有用例库。');
+
+                    if (merge) {
+                        // 去重合并
+                        const existingUrls = new Set(caseLibrary.map(c => c.url));
+                        const newCases = imported.filter(c => !existingUrls.has(c.url));
+                        caseLibrary = [...caseLibrary, ...newCases];
+                        showToast(`✅ 成功导入 ${newCases.length} 个新用例`, 'success');
+                    } else {
+                        caseLibrary = imported;
+                        showToast(`✅ 用例库已替换，共 ${imported.length} 个用例`, 'success');
+                    }
+
+                    saveCaseLibrary();
+                } catch (error) {
+                    showToast('❌ 导入失败: ' + error.message, 'error');
+                }
+            };
+            input.click();
+        }
+
+        // 显示用例库选择器（从库中添加到runner）
+        function showLibrarySelector(runner) {
+            if (caseLibrary.length === 0) {
+                showToast('❌ 用例库为空，请先添加用例', 'warning');
+                // 自动展开用例库
+                if (document.getElementById('case-library-panel').style.display === 'none') {
+                    toggleCaseLibrary();
+                }
+                return;
+            }
+
+            // 创建选择器模态框
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10002;
+                padding: 20px;
+            `;
+
+            const content = document.createElement('div');
+            content.style.cssText = `
+                background: ${document.body.classList.contains('dark-mode') ? '#2d2d2d' : 'white'};
+                color: ${document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333'};
+                padding: 25px;
+                border-radius: 12px;
+                max-width: 600px;
+                width: 100%;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            `;
+
+            let selectedCases = new Set();
+
+            content.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: #9c27b0;">📚 从用例库添加到 ${runner}</h3>
+                <p style="color: #666; font-size: 0.9em; margin-bottom: 15px;">选择要添加的用例（可多选）：</p>
+                <div id="library-selector-list" style="max-height: 400px; overflow-y: auto; margin-bottom: 15px;">
+                    ${caseLibrary.map((item, index) => `
+                        <label style="display: block; padding: 10px; margin-bottom: 8px; background: ${document.body.classList.contains('dark-mode') ? '#3d3d3d' : '#f5f5f5'}; border-radius: 6px; cursor: pointer; border: 2px solid transparent;" onmouseover="this.style.borderColor='#9c27b0'" onmouseout="this.style.borderColor='transparent'">
+                            <input type="checkbox" value="${index}" style="margin-right: 8px; width: 18px; height: 18px; cursor: pointer;">
+                            <span style="font-weight: 600;">${item.description}</span>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 4px; word-break: break-all;">${item.url}</div>
+                            ${item.tags && item.tags.length > 0 ? `
+                                <div style="margin-top: 6px;">
+                                    ${item.tags.map(tag => `<span style="display: inline-block; background: #e1bee7; color: #6a1b9a; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; margin-right: 4px;">${tag}</span>`).join('')}
+                                </div>
+                            ` : ''}
+                        </label>
+                    `).join('')}
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn-secondary" onclick="this.closest('[style*=fixed]').remove()">取消</button>
+                    <button class="btn-primary" id="confirm-add-btn">添加选中的用例</button>
+                </div>
+            `;
+
+            modal.appendChild(content);
+            document.body.appendChild(modal);
+
+            // 点击背景关闭
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            };
+
+            // 确认添加
+            document.getElementById('confirm-add-btn').onclick = () => {
+                const checkboxes = content.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkboxes.length === 0) {
+                    showToast('❌ 请至少选择一个用例', 'warning');
+                    return;
+                }
+
+                checkboxes.forEach(checkbox => {
+                    const index = parseInt(checkbox.value);
+                    const item = caseLibrary[index];
+                    if (item) {
+                        addTestCaseFromLibrary(runner, item);
+                    }
+                });
+
+                modal.remove();
+                showToast(`✅ 已添加 ${checkboxes.length} 个用例到 ${runner}`, 'success');
+            };
+        }
+
+        // 从库中添加用例到runner
+        function addTestCaseFromLibrary(runner, item) {
+            if (!currentConfig) return;
+
+            if (!currentConfig.runners[runner].testCases) {
+                currentConfig.runners[runner].testCases = [];
+            }
+
+            currentConfig.runners[runner].testCases.push({
+                target: item.url,
+                description: item.description
+            });
+
+            renderTestCases(runner, currentConfig.runners[runner].testCases);
+        }
 
         // 添加到测试历史
         function addToHistory(runners, status) {
@@ -2293,9 +2675,14 @@
             // 连接 WebSocket（会自动接收状态更新）
             connectWebSocket();
 
+            // 初始化用例库
+            initDefaultCaseLibrary();
+            renderCaseLibrary();
+
             // 加载其他数据
             await loadReports();
             await loadQuickConfig();
+            renderTestHistory();
         };
     </script>
 </body>
