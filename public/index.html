@@ -700,27 +700,27 @@
                             }
 
                             const runnerTags = runners.map(r =>
-                                \`<span class="runner-tag runner-\${r.toLowerCase()}" style="margin-right: 4px;">\${r}</span>\`
+                                '<span class="runner-tag runner-' + r.toLowerCase() + '" style="margin-right: 4px;">' + r + '</span>'
                             ).join('');
 
-                            return \`
+                            return `
                             <tr>
-                                <td><input type="checkbox" onchange="toggleCaseSelection(\${testCase.id}, this.checked)" \${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
-                                <td><strong>\${escapeHtml(testCase.name)}</strong></td>
-                                <td>\${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
-                                <td><span title="\${escapeHtml(urlsTitle)}" style="cursor: help;">\${urls.length} 个URL</span></td>
-                                <td><span style="font-size: 0.85em; color: #4a5568;">\${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
-                                <td>\${testCase.repeatCount || 3}</td>
-                                <td><span class="status-badge status-\${testCase.status || 'idle'}">\${getStatusText(testCase.status || 'idle')}</span></td>
+                                <td><input type="checkbox" onchange="toggleCaseSelection(${testCase.id}, this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
+                                <td><strong>${escapeHtml(testCase.name)}</strong></td>
+                                <td>${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
+                                <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
+                                <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
+                                <td>${testCase.repeatCount || 3}</td>
+                                <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-success btn-small" onclick="runCase(\${testCase.id})" \${currentRunning ? 'disabled' : ''}>▶ 运行</button>
-                                        <button class="btn-secondary btn-small" onclick="editCase(\${testCase.id})">✏️ 编辑</button>
-                                        <button class="btn-danger btn-small" onclick="deleteCase(\${testCase.id})">🗑️ 删除</button>
+                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})" ${currentRunning ? 'disabled' : ''}>▶ 运行</button>
+                                        <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
+                                        <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
                                     </div>
                                 </td>
                             </tr>
-                        \`;
+                        `;
                         }).join('')}
                     </tbody>
                 </table>
