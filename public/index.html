@@ -584,6 +584,45 @@
             <div class="form-group">
                 <label>重复次数</label>
                 <input type="number" id="case-repeat" value="3" min="1" max="100">
+                <small style="color: #718096; font-size: 0.85em; margin-top: 4px; display: block;">所有测试类型共用此参数</small>
+            </div>
+
+            <div class="form-group">
+                <label>高级配置</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+
+                    <!-- Runtime 配置 -->
+                    <div id="runtime-config" style="display: none;">
+                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">⏱️ Runtime 运行时配置</p>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">持续时间 (毫秒)</label>
+                            <input type="number" id="runtime-duration" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认60000ms (60秒)</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (毫秒)</label>
+                            <input type="number" id="runtime-delay" value="10000" min="0" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">页面加载后等待时间，默认10000ms (10秒)</small>
+                        </div>
+                    </div>
+
+                    <!-- MemoryLeak 配置 -->
+                    <div id="memoryleak-config" style="display: none;">
+                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">🧠 MemoryLeak 内存泄漏配置</p>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">检测间隔 (毫秒)</label>
+                            <input type="number" id="memoryleak-interval" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">每次检测之间的时间间隔，默认60000ms (60秒)</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">迭代次数</label>
+                            <input type="number" id="memoryleak-iterations" value="3" min="1" max="20" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">检测次数，默认3次</small>
+                        </div>
+                    </div>
+
+                    <p id="no-advanced-config" style="color: #9ca3af; margin: 0;">选择 Runtime 或 MemoryLeak 后显示高级配置</p>
+                </div>
             </div>
 
             <div class="form-group">
@@ -660,6 +699,10 @@
             renderCases();
             updateStats();
             loadCompletedToday();
+
+            // 添加高级配置事件监听
+            document.getElementById('runner-runtime').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('runner-memoryleak').addEventListener('change', updateAdvancedConfigDisplay);
         };
 
         // 渲染用例列表
@@ -789,6 +832,20 @@
             showToast(`成功删除 ${count} 个用例`, 'success');
         }
 
+        // 更新高级配置显示
+        function updateAdvancedConfigDisplay() {
+            const runtimeChecked = document.getElementById('runner-runtime').checked;
+            const memoryLeakChecked = document.getElementById('runner-memoryleak').checked;
+
+            const runtimeConfig = document.getElementById('runtime-config');
+            const memoryLeakConfig = document.getElementById('memoryleak-config');
+            const noConfig = document.getElementById('no-advanced-config');
+
+            runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
+            memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
+            noConfig.style.display = (!runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+        }
+
         // 显示添加用例模态框
         function showAddCaseModal() {
             document.getElementById('case-modal').classList.add('active');
@@ -802,8 +859,15 @@
             document.getElementById('case-urls').value = '';
             document.getElementById('case-mode').value = 'headless';
             document.getElementById('case-repeat').value = '3';
+            document.getElementById('runtime-duration').value = '60000';
+            document.getElementById('runtime-delay').value = '10000';
+            document.getElementById('memoryleak-interval').value = '60000';
+            document.getElementById('memoryleak-iterations').value = '3';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
+
+            // 更新高级配置显示
+            updateAdvancedConfigDisplay();
 
             // 移除编辑模式标记
             delete document.getElementById('case-modal').dataset.editId;
@@ -838,8 +902,29 @@
 
             document.getElementById('case-mode').value = testCase.mode || 'headless';
             document.getElementById('case-repeat').value = testCase.repeatCount || 3;
+
+            // 填充高级配置字段
+            if (testCase.runners?.Runtime) {
+                document.getElementById('runtime-duration').value = testCase.runners.Runtime.durationMs || 60000;
+                document.getElementById('runtime-delay').value = testCase.runners.Runtime.delayMs || 10000;
+            } else {
+                document.getElementById('runtime-duration').value = 60000;
+                document.getElementById('runtime-delay').value = 10000;
+            }
+
+            if (testCase.runners?.MemoryLeak) {
+                document.getElementById('memoryleak-interval').value = testCase.runners.MemoryLeak.intervalMs || 60000;
+                document.getElementById('memoryleak-iterations').value = testCase.runners.MemoryLeak.iterations || 3;
+            } else {
+                document.getElementById('memoryleak-interval').value = 60000;
+                document.getElementById('memoryleak-iterations').value = 3;
+            }
+
             document.getElementById('case-description').value = testCase.description || '';
             document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
+
+            // 更新高级配置显示
+            updateAdvancedConfigDisplay();
 
             // 标记为编辑模式
             document.getElementById('case-modal').dataset.editId = id;
@@ -885,6 +970,12 @@
                 return;
             }
 
+            // 读取高级配置值
+            const runtimeDuration = parseInt(document.getElementById('runtime-duration').value) || 60000;
+            const runtimeDelay = parseInt(document.getElementById('runtime-delay').value) || 10000;
+            const memoryInterval = parseInt(document.getElementById('memoryleak-interval').value) || 60000;
+            const memoryIterations = parseInt(document.getElementById('memoryleak-iterations').value) || 3;
+
             // 构建runners配置对象
             const runners = {
                 Initialization: {
@@ -894,14 +985,14 @@
                 Runtime: {
                     enabled: runtimeChecked,
                     repeatCount: repeatCount,
-                    durationMs: 60000,
-                    delayMs: 10000
+                    durationMs: runtimeDuration,
+                    delayMs: runtimeDelay
                 },
                 MemoryLeak: {
                     enabled: memoryChecked,
                     repeatCount: repeatCount,
-                    intervalMs: 60000,
-                    iterations: 3
+                    intervalMs: memoryInterval,
+                    iterations: memoryIterations
                 }
             };
 
