@@ -201,6 +201,45 @@ function validateConfig(config: any, runner: string): { valid: boolean; error?: 
     return { valid: true };
 }
 
+// 转换前端配置为SDK期望的格式
+function transformConfigForSDK(config: any): any {
+    const transformed: any = {
+        mode: config.mode,
+        runners: {}
+    };
+
+    if (config.runners) {
+        for (const [runnerName, runnerConfig] of Object.entries(config.runners)) {
+            const rc = runnerConfig as any;
+
+            // 跳过未启用的runner
+            if (rc.enabled === false) {
+                continue;
+            }
+
+            // 将urls数组转换为testCases数组
+            const urls = rc.urls || [];
+            const testCases = urls.map((url: string) => ({
+                target: url,
+                description: url
+            }));
+
+            transformed.runners[runnerName] = {
+                enabled: true,
+                testCases: testCases,
+                ...(rc.repeatCount !== undefined && { repeatCount: rc.repeatCount }),
+                ...(rc.durationMs !== undefined && { durationMs: rc.durationMs }),
+                ...(rc.delayMs !== undefined && { delayMs: rc.delayMs }),
+                ...(rc.intervalMs !== undefined && { intervalMs: rc.intervalMs }),
+                ...(rc.iterations !== undefined && { iterations: rc.iterations }),
+                ...(rc.onPageTesting !== undefined && { onPageTesting: rc.onPageTesting })
+            };
+        }
+    }
+
+    return transformed;
+}
+
 // 生成配置文件内容（改进版本）
 function generateConfig(config: any): string {
     const mode = config.mode || { anonymous: true, headless: false };
@@ -450,8 +489,11 @@ app.post('/api/start', async (req, res) => {
         // 确保报告目录存在
         await ensureReportsDir();
 
+        // 转换前端配置为SDK期望的格式
+        const transformedConfig = transformConfigForSDK(finalConfig);
+
         // 生成配置文件
-        const tempConfigCode = generateConfig(finalConfig);
+        const tempConfigCode = generateConfig(transformedConfig);
         const tempConfigPath = path.join(__dirname, '../benchmark.config.mts');
         await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
 
