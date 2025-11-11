@@ -614,10 +614,15 @@
                             <input type="number" id="memoryleak-interval" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
                             <small style="color: #718096; font-size: 0.85em;">每次检测之间的时间间隔，默认60000ms (60秒)</small>
                         </div>
-                        <div>
+                        <div style="margin-bottom: 10px;">
                             <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">迭代次数</label>
                             <input type="number" id="memoryleak-iterations" value="3" min="1" max="20" style="width: 100%; padding: 8px;">
                             <small style="color: #718096; font-size: 0.85em;">检测次数，默认3次</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">页面操作代码 (onPageTesting)</label>
+                            <textarea id="memoryleak-onpagetesting" placeholder="// 在这里写你怀疑会触发内存泄露的页面操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                            <small style="color: #718096; font-size: 0.85em;">在每次迭代中执行的页面操作代码，留空表示静置页面</small>
                         </div>
                     </div>
 
@@ -863,6 +868,7 @@
             document.getElementById('runtime-delay').value = '10000';
             document.getElementById('memoryleak-interval').value = '60000';
             document.getElementById('memoryleak-iterations').value = '3';
+            document.getElementById('memoryleak-onpagetesting').value = '';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
 
@@ -915,9 +921,11 @@
             if (testCase.runners?.MemoryLeak) {
                 document.getElementById('memoryleak-interval').value = testCase.runners.MemoryLeak.intervalMs || 60000;
                 document.getElementById('memoryleak-iterations').value = testCase.runners.MemoryLeak.iterations || 3;
+                document.getElementById('memoryleak-onpagetesting').value = testCase.runners.MemoryLeak.onPageTesting || '';
             } else {
                 document.getElementById('memoryleak-interval').value = 60000;
                 document.getElementById('memoryleak-iterations').value = 3;
+                document.getElementById('memoryleak-onpagetesting').value = '';
             }
 
             document.getElementById('case-description').value = testCase.description || '';
@@ -975,6 +983,7 @@
             const runtimeDelay = parseInt(document.getElementById('runtime-delay').value) || 10000;
             const memoryInterval = parseInt(document.getElementById('memoryleak-interval').value) || 60000;
             const memoryIterations = parseInt(document.getElementById('memoryleak-iterations').value) || 3;
+            const memoryOnPageTesting = document.getElementById('memoryleak-onpagetesting').value.trim();
 
             // 构建runners配置对象
             const runners = {
@@ -992,7 +1001,8 @@
                     enabled: memoryChecked,
                     repeatCount: repeatCount,
                     intervalMs: memoryInterval,
-                    iterations: memoryIterations
+                    iterations: memoryIterations,
+                    onPageTesting: memoryOnPageTesting
                 }
             };
 
@@ -1100,7 +1110,8 @@
                             repeatCount: testCase.runners.MemoryLeak.repeatCount || testCase.repeatCount || 3,
                             urls: urls,
                             intervalMs: testCase.runners.MemoryLeak.intervalMs || 60000,
-                            iterations: testCase.runners.MemoryLeak.iterations || 3
+                            iterations: testCase.runners.MemoryLeak.iterations || 3,
+                            onPageTesting: testCase.runners.MemoryLeak.onPageTesting || ''
                         };
                         enabledRunners.push('MemoryLeak');
                     }
@@ -1385,7 +1396,7 @@
                     runners: {
                         Initialization: { enabled: true, repeatCount: 3 },
                         Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
+                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3, onPageTesting: 'await page.click(".bpx-player-ctrl-btn");' }
                     },
                     urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
                     mode: 'headless',
@@ -1421,12 +1432,12 @@
                     runners: {
                         Initialization: { enabled: false },
                         Runtime: { enabled: false },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
+                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3, onPageTesting: '' }
                     },
                     urls: ['https://www.bilibili.com'],
                     mode: 'headless',
                     repeatCount: 5,
-                    description: '专门检测首页的内存泄漏问题',
+                    description: '专门检测首页的内存泄漏问题（静置页面）',
                     tags: ['bilibili', '首页', '内存'],
                     status: 'idle',
                     createdAt: new Date().toISOString()

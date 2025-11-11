@@ -283,10 +283,16 @@ function generateConfig(config: any): string {
 
     if (runners.MemoryLeak && runners.MemoryLeak.enabled) {
         const { testCases = [], intervalMs = 60000, iterations = 3, onPageTesting = '' } = runners.MemoryLeak;
+        const globalOnPageTesting = onPageTesting.trim();
 
         const testCasesWithHandler = testCases.map((tc: any) => {
-            const onPageTestingCode = onPageTesting.trim() ||
-                `// 在这里写你怀疑会触发内存泄露的页面操作\n                        // 若为空，则静置页面`;
+            // 优先使用testCase级别的onPageTesting，否则使用全局的onPageTesting
+            let onPageTestingCode = tc.onPageTesting ? tc.onPageTesting.trim() : globalOnPageTesting;
+
+            // 如果两者都没有，使用注释说明
+            if (!onPageTestingCode) {
+                onPageTestingCode = `// 在这里写你怀疑会触发内存泄露的页面操作\n                        // 若为空，则静置页面`;
+            }
 
             return (
                 `                {\n` +

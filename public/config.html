@@ -463,11 +463,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label>页面操作代码 (onPageTesting)</label>
-                        <textarea id="memory-testing-code" class="code-editor" placeholder="// 在这里写你怀疑会触发内存泄露的页面操作
-// 例如：await page.click('.play-button');
-// 留空则静置页面"></textarea>
-                        <small>在每次迭代中执行的页面操作代码。<strong>留空表示静置页面</strong>。若需要默认行为（进入直播间），请留空。</small>
+                        <label>全局页面操作代码 (onPageTesting - 默认值)</label>
+                        <textarea id="memory-testing-code" class="code-editor" placeholder="// 全局默认的页面操作代码&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面"></textarea>
+                        <small>在每次迭代中执行的页面操作代码（作为所有测试用例的默认值）。<strong>留空表示静置页面</strong>。各测试用例可以覆盖此全局配置。</small>
                     </div>
 
                     <div class="test-cases" id="memory-test-cases"></div>
@@ -553,20 +551,44 @@
 
             const testCase = document.createElement('div');
             testCase.className = 'test-case';
-            testCase.innerHTML = `
-                <div class="test-case-header">
-                    <strong>测试用例 #${index + 1}</strong>
-                    <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
-                </div>
-                <div class="form-group">
-                    <label>目标 URL</label>
-                    <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
-                </div>
-                <div class="form-group">
-                    <label>描述</label>
-                    <input type="text" class="test-description" placeholder="测试用例描述" required>
-                </div>
-            `;
+
+            // MemoryLeak的testCase需要额外的onPageTesting字段
+            if (runner === 'memory') {
+                testCase.innerHTML = `
+                    <div class="test-case-header">
+                        <strong>测试用例 #${index + 1}</strong>
+                        <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
+                    </div>
+                    <div class="form-group">
+                        <label>目标 URL</label>
+                        <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input type="text" class="test-description" placeholder="测试用例描述" required>
+                    </div>
+                    <div class="form-group">
+                        <label>页面操作代码 (onPageTesting - 可选)</label>
+                        <textarea class="test-onPageTesting code-editor" placeholder="// 针对此URL的特定操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4"></textarea>
+                        <small>此测试用例专用的页面操作代码，优先级高于全局配置。留空则使用全局配置或静置页面。</small>
+                    </div>
+                `;
+            } else {
+                testCase.innerHTML = `
+                    <div class="test-case-header">
+                        <strong>测试用例 #${index + 1}</strong>
+                        <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
+                    </div>
+                    <div class="form-group">
+                        <label>目标 URL</label>
+                        <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <input type="text" class="test-description" placeholder="测试用例描述" required>
+                    </div>
+                `;
+            }
 
             container.appendChild(testCase);
         }
@@ -586,7 +608,20 @@
                 const description = tc.querySelector('.test-description').value;
 
                 if (target && description) {
-                    testCases.push({ target, description });
+                    const testCase = { target, description };
+
+                    // MemoryLeak的testCase可以有独立的onPageTesting
+                    if (runner === 'memory') {
+                        const onPageTestingEl = tc.querySelector('.test-onPageTesting');
+                        if (onPageTestingEl) {
+                            const onPageTesting = onPageTestingEl.value.trim();
+                            if (onPageTesting) {
+                                testCase.onPageTesting = onPageTesting;
+                            }
+                        }
+                    }
+
+                    testCases.push(testCase);
                 }
             });
 
@@ -689,6 +724,14 @@
                 const lastCase = container.lastElementChild;
                 lastCase.querySelector('.test-target').value = tc.target;
                 lastCase.querySelector('.test-description').value = tc.description;
+
+                // 恢复MemoryLeak的onPageTesting
+                if (runner === 'memory' && tc.onPageTesting) {
+                    const onPageTestingEl = lastCase.querySelector('.test-onPageTesting');
+                    if (onPageTestingEl) {
+                        onPageTestingEl.value = tc.onPageTesting;
+                    }
+                }
             });
         }
 
