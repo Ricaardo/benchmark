@@ -1,0 +1,48 @@
+---
+title: "快速开始"
+sidebar_position: 2
+---
+
+```twoslash include benchmark
+/// <reference path="./benchmark.d.ts" />
+type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+```
+
+## 🚀 [Benchmark SDK](https://dejavu.bilibili.co/material/package/@bilibili-player/benchmark) 快速开始
+
+### 前提
+
+Benchmark SDK 需要 Node.js 环境支持，支持的 Node.js 版本为 ***`>= 20.0.0`***。
+
+### 1. 安装
+
+你可以全局安装
+```bash title="全局安装，选择你最爱的包管理器"
+npm install -g @bilibili-player/benchmark
+yarn global add @bilibili-player/benchmark
+pnpm install -g @bilibili-player/benchmark
+```
+也可以项目局部安装
+```bash title="项目局部安装，选择你最爱的包管理器"
+npm install -D @bilibili-player/benchmark
+yarn add -D @bilibili-player/benchmark
+pnpm install -D @bilibili-player/benchmark
+```
+
+### 2. 使用
+
+```bash title="使用命令行工具初始化配置文件"
+benchmark init -y
+```
+
+生成的文件为`.mts` 格式的文件，你也可以使用 `.mjs` 格式的文件; 配置文件必须是 `.mjs` 或 `.mts` 格式。
+
+```bash title="运行 benchmark 测试"
+benchmark -c benchmark.config.mts # 你可以根据你的需要更改文件名或文件拓展
+```
+
+你后续可以创建任意多个任意位置的`.mts`文件, 通过 `benchmark -c` 指定文件路径即可。
+
+benchmark SDK 内置了 ts 解析功能，你无需安装额外的依赖和手动编写`tsconfig.json`，只需要配置文件格式为 `.mts`, 即可享受 ts 带来的类型推断和代码提示。

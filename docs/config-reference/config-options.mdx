@@ -1,0 +1,401 @@
+---
+title: 配置选项
+sidebar_position: 2
+---
+
+```twoslash include benchmark
+/// <reference path="./benchmark.d.ts" />
+type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+```
+
+## RootOptions
+
+### `runners`
+
+- Type:
+```ts twoslash
+// @include: benchmark
+/**
+ * CPU throttling to emulate slow CPUs.
+ *
+ * Throttling rate as a slowdown factor (1 is no slowdown, 2 is 2x slowdown, etc).
+ *
+ * @default 1
+ * */
+type InitializationRunnerOptions = Prettify<benchmark.UserOptions['runners']['Initialization']>;
+type RuntimeRunnerOptions = Prettify<benchmark.UserOptions['runners']['Runtime']>;
+type MemoryLeakRunnerOptions = Prettify<benchmark.UserOptions['runners']['MemoryLeak']>;
+
+// ---cut---
+type Runners = {
+    Initialization?: InitializationRunnerOptions;
+    Runtime?: RuntimeRunnerOptions;
+    MemoryLeak?: MemoryLeakRunnerOptions;
+}
+```
+- Required: `true`
+
+详情见: [`InitializationRunnerOptions`](#initializationrunneroptions) , [`RuntimeRunnerOptions`](#runtimerunneroptions), [`MemoryLeakRunnerOptions`](#memoryleakrunneroptions)
+
+### `cpuThrottlingRate`
+
+- Type: `number`
+- Required: `false`
+- Default: `1`
+
+CPU throttling rate, for emulate slow CPUs.
+`1` is no slowdown, `2` is 2x slowdown
+
+CPU slowdown 的倍数, `1` 是 no slowdown, `2` 是 2x slowdown
+
+:::warning
+`cpuThrottlingRate` 只能设置为 2 的倍数
+:::
+
+### `mode`
+
+- Type:
+```typescript
+type Mode = AnonymousMode | NonAnonymousMode;
+type AnonymousMode = {
+    anonymous: true;
+    headless: boolean;
+    usrDataDir?: never;
+};
+type NonAnonymousMode = {
+    anonymous: false;
+    usrDataDir?: string;
+} & ({
+    headless: true;
+    preparePage?: false;
+} | {
+    headless: false;
+    preparePage: boolean;
+});
+```
+- Required: `false`
+- Default: `{ anonymous: true, headless: true }`
+
+用于设置浏览器运行的模式，`anonymous`为匿名模式，`headless` 为无头模式，`usrDataDir` 用于指定用户数据目录
+
+:::info
+使用 PerfCat 平台时
+- `headless` 会被强制设置为 `true`
+- `anonymous` 会被强制设置为 `true`, 若想使用非匿名模式，请使用 `accountName` 选项
+- `usrDataDir` 不生效
+:::
+
+### `port`
+
+- Type: `number`
+- Required: `false`
+- Default: either of `3000`, `8000`, `8080`
+- OnlyLocal: true
+
+当测试目标是一个本地 html 文件时，会使用此端口启动一个本地服务
+
+
+### `executablePath`
+
+- Type: `string`
+- Required: `false`
+- Default: your system's Chrome executable path
+- OnlyLocal: true
+
+自定义 Chrome 可执行文件的路径
+
+### `__internal__`
+
+- Type: `{ launchOptions?: Partial<LaunchOptions>; contextOptions?: Partial<BrowserContextOptions>; chromeFlags?: string[]; }`
+- Required: `false`
+
+## BaseRunnerOptions
+
+### `testCases`
+
+- Type: [`TestCaseOptions[]`](#testcaseoptions)
+- Required: `true`
+
+## RuntimeRunnerOptions
+
+### `durationMs`
+
+- Type: `number`
+- Required: `true`
+
+控制 RuntimeRunner 的运行时长，单位为毫秒
+
+:::info
+此选项为保底值，具体执行时间为 `durationMs` 和 `onPageTesting` 的更大值
+:::
+
+### `delayMs`
+
+- Type: `number`
+- Required: `false`
+- Default: `10_000`
+
+进入页面后，等待的时间，单位为毫秒，一般用于确保页面已经稳定加载，避免初始化的性能消耗影响后续结果
+
+此选项控制所有 testCase 的 delayMs，若 testCase 中有单独设置，则以 testCase 中的为准
+
+### `metrics`
+
+- Type: `Array<"runtime" | "longtask" | "longAnimationFrame" | "fps" | "system">`
+- Required: `false`
+- Default: `['runtime', "longtask"]`
+
+RuntimeRunner 收集的指标类型，`system` 指标仅在本地 mac 系统下可用
+
+### `runtimeGatheringIntervalMs`
+- Type: `number`
+- Required: `false`
+- Default: `1000`
+
+控制 RuntimeRunner 收集数据的间隔时间，单位为毫秒
+:::danger
+Benchmark SDK 内部使用，勿轻易修改
+:::
+
+## InitializationRunnerOptions
+
+### `iterations`
+- Type: `number`
+- Required: `false`
+- Default: `7`
+
+控制 InitializationRunner 的迭代次数，默认为 7 次，值必须为正整数
+
+
+### `includeWarmNavigation`
+- Type: `boolean`
+- Required: `false`
+- Default: `false`
+
+是否包含热启动的初始化测试，默认为 `false`，即只测试冷启动
+
+## MemoryLeakRunnerOptions
+
+### `iterations`
+- Type: `number`
+- Required: `true`
+
+MemoryLeakRunner 的迭代次数，即你在 `onPageTesting` 中执行的操作重复的次数
+
+### `intervalMs`
+- Type: `number`
+- Required: `true`
+
+每次 `onPageTesting` 中操作执行完和 coolDown 之后，统计 cpu 和 内存的时间，如 `60_000`, 表示统计 1min 的内存和 cpu
+
+详见[`onPageCollecting`](../benchmark-sdk-reference/lifecycle-hooks#onpagecollecting)
+
+### `delayMs`
+- Type: `number`
+- Required: `false`
+- Default: `10_000`
+
+进入页面后，等待的时间，单位为毫秒，一般用于确保页面已经稳定加载，避免初始化的性能消耗影响后续结果
+
+### `includeRuntime`
+- Type: `boolean`
+- Required: `false`
+- Default: `false`
+- Deprecated: `true`
+
+语法糖选项；
+
+是否执行完内存泄露测试后，继续收集 Runtime 指标，RuntimeRunner 的执行逻辑与MemoryLeakRunner 一致
+
+### `coolDownMs`
+
+- Type: `number`
+- Required: `false`
+- Default: `3000`
+
+gc 完和页面操作完冷静(等待)的时间
+
+详见[`onPageCollecting`](../benchmark-sdk-reference/lifecycle-hooks#onpagecollecting)
+
+## TestCaseOptions
+
+### `target`
+- Type: `string`
+- Required: `true`
+
+测试的 url, 如 "https://www.bilibili.com/"
+
+### `description`
+- Type: `string`
+- Required: `true`
+
+测试的描述信息，如 "B站首页"，
+> 注意两个测试用例的描述信息不能相同
+
+### `delayMs`
+- Type: `number`
+- Required: `false`
+
+作用同[RuntimeRunnerOptions.delayMs](#delayms), 优先级高于 `RuntimeRunnerOptions.delayMs`
+
+### `cookie`
+- Type: `string | Cookie`
+```typescript
+type Cookie = Array<{
+    name: string;
+    value: string;
+    url?: string;
+    domain?: string;
+    path?: string;
+    expires?: number;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: "Strict" | "Lax" | "None";
+}>;
+```
+- Required: `false`
+- OnlyLocal: true
+
+设置测试页面的 cookie，内部 Playwright 使用
+
+可使用[Cookie-Editor 插件](https://chromewebstore.google.com/detail/hlkenndednhfkekhgcdicdfddnkalmdm?utm_source=item-share-cb)，在登录后快速获取该页面的 cookie
+[<img src={require("@site/static/img/cookie-editor.png").default} width="400"/>](@site/static/img/cookie-editor.png)
+
+### `accountName`
+- Type: `string`
+- Required: `false`
+- OnlyPerfCat: true
+
+在 PerfCat 平台上使用时，指定账号名称，若不设置，则使用匿名模式.
+<details>
+  <summary>支持的账号</summary>
+  - `fe-perfcat-01`
+  - `fe-perfcat-02`
+  - `fe-perfcat-03`
+  - `fe-perfcat-04`
+</details>
+
+### `extraHTTPHeaders`
+
+- Type: `Record<string, string>`
+- Required: `false`
+
+设置网页的请求头，一般用于设置染色环境
+
+```typescript
+{
+  target: "https://pre-www.bilibili.com/",
+  description: "B站首页",
+  extraHTTPHeaders: {
+    "x1-bilispy-color": "test",
+  }
+}
+```
+
+### `deviceOptions`
+- Type:
+```typescript
+export type DeviceOptions = [
+    "Desktop",
+    DeviceCommonSpecificOptions & {
+        fullscreen?: boolean;
+    }
+] | [
+    "Mobile",
+    DeviceCommonSpecificOptions & {
+        preset?: "android";
+    }
+];
+type DeviceCommonSpecificOptions = {
+    userAgent?: string;
+    screen?: {
+        width: number;
+        height: number;
+    };
+    viewport?: {
+        width: number;
+        height: number;
+    } | null;
+    deviceScaleFactor?: number;
+};
+```
+- Required: `false`
+- Default: Desktop, screen: 1920* 1080, viewport 1920 * 860
+
+### `blockList`
+
+- Type: `Array<string | RegExp | ((url: string) => boolean)>`
+
+可以快速地在 case 里设置需要屏蔽的 url
+
+以 `https://s1.hdslb.com/bfs/seed/jinkela/commentpc/bili-comments.b89b7aeff3.js` 举例
+
+- `"**/*bili-comments.*.js"`
+- `/bili-comments\..+\.js$/`
+
+以上两种写法都可以满足屏蔽评论区 js
+
+:::tip
+- 若传入 string 类型，必须保证匹配完整的 js( 可以使用 glob 语法、也可以写出完整的js字符串 )
+- 若传入 RegExp 类型，需匹配的 js 满足正则条件即可
+- 若传入函数类型，函数返回 true 则屏蔽该 js
+:::
+
+### `customCss`
+
+- Type: `string`
+- Required: `false`
+
+```typescript
+{
+    customCss: `
+        .bili-header {
+            display: none;
+        }
+    `
+}
+```
+
+### `plugins`
+- Type: `Plugin<HookContext>[]`
+- Required: `false`
+
+见[插件机制](../benchmark-sdk-reference/advanced/plugins)
+
+### `beforePageLoad`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)
+
+### `onPageLoading`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)
+
+### `onPageLoaded`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)
+
+### `onPageTesting`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)
+
+### `onPageCollecting`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)
+
+### `onPageUnload`
+- Type: `LifeCycleFunction<HookContext>`
+- Required: `false`
+
+见[生命周期钩子](../benchmark-sdk-reference/lifecycle-hooks)

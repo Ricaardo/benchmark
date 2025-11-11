@@ -1,0 +1,15 @@
+---
+title: Webhook 触发任务
+sidebar_position: 3
+---
+
+### 1. 获取 Case 的 Webhook URL
+<img src={require("@site/static/img/webhook_url.png").default} alt=""/>
+
+### 2. 填入 Webhook URL
+- 支持 delaySec 参数，单位为秒，默认为 0
+- 支持 toWeCom 参数，例如 `toWeCom=工号1,工号2`，表示将任务结果通知至企业微信
+<img src={require("@site/static/img/webhook_paste.png").default} alt=""/>
+
+### 3. 触发任务数据同步至平台
+<img src={require("@site/static/img/webhook_job.png").default} alt=""/>

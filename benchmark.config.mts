@@ -1,22 +1,17 @@
 import { type UserOptions } from "@bilibili-player/benchmark";
 
 const config: UserOptions = {
-    mode: {
-        "anonymous": true,
-        "headless": false
-},
+    mode: "headless",
     runners: {
-        Runtime: {
+        Initialization: {
             testCases: [
-          {
-                    target: "https://live.bilibili.com/?spm_id_from=333.1007.0.0",
-                    description: "查韦斯"
-          }
-],
-            durationMs: 60000,
-            delayMs: 10000,
-        },
-    },
+                {
+                    target: "https://www.bilibili.com",
+                    description: "https://www.bilibili.com"
+                }
+            ]
+        }
+    }
 };
 
 export default config;

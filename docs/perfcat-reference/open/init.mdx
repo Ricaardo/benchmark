@@ -1,0 +1,72 @@
+---
+title: 初始化
+sidebar_position: 1
+---
+
+### 必传参数
+|   参数名   |      参数说明      |
+| :--------: | :--------------: |
+| project      | 关于 project 的配置项   |
+| case      | 关于 case 相关的配置项   |
+
+### 可选参数
+|   参数名   |      参数说明      |
+| :--------: | :--------------: |
+| user      | 关于 user 的配置项   |
+
+
+### project
+|   参数名   |      参数说明      | 参数类型 |  是否必传 |         备注         |
+| :--------: | :--------------: | :------: | :------: | :-----------------: |
+| appId      | CMDB 中的 appId   | string   | 是   | 例如 `fe.web-player-infra.fe-perfcat` |
+| appName  |  app 名称       | string      | 否   | 例如 `FE-PerfCat` |
+
+
+### case
+|   参数名   |      参数说明      | 参数类型 |  是否必传  |         备注         |
+| :--------: | :--------------: | :------: | :------: | :-----------------: |
+| title  |  性能测试用例名称 | string  | 是    | 例如 `B站首页性能测试` |
+| desc  |  用例描述 | string  | 否    | 例如 `是否有多个longtask 任务` |
+| config  |  配置 JSON | object | 否     | 如果内部有函数，则函数内部必须硬编码，不支持函数内部变量动态引用外部 |
+| configStr  |  配置 JSON 字符串 | string | 否     | 硬编码，config 和 configStr 至少传入一个 |
+| source     |  触发来源        | 枚举类型 | 是   | `PerfCat.SourceType.FePerfcat` |
+| platform   | 运行平台        | 枚举类型 | 是   | 例如 `PerfCat.Platform.linux` |
+| extraId   | 业务侧的标记 ID        | string | 否   | 例如 `activity-2025.test1` |
+| targetHost   | 目标机器 host 名称        | string | 否   | 例如 `hw-sh-fe-perfcat-mb-service-linux-01` |
+
+
+### user
+|   参数名   |      参数说明      | 参数类型 |  是否必传  |         备注         |
+| :--------: | :--------------: | :------: | :------: | :-----------------: |
+| cookie  |  浏览器 cookie | string  | 否    | 例如 `'{"username": ""}'`, 当 前端携带 cookie 时可不传 |
+
+### 初始化示例
+```ts
+import { PerfCat } from '@bilibili-player/fe-perfcat';
+
+const config = {
+    durationMs: 30000,
+    delayMs: 10000,
+    metrics: ["runtime", "longAnimationFrame", "longtask"],
+    cpuThrottlingRate: 4,
+    testCases: [
+        {
+            target: "https://www.bilibili.com",
+            description: "B站首页"
+        }
+    ]
+};
+
+const perfCat = new PerfCat({
+    project: {
+        appId: 'fe.web-player-infra.fe-perfcat',
+        appName: 'FE-PerfCat'
+    },
+    case: {
+        title: 'B站首页性能测试',
+        config,
+        source: PerfCat.SourceType.FePerfcat,
+        platform: PerfCat.Platform.linux,
+    }
+});
+```
