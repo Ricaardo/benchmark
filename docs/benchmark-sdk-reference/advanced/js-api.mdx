@@ -1,0 +1,45 @@
+---
+title: "JS API 调用"
+sidebar_position: 2
+---
+
+Benchmark SDK 提供了 js 调用的能力，你可以在 js 中调用 Benchmark SDK 的功能，如运行测试用例、获取测试结果等，方便你将 Benchmark SDK 集成到你的项目中。
+
+```typescript twoslash
+// @module: esnext
+// @target: esnext
+import { start } from "@bilibili-player/benchmark";
+
+const asyncGenerator = start({
+    runners: {
+        Runtime: {
+            durationMs: 60_000,
+            testCases: [
+                {
+                    target: "https://www.bilibili.com",
+                    description: "B站首页",
+                },
+            ],
+        },
+        Initialization: {
+            testCases: [
+                {
+                    target: "https://www.bilibili.com",
+                    description: "B站首页",
+                },
+            ],
+        }
+    },
+});
+// asyncGenerator 会异步返回两个结果
+for await (const res of asyncGenerator) {
+    console.dir(res, { depth: null });
+}
+```
+
+:::info
+
+由于[多 Runner](../multi-runner) 机制，start函数返回的为一个asyncGenerator，你需要通过`for await of`或其他遍历asyncGenerator的方式来遍历获取测试结果。
+
+:::
+

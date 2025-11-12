@@ -1,0 +1,100 @@
+---
+title: "多 Runner"
+sidebar_position: 3
+---
+
+在[快速开始](./get-started)章节里，你已经通过`benchmark init -y` 创建了一个配置文件，它使用了 `RuntimeRunner`，它是一个检测「**运行时性能**」的 Runner。
+
+除此之外，Benchmark 还有另外两个Runner，分别是 `InitializationRunner` 和 `MemoryLeakRunner`，分别用于「**初始化性能检测**」和「**内存泄露检测**」。
+
+### 内存泄露检测
+
+```ts twoslash
+import { UserOptions } from '@bilibili-player/benchmark';
+
+const config: UserOptions = {
+    runners: {
+        MemoryLeak: {
+            testCases: [
+                {
+                    target: 'https://www.bilibili.com',
+                    description: 'B站首页',
+                    onPageTesting: async ({ context, page, session }) => {
+                        // 在这里写你怀疑会触发内存泄露的页面操作
+                        // 若为空，则静置页面
+                    },
+                }
+            ],
+            intervalMs: 60_000,
+            iterations: 3,
+        }
+    }
+};
+export default config;
+```
+
+### 初始化性能检测
+
+```ts twoslash
+import { UserOptions } from '@bilibili-player/benchmark';
+
+const config: UserOptions = {
+    runners: {
+        Initialization: {
+            testCases: [
+                {
+                    target: 'https://www.bilibili.com',
+                    description: 'B站首页',
+                },
+                {
+                    target: 'https://search.bilibili.com',
+                    description: 'B站搜索首页',
+                }
+            ],
+        }
+    }
+};
+export default config;
+```
+
+### 完整示例
+
+```typescript twoslash
+import { UserOptions } from '@bilibili-player/benchmark';
+
+const homePage = {
+    target: 'https://www.bilibili.com',
+    description: 'B站首页',
+};
+const searchPage = {
+    target: 'https://search.bilibili.com',
+    description: 'B站搜索首页',
+};
+const config: UserOptions = {
+    runners: {
+        Initialization: {
+            testCases: [homePage, searchPage],
+        },
+        Runtime: {
+            testCases: [homePage, searchPage],
+            durationMs: 60_000,
+            delayMs: 10_000,
+        },
+        MemoryLeak: {
+            testCases: [
+                {
+                    ...homePage,
+                    onPageTesting: async ({ context, page, session }) => {
+                        // 在这里写你怀疑会触发内存泄露的页面操作
+                        // 若为空，则静置页面
+                    },
+                }
+            ],
+            intervalMs: 60_000,
+            iterations: 3,
+        },
+    },
+};
+export default config;
+```
+

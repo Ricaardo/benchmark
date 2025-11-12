@@ -481,9 +481,11 @@
                 <div class="toolbar-left">
                     <button class="btn-primary" onclick="showAddCaseModal()">➕ 添加用例</button>
                     <button class="btn-success" onclick="runSelectedCases()" id="run-selected-btn" disabled>▶ 运行选中 (<span id="selected-count">0</span>)</button>
+                    <button class="btn-danger btn-small" onclick="deleteSelectedCases()" id="delete-selected-btn" disabled>🗑️ 删除选中</button>
                     <button class="btn-secondary btn-small" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
                 <div class="toolbar-right">
+                    <button class="btn-secondary btn-small" onclick="window.location.href='/charts.html'">📊 数据可视化</button>
                     <button class="btn-secondary btn-small" onclick="exportCases()">📤 导出</button>
                     <button class="btn-secondary btn-small" onclick="importCases()">📥 导入</button>
                     <button class="btn-secondary btn-small" onclick="window.location.href='/api.html'">🔑 API管理</button>
@@ -495,6 +497,15 @@
                     <h3>暂无测试用例</h3>
                     <p>点击"添加用例"创建第一个测试用例</p>
                 </div>
+            </div>
+        </div>
+
+        <!-- 任务队列 -->
+        <div class="card" id="queue-card" style="display:none;">
+            <h2>📋 任务队列</h2>
+            <div id="queue-list" style="margin-top: 15px;"></div>
+            <div style="margin-top: 15px;">
+                <button class="btn-danger btn-small" onclick="clearQueue()">清空队列</button>
             </div>
         </div>
 
@@ -558,9 +569,11 @@
             </div>
 
             <div class="form-group">
-                <label>测试URL *（每行一个URL，支持多个）</label>
-                <textarea id="case-urls" placeholder="https://www.bilibili.com&#10;https://www.bilibili.com/video/BV1xx411c7mD&#10;https://t.bilibili.com" rows="4"></textarea>
-                <small style="color: #718096; font-size: 0.85em;">每行输入一个URL，可以添加多个测试地址</small>
+                <label>测试URL * <button type="button" class="btn-secondary btn-small" onclick="addUrlItem()" style="padding: 4px 8px; font-size: 0.85em; margin-left: 10px;">➕ 添加URL</button></label>
+                <div id="url-list" style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <!-- URL 项会动态添加到这里 -->
+                </div>
+                <small style="color: #718096; font-size: 0.85em;">可以添加多个测试URL，每个URL可以有独立的描述</small>
             </div>
 
             <div class="form-group">
@@ -573,7 +586,315 @@
 
             <div class="form-group">
                 <label>重复次数</label>
-                <input type="number" id="case-repeat" value="3" min="1" max="100">
+                <input type="number" id="case-repeat" value="1" min="1" max="100">
+                <small style="color: #718096; font-size: 0.85em; margin-top: 4px; display: block;">所有测试类型共用此参数，默认1次不重复</small>
+            </div>
+
+            <div class="form-group">
+                <label>Runner 配置</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+
+                    <!-- Runtime 配置 -->
+                    <div id="runtime-config" style="display: none;">
+                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">⏱️ Runtime 运行时配置</p>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">持续时间 (毫秒)</label>
+                            <input type="number" id="runtime-duration" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认60000ms (60秒)</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (毫秒)</label>
+                            <input type="number" id="runtime-delay" value="10000" min="0" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">页面加载后等待时间，默认10000ms (10秒)</small>
+                        </div>
+                    </div>
+
+                    <!-- MemoryLeak 配置 -->
+                    <div id="memoryleak-config" style="display: none;">
+                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">🧠 MemoryLeak 内存泄漏配置</p>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">检测间隔 (毫秒)</label>
+                            <input type="number" id="memoryleak-interval" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">每次检测之间的时间间隔，默认60000ms (60秒)</small>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">迭代次数</label>
+                            <input type="number" id="memoryleak-iterations" value="3" min="1" max="20" style="width: 100%; padding: 8px;">
+                            <small style="color: #718096; font-size: 0.85em;">检测次数，默认3次</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">页面操作代码 (onPageTesting)</label>
+                            <textarea id="memoryleak-onpagetesting" placeholder="// 在这里写你怀疑会触发内存泄露的页面操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                            <small style="color: #718096; font-size: 0.85em;">在每次迭代中执行的页面操作代码，留空表示静置页面</small>
+                        </div>
+                    </div>
+
+                    <p id="no-runner-config" style="color: #9ca3af; margin: 0;">选择 Runtime 或 MemoryLeak 后显示配置</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>TestCase 高级配置 (应用到所有 URLs)</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (delayMs)</label>
+                        <input type="number" id="testcase-delay" placeholder="留空使用默认值" min="0" step="1000" style="width: 100%; padding: 8px;">
+                        <small style="color: #718096; font-size: 0.85em;">TestCase级别的延迟时间（毫秒）</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">Cookie (JSON 或字符串)</label>
+
+                        <!-- Cookie预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择Cookie预设...</option>
+                                <option value="bilibili_login">B站登录态</option>
+                                <option value="youtube_login">YouTube登录态</option>
+                                <option value="custom_simple">简单Cookie</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-cookie')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small id="cookie-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">设置页面的 Cookie</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">额外 HTTP 头 (extraHTTPHeaders)</label>
+
+                        <!-- HTTP Headers预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="headers-preset" onchange="applyHeadersPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择User-Agent预设...</option>
+                                <option value="mobile_chrome">📱 移动端Chrome</option>
+                                <option value="mobile_safari">📱 移动端Safari (iPhone)</option>
+                                <option value="desktop_chrome">🖥️ 桌面端Chrome (Win)</option>
+                                <option value="desktop_mac">🖥️ 桌面端Safari (Mac)</option>
+                                <option value="with_auth">🔑 Bearer Token认证</option>
+                                <option value="api_key">🔑 API Key认证</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-headers')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="testcase-headers" placeholder='{"User-Agent": "...", "Authorization": "..."}' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small id="headers-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">JSON格式的额外HTTP请求头</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">阻止列表 (blockList)</label>
+
+                        <!-- BlockList预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="blocklist-preset" onchange="applyBlocklistPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择阻止列表预设...</option>
+                                <option value="block_images">🖼️ 阻止图片</option>
+                                <option value="block_videos">🎬 阻止视频文件</option>
+                                <option value="block_ads">🚫 阻止广告</option>
+                                <option value="block_analytics">📊 阻止统计分析</option>
+                                <option value="block_fonts">🔤 阻止字体</option>
+                                <option value="performance_mode">⚡ 性能模式（推荐）</option>
+                                <option value="bilibili_ads">🅱️ B站广告</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-blocklist')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="testcase-blocklist" placeholder='["*.jpg", "*.png", "https://analytics.example.com/**"]' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">JSON数组格式，支持glob模式，阻止匹配的资源加载 | 💡 可提升性能</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">自定义 CSS (customCss)</label>
+
+                        <!-- CSS预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="css-preset" onchange="applyCssPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择CSS预设...</option>
+                                <option value="hide_ads">🚫 隐藏广告元素</option>
+                                <option value="hide_headers">⬆️ 隐藏头部导航</option>
+                                <option value="hide_footers">⬇️ 隐藏页脚</option>
+                                <option value="focus_video">🎯 视频聚焦模式</option>
+                                <option value="dark_mode">🌙 暗黑模式</option>
+                                <option value="performance_boost">⚡ 性能提升</option>
+                                <option value="bilibili_clean">🅱️ B站净化</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-css')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="testcase-css" placeholder="body { background: red; }" rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">注入到页面的自定义CSS样式</small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">设备选项 (deviceOptions)</label>
+
+                        <!-- Device预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="device-preset" onchange="applyDevicePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择设备预设...</option>
+                                <optgroup label="🖥️ 桌面设备">
+                                    <option value="desktop_fullhd">Full HD (1920x1080 全屏)</option>
+                                    <option value="desktop_normal">标准桌面 (1920x1080 窗口)</option>
+                                    <option value="desktop_2k">2K (2560x1440)</option>
+                                    <option value="desktop_4k">4K (3840x2160)</option>
+                                    <option value="desktop_small">小屏笔记本 (1366x768)</option>
+                                </optgroup>
+                                <optgroup label="📱 移动设备">
+                                    <option value="mobile_android">Android 标准</option>
+                                    <option value="mobile_iphone">iPhone 标准</option>
+                                    <option value="mobile_iphone_pro">iPhone Pro</option>
+                                    <option value="mobile_iphone_pro_max">iPhone Pro Max</option>
+                                    <option value="mobile_ipad">iPad</option>
+                                    <option value="mobile_galaxy_s21">Galaxy S21</option>
+                                </optgroup>
+                            </select>
+                            <button type="button" onclick="clearDeviceConfig()" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <select id="testcase-device-type" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+                            <option value="">不设置（使用默认）</option>
+                            <option value="Desktop">Desktop - 桌面设备</option>
+                            <option value="Mobile">Mobile - 移动设备</option>
+                        </select>
+                        <div id="device-desktop-options" style="display: none; margin-top: 8px;">
+                            <label style="cursor: pointer;">
+                                <input type="checkbox" id="device-fullscreen"> 全屏模式 (fullscreen)
+                            </label>
+                        </div>
+                        <div id="device-mobile-options" style="display: none; margin-top: 8px;">
+                            <select id="device-mobile-preset" style="width: 100%; padding: 8px;">
+                                <option value="android">Android</option>
+                                <option value="iphone">iPhone</option>
+                            </select>
+                        </div>
+                        <small id="device-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>生命周期钩子 (Lifecycle Hooks)</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔧 beforePageLoad</label>
+
+                        <!-- beforePageLoad预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-beforepageload-preset" onchange="applyHookPreset('beforePageLoad', 'hook-beforepageload')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="set_viewport_1080p">🖥️ 设置视口 1080P</option>
+                                <option value="set_viewport_720p">🖥️ 设置视口 720P</option>
+                                <option value="set_viewport_mobile">📱 设置移动端视口</option>
+                                <option value="enable_console_log">📋 启用控制台日志</option>
+                                <option value="block_notifications">🔕 阻止通知权限</option>
+                                <option value="set_geolocation">🌍 设置地理位置</option>
+                                <option value="inject_script">💉 注入全局脚本</option>
+                                <option value="disable_animations">⚡ 禁用CSS动画</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-beforepageload')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="hook-beforepageload" placeholder="// 页面加载前执行&#10;// 例如：await page.setViewportSize({ width: 1920, height: 1080 });" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载之前执行 | 用于设置环境</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">✅ onPageLoaded</label>
+
+                        <!-- onPageLoaded预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpageloaded-preset" onchange="applyHookPreset('onPageLoaded', 'hook-onpageloaded')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="wait_for_video">📹 等待视频加载</option>
+                                <option value="wait_for_content">📄 等待内容加载</option>
+                                <option value="wait_network_idle">🌐 等待网络空闲</option>
+                                <option value="check_no_errors">🐛 检查页面错误</option>
+                                <option value="scroll_to_load">📜 滚动触发懒加载</option>
+                                <option value="remove_overlays">❌ 移除弹窗遮罩</option>
+                                <option value="bilibili_wait_player">🅱️ B站等待播放器</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpageloaded')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="hook-onpageloaded" placeholder="// 页面加载完成后执行&#10;// 例如：await page.waitForSelector('.content');" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载完成后执行 | 用于验证和等待</small>
+                    </div>
+
+                    <div id="hook-onpagetesting-container" style="margin-bottom: 10px; display: none;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔄 onPageTesting</label>
+
+                        <!-- 预设操作选择器 -->
+                        <div style="margin-bottom: 10px; padding: 10px; background: #edf2f7; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <label style="margin: 0; font-weight: 500; font-size: 0.9em;">✨ 快速预设：</label>
+                                <select id="preset-category" onchange="updatePresetOperations()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <option value="">-- 选择分类 --</option>
+                                    <option value="bilibili">B站播放器</option>
+                                    <option value="bilibiliLive">B站直播</option>
+                                    <option value="generic">通用视频</option>
+                                    <option value="interaction">页面交互</option>
+                                    <option value="performance">性能测试</option>
+                                </select>
+                                <select id="preset-operation" onchange="updatePresetParams()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;" disabled>
+                                    <option value="">-- 选择操作 --</option>
+                                </select>
+                            </div>
+
+                            <!-- 参数配置区域 -->
+                            <div id="preset-params" style="display: none; margin-bottom: 8px;"></div>
+
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" onclick="insertPresetCode()" class="btn-small" style="padding: 6px 12px; background: #4299e1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">插入代码</button>
+                                <button type="button" onclick="previewPresetCode()" class="btn-small" style="padding: 6px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">预览代码</button>
+                                <button type="button" onclick="clearHookCode('hook-onpagetesting')" class="btn-small" style="padding: 6px 12px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                            </div>
+                        </div>
+
+                        <textarea id="hook-onpagetesting" placeholder="// Runtime/MemoryLeak 测试期间执行&#10;// 例如：await page.click('.button');&#10;// 或使用上方预设快速插入常用操作" rows="6" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行 | 💡 支持多个操作组合</small>
+                    </div>
+
+                    <div id="hook-onpagecollecting-container" style="margin-bottom: 10px; display: none;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">📊 onPageCollecting</label>
+
+                        <!-- onPageCollecting预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpagecollecting-preset" onchange="applyHookPreset('onPageCollecting', 'hook-onpagecollecting')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="force_gc">🗑️ 强制垃圾回收</option>
+                                <option value="pause_video">⏸️ 暂停视频</option>
+                                <option value="clear_cache">🧹 清理页面缓存</option>
+                                <option value="stop_animations">⏹️ 停止所有动画</option>
+                                <option value="collect_metrics">📊 收集性能指标</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpagecollecting')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="hook-onpagecollecting" placeholder="// MemoryLeak 收集数据时执行&#10;// 例如：await page.evaluate(() => window.gc());" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 MemoryLeak 收集数据时执行 | 建议使用GC预设</small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🏁 onPageUnload</label>
+
+                        <!-- onPageUnload预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpageunload-preset" onchange="applyHookPreset('onPageUnload', 'hook-onpageunload')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="save_screenshot">📸 保存截图</option>
+                                <option value="log_final_state">📝 记录最终状态</option>
+                                <option value="collect_errors">❗ 收集错误日志</option>
+                                <option value="cleanup_listeners">🧹 清理事件监听</option>
+                                <option value="close_connections">🔌 关闭连接</option>
+                                <option value="export_data">📤 导出数据</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpageunload')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
+                        <textarea id="hook-onpageunload" placeholder="// 页面卸载前执行&#10;// 例如：await page.evaluate(() => console.log('cleanup'));" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面卸载前执行 | 用于清理和保存</small>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -593,13 +914,378 @@
         </div>
     </div>
 
+    <!-- 引入预设库 -->
+    <script src="operation-presets.js"></script>
+    <script src="config-presets.js"></script>
+    <script src="hook-presets.js"></script>
+
     <script>
         // 数据存储
         let testCases = JSON.parse(localStorage.getItem('testCases') || '[]');
         let selectedCases = new Set();
-        let currentRunning = null;
+        let currentRunning = null; // 保留用于向后兼容
         let runningQueue = [];
         let completedToday = 0;
+
+        // 新增：后端任务管理
+        let backendTasks = new Map(); // taskId -> task对象
+        const MAX_CONCURRENT = 3;
+
+        // ==================== 预设系统 ====================
+        let currentPresetParams = {}; // 当前预设的参数值
+
+        // 更新预设操作列表
+        function updatePresetOperations() {
+            const category = document.getElementById('preset-category').value;
+            const operationSelect = document.getElementById('preset-operation');
+            const paramsDiv = document.getElementById('preset-params');
+
+            // 清空并重置
+            operationSelect.innerHTML = '<option value="">-- 选择操作 --</option>';
+            paramsDiv.style.display = 'none';
+            paramsDiv.innerHTML = '';
+            currentPresetParams = {};
+
+            if (!category || !OperationPresets[category]) {
+                operationSelect.disabled = true;
+                return;
+            }
+
+            operationSelect.disabled = false;
+            const operations = OperationPresets[category].operations;
+
+            Object.keys(operations).forEach(key => {
+                const op = operations[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${op.name} - ${op.description}`;
+                operationSelect.appendChild(option);
+            });
+        }
+
+        // 更新预设参数配置UI
+        function updatePresetParams() {
+            const category = document.getElementById('preset-category').value;
+            const operation = document.getElementById('preset-operation').value;
+            const paramsDiv = document.getElementById('preset-params');
+
+            paramsDiv.style.display = 'none';
+            paramsDiv.innerHTML = '';
+            currentPresetParams = {};
+
+            if (!category || !operation) return;
+
+            const preset = OperationPresets[category].operations[operation];
+            if (!preset.params || preset.params.length === 0) return;
+
+            paramsDiv.style.display = 'block';
+
+            preset.params.forEach(param => {
+                const paramGroup = document.createElement('div');
+                paramGroup.style.marginBottom = '8px';
+
+                const label = document.createElement('label');
+                label.textContent = param.label + ':';
+                label.style.display = 'block';
+                label.style.marginBottom = '4px';
+                label.style.fontSize = '0.85em';
+                label.style.fontWeight = '500';
+
+                let input;
+                if (param.type === 'select') {
+                    input = document.createElement('select');
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+
+                    param.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.label;
+                        if (opt.value === param.default) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
+                } else if (param.type === 'number') {
+                    input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = param.default || 0;
+                    if (param.min !== undefined) input.min = param.min;
+                    if (param.max !== undefined) input.max = param.max;
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = param.default || '';
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+                }
+
+                input.dataset.paramName = param.name;
+                paramGroup.appendChild(label);
+                paramGroup.appendChild(input);
+                paramsDiv.appendChild(paramGroup);
+
+                // 初始化参数值
+                currentPresetParams[param.name] = input.value;
+
+                // 监听参数变化
+                input.addEventListener('change', () => {
+                    currentPresetParams[param.name] = input.value;
+                });
+                input.addEventListener('input', () => {
+                    currentPresetParams[param.name] = input.value;
+                });
+            });
+        }
+
+        // 生成预设代码
+        function generatePresetCode() {
+            const category = document.getElementById('preset-category').value;
+            const operation = document.getElementById('preset-operation').value;
+
+            if (!category || !operation) {
+                showToast('请先选择预设分类和操作', 'error');
+                return null;
+            }
+
+            const preset = OperationPresets[category].operations[operation];
+            if (!preset) {
+                showToast('预设不存在', 'error');
+                return null;
+            }
+
+            // 构建参数对象
+            const params = {};
+            Object.keys(currentPresetParams).forEach(key => {
+                const value = currentPresetParams[key];
+                // 尝试转换数字类型
+                if (!isNaN(value) && value !== '') {
+                    params[key] = Number(value);
+                } else {
+                    params[key] = value;
+                }
+            });
+
+            return preset.code(params);
+        }
+
+        // 插入预设代码
+        function insertPresetCode() {
+            const code = generatePresetCode();
+            if (!code) return;
+
+            const textarea = document.getElementById('hook-onpagetesting');
+            const currentCode = textarea.value.trim();
+
+            if (currentCode) {
+                // 如果已有代码，追加到末尾
+                textarea.value = currentCode + '\n\n' + code;
+            } else {
+                textarea.value = code;
+            }
+
+            showToast('预设代码已插入', 'success');
+        }
+
+        // 预览预设代码
+        function previewPresetCode() {
+            const code = generatePresetCode();
+            if (!code) return;
+
+            // 使用alert显示（简单实现，可以后续改为更美观的模态框）
+            alert('生成的代码预览：\n\n' + code);
+        }
+
+        // 清空hook代码
+        function clearHookCode(hookId) {
+            if (!confirm('确定要清空当前代码吗？')) return;
+            document.getElementById(hookId).value = '';
+            showToast('代码已清空', 'success');
+        }
+
+        // ==================== 配置预设系统 ====================
+
+        // 应用Cookie预设
+        function applyCookiePreset() {
+            const presetKey = document.getElementById('cookie-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.cookies.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-cookie');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            if (preset.instruction) {
+                document.getElementById('cookie-instruction').textContent = '💡 ' + preset.instruction;
+                document.getElementById('cookie-instruction').style.color = '#e67e22';
+            }
+
+            showToast(`已应用Cookie预设: ${preset.name}`, 'success');
+        }
+
+        // 应用HTTP Headers预设
+        function applyHeadersPreset() {
+            const presetKey = document.getElementById('headers-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.headers.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-headers');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            if (preset.instruction) {
+                document.getElementById('headers-instruction').textContent = '💡 ' + preset.instruction;
+                document.getElementById('headers-instruction').style.color = '#e67e22';
+            }
+
+            showToast(`已应用Headers预设: ${preset.name}`, 'success');
+        }
+
+        // 应用BlockList预设
+        function applyBlocklistPreset() {
+            const presetKey = document.getElementById('blocklist-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.blocklist.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-blocklist');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            showToast(`已应用BlockList预设: ${preset.name}`, 'success');
+        }
+
+        // 应用CSS预设
+        function applyCssPreset() {
+            const presetKey = document.getElementById('css-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.customCss.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-css');
+            textarea.value = preset.value;
+
+            showToast(`已应用CSS预设: ${preset.name}`, 'success');
+        }
+
+        // 应用Device预设
+        function applyDevicePreset() {
+            const presetKey = document.getElementById('device-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.devices.presets[presetKey];
+            if (!preset) return;
+
+            const deviceType = preset.type;
+            const deviceTypeSelect = document.getElementById('testcase-device-type');
+            deviceTypeSelect.value = deviceType;
+
+            // 触发设备类型变化事件
+            updateDeviceOptionsDisplay();
+
+            // 设置具体选项
+            if (deviceType === 'Desktop') {
+                const fullscreenOption = preset.value[1]?.fullscreen;
+                document.getElementById('device-fullscreen').checked = fullscreenOption || false;
+            } else if (deviceType === 'Mobile') {
+                const mobilePresetName = preset.value[1]?.preset || 'iphone';
+                document.getElementById('device-mobile-preset').value = mobilePresetName;
+            }
+
+            const instruction = document.getElementById('device-instruction');
+            instruction.textContent = `已应用: ${preset.displayText}`;
+            instruction.style.color = '#27ae60';
+
+            showToast(`已应用设备预设: ${preset.name}`, 'success');
+        }
+
+        // 清空设备配置
+        function clearDeviceConfig() {
+            document.getElementById('device-preset').value = '';
+            document.getElementById('testcase-device-type').value = '';
+            document.getElementById('device-fullscreen').checked = false;
+            document.getElementById('device-mobile-preset').value = 'android';
+            updateDeviceOptionsDisplay();
+
+            const instruction = document.getElementById('device-instruction');
+            instruction.textContent = '模拟不同设备类型';
+            instruction.style.color = '#718096';
+
+            showToast('设备配置已清空', 'success');
+        }
+
+        // 通用清空配置
+        function clearConfig(elementId) {
+            document.getElementById(elementId).value = '';
+
+            // 重置instruction样式
+            const instructionId = elementId.replace('testcase-', '') + '-instruction';
+            const instructionEl = document.getElementById(instructionId);
+            if (instructionEl) {
+                instructionEl.style.color = '#718096';
+            }
+
+            // 重置对应的预设选择器
+            const presetSelectId = elementId.replace('testcase-', '') + '-preset';
+            const presetSelect = document.getElementById(presetSelectId);
+            if (presetSelect) {
+                presetSelect.value = '';
+            }
+
+            showToast('配置已清空', 'success');
+        }
+
+        // ==================== 钩子函数预设系统 ====================
+
+        // 应用钩子函数预设
+        function applyHookPreset(hookName, textareaId) {
+            const presetSelectId = textareaId + '-preset';
+            const presetSelect = document.getElementById(presetSelectId);
+            const presetKey = presetSelect.value;
+
+            if (!presetKey) return;
+
+            const hookPresets = HookPresets[hookName];
+            if (!hookPresets || !hookPresets.presets[presetKey]) {
+                showToast('预设不存在', 'error');
+                return;
+            }
+
+            const preset = hookPresets.presets[presetKey];
+            const textarea = document.getElementById(textareaId);
+            const currentCode = textarea.value.trim();
+
+            if (currentCode) {
+                // 如果已有代码，询问是替换还是追加
+                if (confirm(`当前已有代码，是否追加新预设？\n\n点击"确定"追加，点击"取消"替换`)) {
+                    textarea.value = currentCode + '\n\n' + preset.code;
+                    showToast(`已追加预设: ${preset.name}`, 'success');
+                } else {
+                    textarea.value = preset.code;
+                    showToast(`已替换为预设: ${preset.name}`, 'success');
+                }
+            } else {
+                textarea.value = preset.code;
+                showToast(`已应用预设: ${preset.name}`, 'success');
+            }
+
+            // 重置下拉框
+            presetSelect.value = '';
+        }
 
         // WebSocket连接
         let ws = null;
@@ -633,7 +1319,7 @@
         function handleWebSocketMessage(data) {
             switch (data.type) {
                 case 'status':
-                    updateStatus(data.status, data.runner);
+                    updateStatus(data.data.status, data.data.currentRunner);
                     break;
                 case 'output':
                     appendOutput(data.data);
@@ -641,7 +1327,42 @@
                 case 'progress':
                     updateProgress(data.current, data.total);
                     break;
+                case 'tasks':
+                    // 新增：处理任务列表更新
+                    updateTasksList(data.data);
+                    break;
+                case 'task_update':
+                    // 新增：处理单个任务更新
+                    updateSingleTask(data.data);
+                    break;
             }
+        }
+
+        // 新增：更新任务列表
+        function updateTasksList(tasks) {
+            backendTasks.clear();
+            tasks.forEach(task => {
+                backendTasks.set(task.id, task);
+            });
+            updateStats();
+            updateQueueDisplay();
+        }
+
+        // 新增：更新单个任务
+        function updateSingleTask(task) {
+            backendTasks.set(task.id, task);
+
+            // 如果有输出，追加到输出区域
+            if (task.output) {
+                const outputArea = document.getElementById('output-area');
+                if (outputArea) {
+                    outputArea.value = task.output;
+                    outputArea.scrollTop = outputArea.scrollHeight;
+                }
+            }
+
+            updateStats();
+            updateQueueDisplay();
         }
 
         // 初始化
@@ -650,6 +1371,11 @@
             renderCases();
             updateStats();
             loadCompletedToday();
+
+            // 添加高级配置事件监听
+            document.getElementById('runner-runtime').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('runner-memoryleak').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('testcase-device-type').addEventListener('change', updateDeviceOptionsDisplay);
         };
 
         // 渲染用例列表
@@ -710,11 +1436,11 @@
                                 <td>${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
                                 <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
                                 <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
-                                <td>${testCase.repeatCount || 3}</td>
+                                <td>${testCase.repeatCount || 1}</td>
                                 <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})" ${currentRunning ? 'disabled' : ''}>▶ 运行</button>
+                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})">▶ 运行</button>
                                         <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
                                         <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
                                     </div>
@@ -733,7 +1459,11 @@
         // 更新统计信息
         function updateStats() {
             document.getElementById('total-cases').textContent = testCases.length;
-            document.getElementById('running-cases').textContent = currentRunning ? 1 : 0;
+
+            // 统计后端运行中的任务数
+            const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
+            document.getElementById('running-cases').textContent = runningCount;
+
             document.getElementById('completed-today').textContent = completedToday;
         }
 
@@ -758,7 +1488,150 @@
 
         function updateSelectionUI() {
             document.getElementById('selected-count').textContent = selectedCases.size;
-            document.getElementById('run-selected-btn').disabled = selectedCases.size === 0 || currentRunning !== null;
+            document.getElementById('run-selected-btn').disabled = selectedCases.size === 0;
+            document.getElementById('delete-selected-btn').disabled = selectedCases.size === 0;
+        }
+
+        // 批量删除用例
+        function deleteSelectedCases() {
+            if (selectedCases.size === 0) return;
+
+            const count = selectedCases.size;
+            if (!confirm(`确定要删除选中的 ${count} 个用例吗？`)) return;
+
+            // 删除所有选中的用例
+            testCases = testCases.filter(tc => !selectedCases.has(tc.id));
+            selectedCases.clear();
+
+            saveToStorage();
+            renderCases();
+            updateSelectionUI();
+            showToast(`成功删除 ${count} 个用例`, 'success');
+        }
+
+        // 更新高级配置显示
+        function updateAdvancedConfigDisplay() {
+            const runtimeChecked = document.getElementById('runner-runtime').checked;
+            const memoryLeakChecked = document.getElementById('runner-memoryleak').checked;
+
+            const runtimeConfig = document.getElementById('runtime-config');
+            const memoryLeakConfig = document.getElementById('memoryleak-config');
+            const noConfig = document.getElementById('no-runner-config');
+
+            runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
+            memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
+            noConfig.style.display = (!runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+
+            // 根据选择的runner显示/隐藏生命周期钩子
+            const onPageTestingContainer = document.getElementById('hook-onpagetesting-container');
+            const onPageCollectingContainer = document.getElementById('hook-onpagecollecting-container');
+
+            // onPageTesting 只在 Runtime 或 MemoryLeak 时显示
+            onPageTestingContainer.style.display = (runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
+
+            // onPageCollecting 只在 MemoryLeak 时显示
+            onPageCollectingContainer.style.display = memoryLeakChecked ? 'block' : 'none';
+        }
+
+        // 更新设备选项显示
+        function updateDeviceOptionsDisplay() {
+            const deviceType = document.getElementById('testcase-device-type').value;
+            const desktopOptions = document.getElementById('device-desktop-options');
+            const mobileOptions = document.getElementById('device-mobile-options');
+
+            desktopOptions.style.display = deviceType === 'Desktop' ? 'block' : 'none';
+            mobileOptions.style.display = deviceType === 'Mobile' ? 'block' : 'none';
+        }
+
+        // ==================== URL 列表管理 ====================
+        let urlItems = [];
+        let urlItemCounter = 0;
+
+        // 添加URL项
+        function addUrlItem(url = '', description = '') {
+            const itemId = urlItemCounter++;
+            urlItems.push({ id: itemId, url, description });
+            renderUrlList();
+        }
+
+        // 删除URL项
+        function removeUrlItem(itemId) {
+            urlItems = urlItems.filter(item => item.id !== itemId);
+            renderUrlList();
+        }
+
+        // 渲染URL列表
+        function renderUrlList() {
+            const container = document.getElementById('url-list');
+
+            if (urlItems.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center; margin: 0;">暂无URL，点击上方"➕ 添加URL"按钮添加</p>';
+                return;
+            }
+
+            container.innerHTML = urlItems.map((item, index) => `
+                <div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #4a5568; min-width: 30px;">URL ${index + 1}:</span>
+                        <input type="text"
+                               class="url-input"
+                               data-id="${item.id}"
+                               value="${escapeHtml(item.url)}"
+                               placeholder="https://www.bilibili.com"
+                               style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
+                               oninput="updateUrlItem(${item.id}, 'url', this.value)">
+                        <button type="button"
+                                class="btn-danger btn-small"
+                                onclick="removeUrlItem(${item.id})"
+                                style="padding: 6px 12px; font-size: 0.85em;">🗑️</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 600; color: #4a5568; min-width: 30px;">描述:</span>
+                        <input type="text"
+                               class="desc-input"
+                               data-id="${item.id}"
+                               value="${escapeHtml(item.description)}"
+                               placeholder="例如：B站首页、视频播放页"
+                               style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
+                               oninput="updateUrlItem(${item.id}, 'description', this.value)">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 更新URL项
+        function updateUrlItem(itemId, field, value) {
+            const item = urlItems.find(i => i.id === itemId);
+            if (item) {
+                item[field] = value;
+            }
+        }
+
+        // 清空URL列表
+        function clearUrlList() {
+            urlItems = [];
+            urlItemCounter = 0;
+            renderUrlList();
+        }
+
+        // 从旧格式加载URLs（兼容性）
+        function loadUrlsFromOldFormat(urls) {
+            clearUrlList();
+            urls.forEach(url => {
+                addUrlItem(url, url); // 默认描述为URL本身
+            });
+        }
+
+        // 从新格式加载URLs（带描述）
+        function loadUrlsFromNewFormat(urlsWithDesc) {
+            clearUrlList();
+            urlsWithDesc.forEach(item => {
+                if (typeof item === 'string') {
+                    addUrlItem(item, item);
+                } else {
+                    addUrlItem(item.url || '', item.description || item.url || '');
+                }
+            });
         }
 
         // 显示添加用例模态框
@@ -766,16 +1639,45 @@
             document.getElementById('case-modal').classList.add('active');
             document.querySelector('.modal-header').textContent = '➕ 添加测试用例';
 
-            // 清空表单
+            // 清空表单 - 基础字段
             document.getElementById('case-name').value = '';
             document.getElementById('runner-initialization').checked = false;
             document.getElementById('runner-runtime').checked = false;
             document.getElementById('runner-memoryleak').checked = false;
-            document.getElementById('case-urls').value = '';
+            clearUrlList();
+            addUrlItem(); // 添加一个空的URL项
             document.getElementById('case-mode').value = 'headless';
-            document.getElementById('case-repeat').value = '3';
+            document.getElementById('case-repeat').value = '1';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
+
+            // 清空 Runner 配置
+            document.getElementById('runtime-duration').value = '60000';
+            document.getElementById('runtime-delay').value = '10000';
+            document.getElementById('memoryleak-interval').value = '60000';
+            document.getElementById('memoryleak-iterations').value = '3';
+            document.getElementById('memoryleak-onpagetesting').value = '';
+
+            // 清空 TestCase 高级配置
+            document.getElementById('testcase-delay').value = '';
+            document.getElementById('testcase-cookie').value = '';
+            document.getElementById('testcase-headers').value = '';
+            document.getElementById('testcase-blocklist').value = '';
+            document.getElementById('testcase-css').value = '';
+            document.getElementById('testcase-device-type').value = '';
+            document.getElementById('device-fullscreen').checked = false;
+            document.getElementById('device-mobile-preset').value = 'android';
+
+            // 清空生命周期钩子
+            document.getElementById('hook-beforepageload').value = '';
+            document.getElementById('hook-onpageloaded').value = '';
+            document.getElementById('hook-onpagetesting').value = '';
+            document.getElementById('hook-onpagecollecting').value = '';
+            document.getElementById('hook-onpageunload').value = '';
+
+            // 更新显示
+            updateAdvancedConfigDisplay();
+            updateDeviceOptionsDisplay();
 
             // 移除编辑模式标记
             delete document.getElementById('case-modal').dataset.editId;
@@ -804,14 +1706,74 @@
                 document.getElementById('runner-memoryleak').checked = testCase.runner === 'MemoryLeak';
             }
 
-            // 处理URLs - 兼容旧格式（url）和新格式（urls数组）
-            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
-            document.getElementById('case-urls').value = urls.join('\n');
+            // 处理URLs - 支持新旧格式
+            if (testCase.urlsWithDesc && Array.isArray(testCase.urlsWithDesc)) {
+                // 新格式：带描述的URL数组
+                loadUrlsFromNewFormat(testCase.urlsWithDesc);
+            } else {
+                // 旧格式：纯URL数组
+                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                loadUrlsFromOldFormat(urls);
+            }
 
             document.getElementById('case-mode').value = testCase.mode || 'headless';
-            document.getElementById('case-repeat').value = testCase.repeatCount || 3;
+            document.getElementById('case-repeat').value = testCase.repeatCount || 1;
+
+            // 填充 Runner 配置字段
+            if (testCase.runners?.Runtime) {
+                document.getElementById('runtime-duration').value = testCase.runners.Runtime.durationMs || 60000;
+                document.getElementById('runtime-delay').value = testCase.runners.Runtime.delayMs || 10000;
+            } else {
+                document.getElementById('runtime-duration').value = 60000;
+                document.getElementById('runtime-delay').value = 10000;
+            }
+
+            if (testCase.runners?.MemoryLeak) {
+                document.getElementById('memoryleak-interval').value = testCase.runners.MemoryLeak.intervalMs || 60000;
+                document.getElementById('memoryleak-iterations').value = testCase.runners.MemoryLeak.iterations || 3;
+                document.getElementById('memoryleak-onpagetesting').value = testCase.runners.MemoryLeak.onPageTesting || '';
+            } else {
+                document.getElementById('memoryleak-interval').value = 60000;
+                document.getElementById('memoryleak-iterations').value = 3;
+                document.getElementById('memoryleak-onpagetesting').value = '';
+            }
+
+            // 填充 TestCase 高级配置字段
+            const advConfig = testCase.advancedConfig || {};
+            document.getElementById('testcase-delay').value = advConfig.delayMs || '';
+            document.getElementById('testcase-cookie').value = advConfig.cookie ? (typeof advConfig.cookie === 'string' ? advConfig.cookie : JSON.stringify(advConfig.cookie, null, 2)) : '';
+            document.getElementById('testcase-headers').value = advConfig.extraHTTPHeaders ? JSON.stringify(advConfig.extraHTTPHeaders, null, 2) : '';
+            document.getElementById('testcase-blocklist').value = advConfig.blockList ? JSON.stringify(advConfig.blockList, null, 2) : '';
+            document.getElementById('testcase-css').value = advConfig.customCss || '';
+
+            // 恢复 deviceOptions
+            if (advConfig.deviceOptions && Array.isArray(advConfig.deviceOptions)) {
+                document.getElementById('testcase-device-type').value = advConfig.deviceOptions[0];
+                if (advConfig.deviceOptions[0] === 'Desktop' && advConfig.deviceOptions[1]) {
+                    document.getElementById('device-fullscreen').checked = advConfig.deviceOptions[1].fullscreen || false;
+                } else if (advConfig.deviceOptions[0] === 'Mobile' && advConfig.deviceOptions[1]) {
+                    document.getElementById('device-mobile-preset').value = advConfig.deviceOptions[1].preset || 'android';
+                }
+            } else {
+                document.getElementById('testcase-device-type').value = '';
+                document.getElementById('device-fullscreen').checked = false;
+                document.getElementById('device-mobile-preset').value = 'android';
+            }
+
+            // 填充生命周期钩子
+            const hooks = advConfig.hooks || {};
+            document.getElementById('hook-beforepageload').value = hooks.beforePageLoad || '';
+            document.getElementById('hook-onpageloaded').value = hooks.onPageLoaded || '';
+            document.getElementById('hook-onpagetesting').value = hooks.onPageTesting || '';
+            document.getElementById('hook-onpagecollecting').value = hooks.onPageCollecting || '';
+            document.getElementById('hook-onpageunload').value = hooks.onPageUnload || '';
+
             document.getElementById('case-description').value = testCase.description || '';
             document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
+
+            // 更新显示
+            updateAdvancedConfigDisplay();
+            updateDeviceOptionsDisplay();
 
             // 标记为编辑模式
             document.getElementById('case-modal').dataset.editId = id;
@@ -823,7 +1785,6 @@
             const initChecked = document.getElementById('runner-initialization').checked;
             const runtimeChecked = document.getElementById('runner-runtime').checked;
             const memoryChecked = document.getElementById('runner-memoryleak').checked;
-            const urlsText = document.getElementById('case-urls').value.trim();
             const mode = document.getElementById('case-mode').value;
             const repeatCount = parseInt(document.getElementById('case-repeat').value);
             const description = document.getElementById('case-description').value.trim();
@@ -840,22 +1801,50 @@
                 return;
             }
 
-            // 解析多个URL
-            const urls = urlsText.split('\n')
-                .map(url => url.trim())
-                .filter(url => url.length > 0);
-
-            if (urls.length === 0) {
-                showToast('请至少输入一个URL', 'error');
+            // 从 urlItems 收集 URL 和描述
+            if (urlItems.length === 0) {
+                showToast('请至少添加一个URL', 'error');
                 return;
             }
 
-            // 验证所有URL格式
-            const invalidUrls = urls.filter(url => !isValidURL(url));
+            // 验证 URL 格式并构建数据结构
+            const urlsWithDesc = [];
+            const invalidUrls = [];
+
+            for (const item of urlItems) {
+                const url = item.url.trim();
+                const desc = item.description.trim();
+
+                if (!url) {
+                    showToast('存在空的URL，请填写或删除', 'error');
+                    return;
+                }
+
+                if (!isValidURL(url)) {
+                    invalidUrls.push(url);
+                    continue;
+                }
+
+                urlsWithDesc.push({
+                    url: url,
+                    description: desc || url  // 如果没有描述，使用URL本身
+                });
+            }
+
             if (invalidUrls.length > 0) {
                 showToast(`以下URL格式无效：\n${invalidUrls.join('\n')}`, 'error');
                 return;
             }
+
+            // 为了兼容性，也保留纯URL数组
+            const urls = urlsWithDesc.map(item => item.url);
+
+            // 读取高级配置值
+            const runtimeDuration = parseInt(document.getElementById('runtime-duration').value) || 60000;
+            const runtimeDelay = parseInt(document.getElementById('runtime-delay').value) || 10000;
+            const memoryInterval = parseInt(document.getElementById('memoryleak-interval').value) || 60000;
+            const memoryIterations = parseInt(document.getElementById('memoryleak-iterations').value) || 3;
+            const memoryOnPageTesting = document.getElementById('memoryleak-onpagetesting').value.trim();
 
             // 构建runners配置对象
             const runners = {
@@ -866,16 +1855,95 @@
                 Runtime: {
                     enabled: runtimeChecked,
                     repeatCount: repeatCount,
-                    durationMs: 60000,
-                    delayMs: 10000
+                    durationMs: runtimeDuration,
+                    delayMs: runtimeDelay
                 },
                 MemoryLeak: {
                     enabled: memoryChecked,
                     repeatCount: repeatCount,
-                    intervalMs: 60000,
-                    iterations: 3
+                    intervalMs: memoryInterval,
+                    iterations: memoryIterations,
+                    onPageTesting: memoryOnPageTesting
                 }
             };
+
+            // 收集 TestCase 高级配置
+            const advancedConfig = {};
+
+            // delayMs
+            const tcDelayMs = document.getElementById('testcase-delay').value.trim();
+            if (tcDelayMs) {
+                advancedConfig.delayMs = parseInt(tcDelayMs);
+            }
+
+            // cookie
+            const cookieValue = document.getElementById('testcase-cookie').value.trim();
+            if (cookieValue) {
+                try {
+                    advancedConfig.cookie = JSON.parse(cookieValue);
+                } catch {
+                    advancedConfig.cookie = cookieValue; // 作为字符串
+                }
+            }
+
+            // extraHTTPHeaders
+            const headersValue = document.getElementById('testcase-headers').value.trim();
+            if (headersValue) {
+                try {
+                    advancedConfig.extraHTTPHeaders = JSON.parse(headersValue);
+                } catch (e) {
+                    console.error('Invalid JSON for extraHTTPHeaders:', e);
+                }
+            }
+
+            // blockList
+            const blockListValue = document.getElementById('testcase-blocklist').value.trim();
+            if (blockListValue) {
+                try {
+                    advancedConfig.blockList = JSON.parse(blockListValue);
+                } catch (e) {
+                    console.error('Invalid JSON for blockList:', e);
+                }
+            }
+
+            // customCss
+            const cssValue = document.getElementById('testcase-css').value.trim();
+            if (cssValue) {
+                advancedConfig.customCss = cssValue;
+            }
+
+            // deviceOptions
+            const deviceType = document.getElementById('testcase-device-type').value;
+            if (deviceType) {
+                if (deviceType === 'Desktop') {
+                    const fullscreen = document.getElementById('device-fullscreen').checked;
+                    advancedConfig.deviceOptions = ['Desktop', { fullscreen }];
+                } else if (deviceType === 'Mobile') {
+                    const preset = document.getElementById('device-mobile-preset').value;
+                    advancedConfig.deviceOptions = ['Mobile', { preset }];
+                }
+            }
+
+            // 生命周期钩子
+            const hooks = {};
+            const beforePageLoad = document.getElementById('hook-beforepageload').value.trim();
+            if (beforePageLoad) hooks.beforePageLoad = beforePageLoad;
+
+            const onPageLoaded = document.getElementById('hook-onpageloaded').value.trim();
+            if (onPageLoaded) hooks.onPageLoaded = onPageLoaded;
+
+            const onPageTesting = document.getElementById('hook-onpagetesting').value.trim();
+            if (onPageTesting) hooks.onPageTesting = onPageTesting;
+
+            const onPageCollecting = document.getElementById('hook-onpagecollecting').value.trim();
+            if (onPageCollecting) hooks.onPageCollecting = onPageCollecting;
+
+            const onPageUnload = document.getElementById('hook-onpageunload').value.trim();
+            if (onPageUnload) hooks.onPageUnload = onPageUnload;
+
+            if (Object.keys(hooks).length > 0) {
+                advancedConfig.hooks = hooks;
+            }
 
             const editId = document.getElementById('case-modal').dataset.editId;
 
@@ -886,10 +1954,12 @@
                     testCase.name = name;
                     testCase.runners = runners;
                     testCase.urls = urls;
+                    testCase.urlsWithDesc = urlsWithDesc;  // 新增：带描述的URL数组
                     testCase.mode = mode;
                     testCase.repeatCount = repeatCount;
                     testCase.description = description;
                     testCase.tags = tags;
+                    testCase.advancedConfig = advancedConfig;
                     // 移除旧的字段（如果存在）
                     delete testCase.url;
                     delete testCase.runner;
@@ -902,10 +1972,12 @@
                     name,
                     runners,
                     urls,
+                    urlsWithDesc,  // 新增：带描述的URL数组
                     mode,
                     repeatCount,
                     description,
                     tags,
+                    advancedConfig,
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 };
@@ -932,10 +2004,15 @@
         // 运行单个用例
         async function runCase(id) {
             const testCase = testCases.find(tc => tc.id === id);
-            if (!testCase || currentRunning) return;
+            if (!testCase) return;
 
-            currentRunning = testCase.id;
-            testCase.status = 'running';
+            // 移除单任务限制，允许并发执行
+            const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
+            if (runningCount >= MAX_CONCURRENT) {
+                showToast(`当前已有 ${runningCount} 个任务在运行，将进入队列等待`, 'info');
+            }
+
+            testCase.status = 'pending';
             renderCases();
 
             document.getElementById('status-card').style.display = 'block';
@@ -944,13 +2021,45 @@
             document.getElementById('current-status').className = 'status-badge status-running';
 
             try {
-                // 获取URLs - 兼容旧格式
-                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                // 获取URLs - 支持新格式（带描述）和旧格式
+                let urlsData = [];
                 const mode = testCase.mode || 'headless';
 
-                if (urls.length === 0) {
+                if (testCase.urlsWithDesc && testCase.urlsWithDesc.length > 0) {
+                    // 新格式：带描述的URL数组
+                    urlsData = testCase.urlsWithDesc;
+                } else {
+                    // 旧格式：纯URL数组
+                    const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                    urlsData = urls.map(url => ({
+                        url: url,
+                        description: url
+                    }));
+                }
+
+                if (urlsData.length === 0) {
                     throw new Error('测试用例没有配置URL');
                 }
+
+                // 构建 testCases 数组 - 将 URLs 转换为 testCases 并应用高级配置
+                const advConfig = testCase.advancedConfig || {};
+                const testCasesArray = urlsData.map(item => {
+                    const tc = {
+                        target: item.url,
+                        description: item.description || item.url  // 使用自定义描述或URL本身
+                    };
+
+                    // 应用高级配置
+                    if (advConfig.delayMs !== undefined) tc.delayMs = advConfig.delayMs;
+                    if (advConfig.cookie) tc.cookie = advConfig.cookie;
+                    if (advConfig.extraHTTPHeaders) tc.extraHTTPHeaders = advConfig.extraHTTPHeaders;
+                    if (advConfig.blockList) tc.blockList = advConfig.blockList;
+                    if (advConfig.customCss) tc.customCss = advConfig.customCss;
+                    if (advConfig.deviceOptions) tc.deviceOptions = advConfig.deviceOptions;
+                    if (advConfig.hooks) tc.hooks = advConfig.hooks;
+
+                    return tc;
+                });
 
                 // 构建runners配置 - 兼容新旧格式
                 let runnersConfig = {};
@@ -960,16 +2069,17 @@
                     // 新格式：多runner支持
                     if (testCase.runners.Initialization?.enabled) {
                         runnersConfig.Initialization = {
-                            repeatCount: testCase.runners.Initialization.repeatCount || testCase.repeatCount || 3,
-                            urls: urls
+                            enabled: true,
+                            testCases: testCasesArray,
+                            iterations: testCase.runners.Initialization.iterations || 7
                         };
                         enabledRunners.push('Initialization');
                     }
 
                     if (testCase.runners.Runtime?.enabled) {
                         runnersConfig.Runtime = {
-                            repeatCount: testCase.runners.Runtime.repeatCount || testCase.repeatCount || 3,
-                            urls: urls,
+                            enabled: true,
+                            testCases: testCasesArray,
                             durationMs: testCase.runners.Runtime.durationMs || 60000,
                             delayMs: testCase.runners.Runtime.delayMs || 10000
                         };
@@ -977,9 +2087,18 @@
                     }
 
                     if (testCase.runners.MemoryLeak?.enabled) {
+                        // 为 MemoryLeak 处理 onPageTesting（向后兼容）
+                        const memoryTestCases = testCasesArray.map(tc => {
+                            const mtc = { ...tc };
+                            if (testCase.runners.MemoryLeak.onPageTesting) {
+                                mtc.onPageTesting = testCase.runners.MemoryLeak.onPageTesting;
+                            }
+                            return mtc;
+                        });
+
                         runnersConfig.MemoryLeak = {
-                            repeatCount: testCase.runners.MemoryLeak.repeatCount || testCase.repeatCount || 3,
-                            urls: urls,
+                            enabled: true,
+                            testCases: memoryTestCases,
                             intervalMs: testCase.runners.MemoryLeak.intervalMs || 60000,
                             iterations: testCase.runners.MemoryLeak.iterations || 3
                         };
@@ -988,8 +2107,8 @@
                 } else if (testCase.runner) {
                     // 旧格式：单个runner
                     runnersConfig[testCase.runner] = {
-                        repeatCount: testCase.repeatCount || 3,
-                        urls: urls
+                        enabled: true,
+                        testCases: testCasesArray
                     };
                     enabledRunners.push(testCase.runner);
                 }
@@ -998,14 +2117,17 @@
                     throw new Error('测试用例没有启用任何测试类型');
                 }
 
-                // 发送请求 - 注意：对于多runner，后端需要调整
+                // 发送请求到后端任务API
                 const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        runner: enabledRunners[0], // 暂时使用第一个runner（后端需要调整支持多runner）
+                        name: testCase.name, // 添加任务名称
                         config: {
-                            mode: mode,
+                            mode: {
+                                anonymous: true,
+                                headless: mode === 'headless'
+                            },
                             runners: runnersConfig
                         }
                     })
@@ -1014,39 +2136,205 @@
                 const result = await response.json();
 
                 if (!result.success) {
-                    throw new Error(result.message || '启动测试失败');
+                    throw new Error(result.message || result.error || '启动测试失败');
                 }
 
-                appendOutput(`[系统] 测试用例 "${testCase.name}" 已启动`);
+                showToast(`任务已创建: ${testCase.name}`, 'success');
+                appendOutput(`[系统] 测试用例 "${testCase.name}" 已提交到任务队列`);
+                appendOutput(`[系统] 任务ID: ${result.taskId}`);
                 appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
                 appendOutput(`[系统] 测试类型: ${enabledRunners.join(' + ')}`);
-                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount} 次`);
+                appendOutput(`[系统] 测试 ${urlsData.length} 个URL, 重复 ${testCase.repeatCount || 1} 次`);
             } catch (error) {
                 testCase.status = 'error';
-                currentRunning = null;
                 renderCases();
                 showToast('运行失败: ' + error.message, 'error');
                 appendOutput(`[错误] ${error.message}`);
             }
         }
 
+        // 更新队列显示 - 显示后端任务状态
+        function updateQueueDisplay() {
+            const queueCard = document.getElementById('queue-card');
+            const queueList = document.getElementById('queue-list');
+
+            const tasks = Array.from(backendTasks.values());
+
+            if (tasks.length === 0) {
+                queueCard.style.display = 'none';
+                return;
+            }
+
+            queueCard.style.display = 'block';
+
+            // 按状态排序：running -> pending -> completed -> error
+            const sortedTasks = tasks.sort((a, b) => {
+                const statusOrder = { running: 0, pending: 1, completed: 2, error: 3 };
+                return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+            });
+
+            const queueHTML = sortedTasks.map(task => {
+                const statusIcons = {
+                    running: '🔄',
+                    pending: '⏳',
+                    completed: '✅',
+                    error: '❌'
+                };
+                const statusTexts = {
+                    running: '正在运行',
+                    pending: '等待中',
+                    completed: '已完成',
+                    error: '失败'
+                };
+                const bgColors = {
+                    running: '#fef3c7',
+                    pending: '#f3f4f6',
+                    completed: '#d1fae5',
+                    error: '#fee2e2'
+                };
+
+                const icon = statusIcons[task.status] || '❓';
+                const statusText = statusTexts[task.status] || '未知';
+                const bgColor = bgColors[task.status] || '#f3f4f6';
+
+                return `
+                    <div style="padding: 10px; margin-bottom: 8px; background: ${bgColor}; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${escapeHtml(task.name)}</strong>
+                            <span style="margin-left: 10px; color: #6b7280; font-size: 0.9em;">${icon} ${statusText}</span>
+                            <span style="margin-left: 10px; color: #9ca3af; font-size: 0.85em;">${task.runner}</span>
+                        </div>
+                        <div>
+                            ${task.status === 'running' ? `
+                                <button class="btn-danger btn-small" onclick="stopTask('${task.id}')" style="margin-left: 5px;" title="优雅停止（最多等待5秒）">停止</button>
+                                <button class="btn-danger btn-small" onclick="stopTask('${task.id}', true)" style="margin-left: 5px; background: #991b1b;" title="立即强制终止进程">强制停止</button>
+                            ` : ''}
+                            ${task.status === 'pending' ? `<button class="btn-danger btn-small" onclick="deleteTask('${task.id}')" style="margin-left: 5px;">取消</button>` : ''}
+                            ${(task.status === 'completed' || task.status === 'error') ? `<button class="btn-secondary btn-small" onclick="deleteTask('${task.id}')" style="margin-left: 5px;">移除</button>` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            queueList.innerHTML = queueHTML || '<p style="color: #9ca3af;">队列为空</p>';
+        }
+
+        // 新增：停止任务
+        async function stopTask(taskId, force = false) {
+            const task = backendTasks.get(taskId);
+            if (!task) {
+                showToast('任务不存在', 'error');
+                return;
+            }
+
+            // 如果是强制停止，先确认
+            if (force) {
+                if (!confirm(`确定要强制停止任务"${task.name}"吗？\n\n这将立即终止进程，可能导致数据丢失。`)) {
+                    return;
+                }
+            } else {
+                // 普通停止也需要确认
+                if (!confirm(`确定要停止任务"${task.name}"吗？\n\n进程将被优雅关闭（最多等待5秒）。`)) {
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ force })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(force ? '任务已强制停止' : '任务停止中...', 'success');
+                } else {
+                    showToast('停止任务失败: ' + (result.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showToast('停止任务失败: ' + error.message, 'error');
+            }
+        }
+
+        // 新增：删除任务
+        async function deleteTask(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('任务已删除', 'success');
+                    backendTasks.delete(taskId);
+                    updateQueueDisplay();
+                } else {
+                    showToast('删除任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除任务失败: ' + error.message, 'error');
+            }
+        }
+
+        // 从队列中移除任务
+        function removeFromQueue(index) {
+            if (index < runningQueue.length) {
+                const removedId = runningQueue.splice(index, 1)[0];
+                const testCase = testCases.find(tc => tc.id === removedId);
+                if (testCase) {
+                    showToast(`已从队列移除: ${testCase.name}`, 'success');
+                }
+                updateQueueDisplay();
+            }
+        }
+
+        // 清空队列
+        function clearQueue() {
+            if (runningQueue.length === 0) return;
+
+            if (!confirm(`确定要清空队列中的 ${runningQueue.length} 个任务吗？当前正在运行的任务不会被停止。`)) return;
+
+            // 保留第一个（正在运行的）
+            if (currentRunning) {
+                runningQueue = [runningQueue[0]];
+            } else {
+                runningQueue = [];
+            }
+
+            updateQueueDisplay();
+            showToast('队列已清空', 'success');
+        }
+
         // 运行选中的用例
         async function runSelectedCases() {
-            if (selectedCases.size === 0 || currentRunning) return;
+            if (selectedCases.size === 0) return;
 
-            runningQueue = Array.from(selectedCases);
-            showToast(`准备运行 ${runningQueue.length} 个用例`, 'success');
+            // 如果已有队列在运行，询问是否追加
+            if (runningQueue.length > 0) {
+                if (!confirm(`当前已有 ${runningQueue.length} 个任务在队列中，是否追加新任务？`)) return;
+            }
 
-            await runNextInQueue();
+            // 追加到队列
+            const newTasks = Array.from(selectedCases);
+            runningQueue.push(...newTasks);
+
+            showToast(`已添加 ${newTasks.length} 个用例到队列`, 'success');
+            updateQueueDisplay();
+
+            // 如果当前没有运行中的任务，开始执行
+            if (!currentRunning) {
+                await runNextInQueue();
+            }
         }
 
         async function runNextInQueue() {
             if (runningQueue.length === 0) {
                 showToast('所有用例运行完成', 'success');
+                updateQueueDisplay();
                 return;
             }
 
-            const id = runningQueue.shift();
+            const id = runningQueue[0]; // 不要shift，等运行完成后再移除
+            updateQueueDisplay();
             await runCase(id);
         }
 
@@ -1087,6 +2375,12 @@
                     }
                     currentRunning = null;
                     renderCases();
+
+                    // 从队列中移除已完成的任务
+                    if (runningQueue.length > 0 && runningQueue[0] === testCase?.id) {
+                        runningQueue.shift();
+                        updateQueueDisplay();
+                    }
 
                     // 如果有队列，继续运行下一个
                     if (runningQueue.length > 0) {
@@ -1164,97 +2458,172 @@
             const presets = [
                 {
                     id: Date.now(),
-                    name: 'B站首页-初始化测试',
+                    name: '📊 示例1: B站首页 - 基础性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 7 },
                         Runtime: { enabled: false },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com'],
                     mode: 'headless',
-                    repeatCount: 3,
-                    description: '仅测试B站首页的初始化性能',
-                    tags: ['bilibili', '首页', '初始化'],
+                    repeatCount: 1,
+                    description: '测试B站首页的初始化性能（冷启动）',
+                    tags: ['示例', 'bilibili', '基础'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
                 },
                 {
                     id: Date.now() + 1,
-                    name: 'B站视频页-全面性能测试',
+                    name: '🎬 示例2: B站视频页 - Runtime性能监控',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
+                        Initialization: { enabled: false },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
                     mode: 'headless',
-                    repeatCount: 3,
-                    description: '对视频页进行全面测试：初始化 + 运行时 + 内存泄漏',
-                    tags: ['bilibili', '视频', '综合测试'],
+                    repeatCount: 1,
+                    description: '监控视频页30秒运行时性能，测试FPS和长任务',
+                    tags: ['示例', 'bilibili', 'runtime'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        hooks: {
+                            onPageLoaded: 'console.log("页面加载完成，开始监控...");',
+                            onPageTesting: '// 点击播放按钮\nawait page.click(".bpx-player-ctrl-btn");'
+                        }
+                    }
                 },
                 {
                     id: Date.now() + 2,
-                    name: 'B站多页面-初始化+运行时',
+                    name: '🧠 示例3: 内存泄漏检测 - 视频切换',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
+                        Initialization: { enabled: false },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: true, repeatCount: 1, intervalMs: 30000, iterations: 3, onPageTesting: '// 模拟视频切换操作\nawait page.evaluate(() => {\n  // 触发可能的内存泄漏操作\n  window.scrollTo(0, document.body.scrollHeight);\n});' }
+                    },
+                    urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
+                    mode: 'headless',
+                    repeatCount: 1,
+                    description: '检测视频页面的内存泄漏问题，重复执行页面操作',
+                    tags: ['示例', 'bilibili', '内存泄漏'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
+                },
+                {
+                    id: Date.now() + 3,
+                    name: '🚀 示例4: 多页面对比测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
                     urls: [
                         'https://www.bilibili.com',
                         'https://www.bilibili.com/video/BV1xx411c7mD',
-                        'https://t.bilibili.com'
+                        'https://t.bilibili.com',
+                        'https://space.bilibili.com'
                     ],
                     mode: 'headless',
-                    repeatCount: 3,
-                    description: '测试多个页面的初始化和运行时性能',
-                    tags: ['bilibili', '多页面', '双测试'],
+                    repeatCount: 1,
+                    description: '对比测试B站不同页面的性能表现',
+                    tags: ['示例', 'bilibili', '多页面'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: Date.now() + 3,
-                    name: 'B站首页-内存泄漏专项',
-                    runners: {
-                        Initialization: { enabled: false },
-                        Runtime: { enabled: false },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3 }
-                    },
-                    urls: ['https://www.bilibili.com'],
-                    mode: 'headless',
-                    repeatCount: 5,
-                    description: '专门检测首页的内存泄漏问题',
-                    tags: ['bilibili', '首页', '内存'],
-                    status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
                 },
                 {
                     id: Date.now() + 4,
-                    name: 'B站核心页面-有头模式观察',
+                    name: '📱 示例5: 移动端模拟 - 性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 2 },
-                        Runtime: { enabled: true, repeatCount: 2, durationMs: 30000, delayMs: 5000 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
-                    urls: [
-                        'https://www.bilibili.com',
-                        'https://www.bilibili.com/video/BV1xx411c7mD'
-                    ],
-                    mode: 'headed',
-                    repeatCount: 2,
-                    description: '使用有头模式观察核心页面的初始化和运行时表现',
-                    tags: ['bilibili', '核心页面', '有头模式'],
+                    urls: ['https://m.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 1,
+                    description: '模拟移动设备测试B站移动端性能',
+                    tags: ['示例', 'bilibili', '移动端'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        deviceOptions: ['Mobile', { preset: 'android' }]
+                    }
+                },
+                {
+                    id: Date.now() + 5,
+                    name: '🚫 示例6: 阻止资源加载 - 优化测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 1,
+                    description: '阻止图片和字体加载，测试核心页面性能',
+                    tags: ['示例', 'bilibili', '资源优化'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        blockList: ['*.jpg', '*.png', '*.webp', '*.woff', '*.woff2'],
+                        hooks: {
+                            beforePageLoad: 'console.log("已阻止图片和字体加载");'
+                        }
+                    }
+                },
+                {
+                    id: Date.now() + 6,
+                    name: '🎨 示例7: 自定义CSS - 隐藏广告',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '注入自定义CSS隐藏广告元素，测试性能影响',
+                    tags: ['示例', 'bilibili', 'css'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        customCss: '.ad-report, .bili-banner, [class*="ad-"] { display: none !important; }'
+                    }
+                },
+                {
+                    id: Date.now() + 7,
+                    name: '🔄 示例8: 全面测试 - 所有Runner',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 2, iterations: 5, includeWarmNavigation: false },
+                        Runtime: { enabled: true, repeatCount: 2, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: true, repeatCount: 2, intervalMs: 30000, iterations: 2, onPageTesting: 'await page.evaluate(() => window.scrollTo(0, 500));' }
+                    },
+                    urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
+                    mode: 'headless',
+                    repeatCount: 2,
+                    description: '对视频页执行全面性能测试：初始化、运行时、内存泄漏',
+                    tags: ['示例', 'bilibili', '全面测试'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        delayMs: 5000,
+                        hooks: {
+                            onPageLoaded: 'console.log("页面加载完成");',
+                            onPageTesting: 'console.log("开始性能测试");',
+                            onPageUnload: 'console.log("测试完成，清理页面");'
+                        }
+                    }
                 }
             ];
 
             testCases = [...testCases, ...presets];
             saveToStorage();
             renderCases();
-            showToast('已加载 5 个预设用例（含多runner示例）', 'success');
+            showToast(`✅ 已加载 ${presets.length} 个实战示例！包含基础测试、高级配置、生命周期钩子等功能演示`, 'success');
         }
 
         // 工具函数

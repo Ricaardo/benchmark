@@ -391,6 +391,46 @@
                         <small>启用后浏览器将在后台运行，不显示窗口（推荐调试时关闭）</small>
                     </div>
                 </div>
+
+                <!-- Mode Advanced Options -->
+                <div id="mode-advanced" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; display: none;">
+                    <div class="form-group">
+                        <label>用户数据目录 (usrDataDir) - 非匿名模式</label>
+                        <input type="text" id="mode-usrdatadir" placeholder="/path/to/user/data/dir">
+                        <small>指定用户数据目录路径（仅非匿名模式）</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="mode-preparepage">
+                            <span>准备页面 (preparePage) - 非匿名+非无头模式</span>
+                        </label>
+                        <small>是否准备页面（仅在非匿名且非无头模式下可用）</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Root Global Configuration -->
+            <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #333;">⚙️ 全局配置 (Root)</h3>
+
+                <div class="form-group">
+                    <label>CPU 节流倍数 (cpuThrottlingRate)</label>
+                    <input type="number" id="cpu-throttling" value="1" min="1" step="1">
+                    <small>模拟慢速CPU，1表示无节流，2表示2倍慢速，4表示4倍慢速（必须是2的倍数）</small>
+                </div>
+
+                <div class="form-group">
+                    <label>本地服务端口 (port) - 仅测试本地HTML文件时使用</label>
+                    <input type="number" id="local-port" placeholder="3000 / 8000 / 8080">
+                    <small>当测试目标是本地HTML文件时启动的服务端口，留空使用默认值（3000/8000/8080之一）</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Chrome 可执行文件路径 (executablePath) - 可选</label>
+                    <input type="text" id="executable-path" placeholder="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome">
+                    <small>自定义Chrome可执行文件路径，留空使用系统默认Chrome</small>
+                </div>
             </div>
 
             <!-- Initialization Runner -->
@@ -404,6 +444,21 @@
                 </div>
                 <div id="init-config" style="display: none;">
                     <p style="color: #666; margin-bottom: 15px;">测试页面初始化加载性能，每个测试用例运行一次。</p>
+
+                    <div class="form-group">
+                        <label>迭代次数</label>
+                        <input type="number" id="init-iterations" value="7" min="1" max="20">
+                        <small>InitializationRunner 的迭代次数，默认为 7 次，值必须为正整数</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="init-include-warm">
+                            <span>包含热启动测试 (includeWarmNavigation)</span>
+                        </label>
+                        <small>是否包含热启动的初始化测试，默认为 false（只测试冷启动）</small>
+                    </div>
+
                     <div class="test-cases" id="init-test-cases"></div>
                     <button class="btn-secondary btn-small" onclick="addTestCase('init')">➕ 添加测试用例</button>
                 </div>
@@ -431,6 +486,33 @@
                         <label>延迟时间 (毫秒)</label>
                         <input type="number" id="runtime-delay" value="10000" step="1000">
                         <small>开始测试前的等待时间，默认 10000ms (10秒)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>收集的指标类型 (metrics)</label>
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-runtime" checked style="margin-right: 8px;">
+                                <strong>runtime</strong> - 运行时性能指标
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-longtask" checked style="margin-right: 8px;">
+                                <strong>longtask</strong> - 长任务检测
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-longanimationframe" style="margin-right: 8px;">
+                                <strong>longAnimationFrame</strong> - 长动画帧检测
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-fps" style="margin-right: 8px;">
+                                <strong>fps</strong> - 帧率监测
+                            </label>
+                            <label style="display: block; margin-bottom: 0; cursor: pointer;">
+                                <input type="checkbox" id="metric-system" style="margin-right: 8px;">
+                                <strong>system</strong> - 系统指标（仅本地Mac系统可用）
+                            </label>
+                        </div>
+                        <small>RuntimeRunner 收集的指标类型，默认为 ['runtime', 'longtask']</small>
                     </div>
 
                     <div class="test-cases" id="runtime-test-cases"></div>
@@ -463,11 +545,21 @@
                     </div>
 
                     <div class="form-group">
-                        <label>页面操作代码 (onPageTesting)</label>
-                        <textarea id="memory-testing-code" class="code-editor" placeholder="// 在这里写你怀疑会触发内存泄露的页面操作
-// 例如：await page.click('.play-button');
-// 留空则静置页面"></textarea>
-                        <small>在每次迭代中执行的页面操作代码。<strong>留空表示静置页面</strong>。若需要默认行为（进入直播间），请留空。</small>
+                        <label>延迟时间 (毫秒)</label>
+                        <input type="number" id="memory-delay" value="10000" step="1000">
+                        <small>进入页面后的等待时间，确保页面稳定加载，默认 10000ms (10秒)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>冷静时间 (毫秒)</label>
+                        <input type="number" id="memory-cooldown" value="3000" step="1000">
+                        <small>GC 完成和页面操作完成后的等待时间，默认 3000ms (3秒)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>全局页面操作代码 (onPageTesting - 默认值)</label>
+                        <textarea id="memory-testing-code" class="code-editor" placeholder="// 全局默认的页面操作代码&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面"></textarea>
+                        <small>在每次迭代中执行的页面操作代码（作为所有测试用例的默认值）。<strong>留空表示静置页面</strong>。各测试用例可以覆盖此全局配置。</small>
                     </div>
 
                     <div class="test-cases" id="memory-test-cases"></div>
@@ -487,11 +579,33 @@
         // 使用相对路径，动态获取 API 地址
         const API_BASE = `${window.location.origin}/api`;
         let config = {
-            mode: { anonymous: true, headless: false },
+            mode: { anonymous: true, headless: false, usrDataDir: '', preparePage: false },
+            cpuThrottlingRate: 1,
+            port: null,
+            executablePath: '',
             runners: {
-                Initialization: { enabled: false, testCases: [] },
-                Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000 },
-                MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                Initialization: {
+                    enabled: false,
+                    testCases: [],
+                    iterations: 7,
+                    includeWarmNavigation: false
+                },
+                Runtime: {
+                    enabled: false,
+                    testCases: [],
+                    durationMs: 60000,
+                    delayMs: 10000,
+                    metrics: ['runtime', 'longtask']
+                },
+                MemoryLeak: {
+                    enabled: false,
+                    testCases: [],
+                    intervalMs: 60000,
+                    iterations: 3,
+                    delayMs: 10000,
+                    coolDownMs: 3000,
+                    onPageTesting: ''
+                }
             }
         };
 
@@ -550,25 +664,180 @@
         function addTestCase(runner) {
             const container = document.getElementById(`${runner}-test-cases`);
             const index = container.children.length;
+            const tcId = `tc-${runner}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
             const testCase = document.createElement('div');
             testCase.className = 'test-case';
-            testCase.innerHTML = `
+
+            // 基础配置
+            let basicFields = `
                 <div class="test-case-header">
                     <strong>测试用例 #${index + 1}</strong>
                     <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
                 </div>
                 <div class="form-group">
-                    <label>目标 URL</label>
+                    <label>目标 URL *</label>
                     <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
                 </div>
                 <div class="form-group">
-                    <label>描述</label>
+                    <label>描述 *</label>
                     <input type="text" class="test-description" placeholder="测试用例描述" required>
                 </div>
             `;
 
+            // MemoryLeak特有字段
+            if (runner === 'memory') {
+                basicFields += `
+                <div class="form-group">
+                    <label>页面操作代码 (onPageTesting - 可选)</label>
+                    <textarea class="test-onPageTesting code-editor" placeholder="// 针对此URL的特定操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4"></textarea>
+                    <small>此测试用例专用的页面操作代码，优先级高于全局配置。留空则使用全局配置或静置页面。</small>
+                </div>
+                `;
+            }
+
+            // 高级配置区域
+            const advancedFields = `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="color: #667eea;">⚙️ 高级配置 (可选)</strong>
+                        <button type="button" class="btn-secondary btn-small" onclick="toggleAdvanced('${tcId}')" style="padding: 4px 10px;">展开/折叠</button>
+                    </div>
+                    <div id="${tcId}-advanced" style="display: none;">
+                        <!-- TestCase级别延迟 -->
+                        <div class="form-group">
+                            <label>延迟时间 (delayMs) - testCase级别</label>
+                            <input type="number" class="test-delayMs" placeholder="留空使用Runner级别的delayMs" step="1000">
+                            <small>此testCase专用的延迟时间，优先级高于Runner配置</small>
+                        </div>
+
+                        <!-- Cookie -->
+                        <div class="form-group">
+                            <label>Cookie（JSON格式或字符串）</label>
+                            <textarea class="test-cookie code-editor" placeholder='示例：[{"name":"SESSDATA","value":"xxx"}]' rows="3"></textarea>
+                            <small>设置Cookie，可以是字符串或JSON数组格式（仅本地测试）</small>
+                        </div>
+
+                        <!-- HTTP Headers -->
+                        <div class="form-group">
+                            <label>HTTP 请求头 (extraHTTPHeaders)</label>
+                            <textarea class="test-headers code-editor" placeholder='示例：{"x1-bilispy-color":"test"}' rows="3"></textarea>
+                            <small>自定义HTTP请求头（JSON格式），常用于染色环境</small>
+                        </div>
+
+                        <!-- Block List -->
+                        <div class="form-group">
+                            <label>URL 屏蔽列表 (blockList)</label>
+                            <textarea class="test-blocklist code-editor" placeholder='示例：["**/*bili-comments.*.js", "/ads/**"]' rows="3"></textarea>
+                            <small>屏蔽的URL列表（JSON数组），支持glob模式</small>
+                        </div>
+
+                        <!-- Custom CSS -->
+                        <div class="form-group">
+                            <label>自定义 CSS (customCss)</label>
+                            <textarea class="test-customcss code-editor" placeholder=".bili-header { display: none; }" rows="3"></textarea>
+                            <small>注入自定义CSS样式</small>
+                        </div>
+
+                        <!-- Device Options -->
+                        <div class="form-group">
+                            <label>设备类型</label>
+                            <select class="test-devicetype">
+                                <option value="">默认 (Desktop)</option>
+                                <option value="Desktop">Desktop</option>
+                                <option value="Mobile">Mobile</option>
+                            </select>
+                        </div>
+                        <div class="test-device-desktop" style="display: none;">
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="checkbox" class="test-device-fullscreen">
+                                    <span>全屏模式 (fullscreen)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="test-device-mobile" style="display: none;">
+                            <div class="form-group">
+                                <label>Mobile 预设</label>
+                                <select class="test-device-preset">
+                                    <option value="">无</option>
+                                    <option value="android">Android</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Lifecycle Hooks -->
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
+                            <strong style="display: block; margin-bottom: 10px; color: #667eea;">🔗 生命周期钩子</strong>
+
+                            <div class="form-group">
+                                <label>beforePageLoad</label>
+                                <textarea class="test-hook-beforepageload code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面加载前执行&#10;}" rows="3"></textarea>
+                                <small>页面加载前执行的钩子函数</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>onPageLoaded</label>
+                                <textarea class="test-hook-onpageloaded code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面加载完成后执行&#10;}" rows="3"></textarea>
+                                <small>页面加载完成后执行的钩子函数</small>
+                            </div>
+
+                            ${runner !== 'memory' && runner !== 'runtime' ? '' : `
+                            <div class="form-group">
+                                <label>onPageTesting</label>
+                                <textarea class="test-hook-onpagetesting code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 测试过程中执行&#10;}" rows="3"></textarea>
+                                <small>测试过程中执行的钩子函数 (Runtime/MemoryLeak)</small>
+                            </div>
+                            `}
+
+                            ${runner !== 'memory' ? '' : `
+                            <div class="form-group">
+                                <label>onPageCollecting</label>
+                                <textarea class="test-hook-onpagecollecting code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 数据收集时执行&#10;}" rows="3"></textarea>
+                                <small>数据收集时执行的钩子函数 (仅MemoryLeak)</small>
+                            </div>
+                            `}
+
+                            <div class="form-group">
+                                <label>onPageUnload</label>
+                                <textarea class="test-hook-onpageunload code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面卸载前执行&#10;}" rows="3"></textarea>
+                                <small>页面卸载前执行的钩子函数</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            testCase.innerHTML = basicFields + advancedFields;
+
+            // 添加设备类型切换事件
             container.appendChild(testCase);
+
+            const deviceTypeSelect = testCase.querySelector('.test-devicetype');
+            if (deviceTypeSelect) {
+                deviceTypeSelect.addEventListener('change', function() {
+                    const desktopDiv = testCase.querySelector('.test-device-desktop');
+                    const mobileDiv = testCase.querySelector('.test-device-mobile');
+                    if (this.value === 'Desktop') {
+                        desktopDiv.style.display = 'block';
+                        mobileDiv.style.display = 'none';
+                    } else if (this.value === 'Mobile') {
+                        desktopDiv.style.display = 'none';
+                        mobileDiv.style.display = 'block';
+                    } else {
+                        desktopDiv.style.display = 'none';
+                        mobileDiv.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // 切换高级配置显示
+        function toggleAdvanced(tcId) {
+            const advancedDiv = document.getElementById(`${tcId}-advanced`);
+            if (advancedDiv) {
+                advancedDiv.style.display = advancedDiv.style.display === 'none' ? 'block' : 'none';
+            }
         }
 
         // 删除测试用例
@@ -586,7 +855,101 @@
                 const description = tc.querySelector('.test-description').value;
 
                 if (target && description) {
-                    testCases.push({ target, description });
+                    const testCase = { target, description };
+
+                    // MemoryLeak的testCase可以有独立的onPageTesting
+                    if (runner === 'memory') {
+                        const onPageTestingEl = tc.querySelector('.test-onPageTesting');
+                        if (onPageTestingEl) {
+                            const onPageTesting = onPageTestingEl.value.trim();
+                            if (onPageTesting) {
+                                testCase.onPageTesting = onPageTesting;
+                            }
+                        }
+                    }
+
+                    // 收集高级配置
+                    const delayMsEl = tc.querySelector('.test-delayMs');
+                    if (delayMsEl && delayMsEl.value) {
+                        testCase.delayMs = parseInt(delayMsEl.value);
+                    }
+
+                    const cookieEl = tc.querySelector('.test-cookie');
+                    if (cookieEl && cookieEl.value.trim()) {
+                        try {
+                            testCase.cookie = JSON.parse(cookieEl.value.trim());
+                        } catch {
+                            testCase.cookie = cookieEl.value.trim();
+                        }
+                    }
+
+                    const headersEl = tc.querySelector('.test-headers');
+                    if (headersEl && headersEl.value.trim()) {
+                        try {
+                            testCase.extraHTTPHeaders = JSON.parse(headersEl.value.trim());
+                        } catch (e) {
+                            console.error('Invalid JSON for extraHTTPHeaders:', e);
+                        }
+                    }
+
+                    const blocklistEl = tc.querySelector('.test-blocklist');
+                    if (blocklistEl && blocklistEl.value.trim()) {
+                        try {
+                            testCase.blockList = JSON.parse(blocklistEl.value.trim());
+                        } catch (e) {
+                            console.error('Invalid JSON for blockList:', e);
+                        }
+                    }
+
+                    const customCssEl = tc.querySelector('.test-customcss');
+                    if (customCssEl && customCssEl.value.trim()) {
+                        testCase.customCss = customCssEl.value.trim();
+                    }
+
+                    // 设备选项
+                    const deviceTypeEl = tc.querySelector('.test-devicetype');
+                    if (deviceTypeEl && deviceTypeEl.value) {
+                        if (deviceTypeEl.value === 'Desktop') {
+                            const fullscreenEl = tc.querySelector('.test-device-fullscreen');
+                            testCase.deviceOptions = ['Desktop', { fullscreen: fullscreenEl ? fullscreenEl.checked : false }];
+                        } else if (deviceTypeEl.value === 'Mobile') {
+                            const presetEl = tc.querySelector('.test-device-preset');
+                            testCase.deviceOptions = ['Mobile', { preset: presetEl && presetEl.value ? presetEl.value : undefined }];
+                        }
+                    }
+
+                    // 生命周期钩子
+                    const hooks = {};
+                    const beforePageLoadEl = tc.querySelector('.test-hook-beforepageload');
+                    if (beforePageLoadEl && beforePageLoadEl.value.trim()) {
+                        hooks.beforePageLoad = beforePageLoadEl.value.trim();
+                    }
+
+                    const onPageLoadedEl = tc.querySelector('.test-hook-onpageloaded');
+                    if (onPageLoadedEl && onPageLoadedEl.value.trim()) {
+                        hooks.onPageLoaded = onPageLoadedEl.value.trim();
+                    }
+
+                    const onPageTestingEl = tc.querySelector('.test-hook-onpagetesting');
+                    if (onPageTestingEl && onPageTestingEl.value.trim()) {
+                        hooks.onPageTesting = onPageTestingEl.value.trim();
+                    }
+
+                    const onPageCollectingEl = tc.querySelector('.test-hook-onpagecollecting');
+                    if (onPageCollectingEl && onPageCollectingEl.value.trim()) {
+                        hooks.onPageCollecting = onPageCollectingEl.value.trim();
+                    }
+
+                    const onPageUnloadEl = tc.querySelector('.test-hook-onpageunload');
+                    if (onPageUnloadEl && onPageUnloadEl.value.trim()) {
+                        hooks.onPageUnload = onPageUnloadEl.value.trim();
+                    }
+
+                    if (Object.keys(hooks).length > 0) {
+                        testCase.hooks = hooks;
+                    }
+
+                    testCases.push(testCase);
                 }
             });
 
@@ -599,10 +962,20 @@
                 // Mode configuration
                 config.mode.anonymous = document.getElementById('mode-anonymous').checked;
                 config.mode.headless = document.getElementById('mode-headless').checked;
+                config.mode.usrDataDir = document.getElementById('mode-usrdatadir').value.trim();
+                config.mode.preparePage = document.getElementById('mode-preparepage').checked;
+
+                // Root global configuration
+                config.cpuThrottlingRate = parseInt(document.getElementById('cpu-throttling').value) || 1;
+                const portValue = document.getElementById('local-port').value.trim();
+                config.port = portValue ? parseInt(portValue) : null;
+                config.executablePath = document.getElementById('executable-path').value.trim();
 
                 // Initialization
                 config.runners.Initialization.enabled = document.getElementById('init-enabled').checked;
                 config.runners.Initialization.testCases = collectTestCases('init');
+                config.runners.Initialization.iterations = parseInt(document.getElementById('init-iterations').value) || 7;
+                config.runners.Initialization.includeWarmNavigation = document.getElementById('init-include-warm').checked;
 
                 // Runtime
                 config.runners.Runtime.enabled = document.getElementById('runtime-enabled').checked;
@@ -610,11 +983,22 @@
                 config.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration').value);
                 config.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay').value);
 
+                // Runtime metrics
+                const metrics = [];
+                if (document.getElementById('metric-runtime').checked) metrics.push('runtime');
+                if (document.getElementById('metric-longtask').checked) metrics.push('longtask');
+                if (document.getElementById('metric-longanimationframe').checked) metrics.push('longAnimationFrame');
+                if (document.getElementById('metric-fps').checked) metrics.push('fps');
+                if (document.getElementById('metric-system').checked) metrics.push('system');
+                config.runners.Runtime.metrics = metrics.length > 0 ? metrics : ['runtime', 'longtask'];
+
                 // MemoryLeak
                 config.runners.MemoryLeak.enabled = document.getElementById('memory-enabled').checked;
                 config.runners.MemoryLeak.testCases = collectTestCases('memory');
                 config.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval').value);
                 config.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations').value);
+                config.runners.MemoryLeak.delayMs = parseInt(document.getElementById('memory-delay').value) || 10000;
+                config.runners.MemoryLeak.coolDownMs = parseInt(document.getElementById('memory-cooldown').value) || 3000;
                 config.runners.MemoryLeak.onPageTesting = document.getElementById('memory-testing-code').value;
 
                 // 验证至少启用一个 runner
@@ -653,9 +1037,18 @@
                 // 恢复 Mode 配置
                 document.getElementById('mode-anonymous').checked = config.mode?.anonymous ?? true;
                 document.getElementById('mode-headless').checked = config.mode?.headless ?? false;
+                document.getElementById('mode-usrdatadir').value = config.mode?.usrDataDir || '';
+                document.getElementById('mode-preparepage').checked = config.mode?.preparePage ?? false;
+
+                // 恢复 Root 全局配置
+                document.getElementById('cpu-throttling').value = config.cpuThrottlingRate || 1;
+                document.getElementById('local-port').value = config.port || '';
+                document.getElementById('executable-path').value = config.executablePath || '';
 
                 // 恢复 Initialization
                 document.getElementById('init-enabled').checked = config.runners.Initialization.enabled;
+                document.getElementById('init-iterations').value = config.runners.Initialization.iterations || 7;
+                document.getElementById('init-include-warm').checked = config.runners.Initialization.includeWarmNavigation || false;
                 toggleRunner('init');
                 restoreTestCases('init', config.runners.Initialization.testCases);
 
@@ -663,6 +1056,15 @@
                 document.getElementById('runtime-enabled').checked = config.runners.Runtime.enabled;
                 document.getElementById('runtime-duration').value = config.runners.Runtime.durationMs;
                 document.getElementById('runtime-delay').value = config.runners.Runtime.delayMs;
+
+                // 恢复 Runtime metrics
+                const metrics = config.runners.Runtime.metrics || ['runtime', 'longtask'];
+                document.getElementById('metric-runtime').checked = metrics.includes('runtime');
+                document.getElementById('metric-longtask').checked = metrics.includes('longtask');
+                document.getElementById('metric-longanimationframe').checked = metrics.includes('longAnimationFrame');
+                document.getElementById('metric-fps').checked = metrics.includes('fps');
+                document.getElementById('metric-system').checked = metrics.includes('system');
+
                 toggleRunner('runtime');
                 restoreTestCases('runtime', config.runners.Runtime.testCases);
 
@@ -670,6 +1072,8 @@
                 document.getElementById('memory-enabled').checked = config.runners.MemoryLeak.enabled;
                 document.getElementById('memory-interval').value = config.runners.MemoryLeak.intervalMs;
                 document.getElementById('memory-iterations').value = config.runners.MemoryLeak.iterations;
+                document.getElementById('memory-delay').value = config.runners.MemoryLeak.delayMs || 10000;
+                document.getElementById('memory-cooldown').value = config.runners.MemoryLeak.coolDownMs || 3000;
                 document.getElementById('memory-testing-code').value = config.runners.MemoryLeak.onPageTesting || '';
                 toggleRunner('memory');
                 restoreTestCases('memory', config.runners.MemoryLeak.testCases);
@@ -689,6 +1093,88 @@
                 const lastCase = container.lastElementChild;
                 lastCase.querySelector('.test-target').value = tc.target;
                 lastCase.querySelector('.test-description').value = tc.description;
+
+                // 恢复MemoryLeak的onPageTesting
+                if (runner === 'memory' && tc.onPageTesting) {
+                    const onPageTestingEl = lastCase.querySelector('.test-onPageTesting');
+                    if (onPageTestingEl) {
+                        onPageTestingEl.value = tc.onPageTesting;
+                    }
+                }
+
+                // 恢复高级配置
+                if (tc.delayMs !== undefined) {
+                    const el = lastCase.querySelector('.test-delayMs');
+                    if (el) el.value = tc.delayMs;
+                }
+
+                if (tc.cookie) {
+                    const el = lastCase.querySelector('.test-cookie');
+                    if (el) {
+                        el.value = typeof tc.cookie === 'string' ? tc.cookie : JSON.stringify(tc.cookie, null, 2);
+                    }
+                }
+
+                if (tc.extraHTTPHeaders) {
+                    const el = lastCase.querySelector('.test-headers');
+                    if (el) el.value = JSON.stringify(tc.extraHTTPHeaders, null, 2);
+                }
+
+                if (tc.blockList) {
+                    const el = lastCase.querySelector('.test-blocklist');
+                    if (el) el.value = JSON.stringify(tc.blockList, null, 2);
+                }
+
+                if (tc.customCss) {
+                    const el = lastCase.querySelector('.test-customcss');
+                    if (el) el.value = tc.customCss;
+                }
+
+                // 恢复设备选项
+                if (tc.deviceOptions) {
+                    const deviceTypeEl = lastCase.querySelector('.test-devicetype');
+                    if (deviceTypeEl && Array.isArray(tc.deviceOptions)) {
+                        deviceTypeEl.value = tc.deviceOptions[0];
+                        // 触发change事件以显示对应的选项
+                        deviceTypeEl.dispatchEvent(new Event('change'));
+
+                        if (tc.deviceOptions[0] === 'Desktop' && tc.deviceOptions[1]) {
+                            const fullscreenEl = lastCase.querySelector('.test-device-fullscreen');
+                            if (fullscreenEl) fullscreenEl.checked = tc.deviceOptions[1].fullscreen || false;
+                        } else if (tc.deviceOptions[0] === 'Mobile' && tc.deviceOptions[1]) {
+                            const presetEl = lastCase.querySelector('.test-device-preset');
+                            if (presetEl) presetEl.value = tc.deviceOptions[1].preset || '';
+                        }
+                    }
+                }
+
+                // 恢复生命周期钩子
+                if (tc.hooks) {
+                    if (tc.hooks.beforePageLoad) {
+                        const el = lastCase.querySelector('.test-hook-beforepageload');
+                        if (el) el.value = tc.hooks.beforePageLoad;
+                    }
+
+                    if (tc.hooks.onPageLoaded) {
+                        const el = lastCase.querySelector('.test-hook-onpageloaded');
+                        if (el) el.value = tc.hooks.onPageLoaded;
+                    }
+
+                    if (tc.hooks.onPageTesting) {
+                        const el = lastCase.querySelector('.test-hook-onpagetesting');
+                        if (el) el.value = tc.hooks.onPageTesting;
+                    }
+
+                    if (tc.hooks.onPageCollecting) {
+                        const el = lastCase.querySelector('.test-hook-onpagecollecting');
+                        if (el) el.value = tc.hooks.onPageCollecting;
+                    }
+
+                    if (tc.hooks.onPageUnload) {
+                        const el = lastCase.querySelector('.test-hook-onpageunload');
+                        if (el) el.value = tc.hooks.onPageUnload;
+                    }
+                }
             });
         }
 

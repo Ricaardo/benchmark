@@ -1,0 +1,296 @@
+---
+title: "生命周期钩子"
+sidebar_position: 4
+---
+
+import OnPageLoadedSvg from '@site/static/img/onPageLoaded.excalidraw.svg';
+import BenchmarkLifecycleSvg from '@site/static/img/benchmark-lifecycle.excalidraw.svg';
+import MemoryLeakLifecycleSvg from '@site/static/img/memoryleak-lifecycle.excalidraw.svg';
+
+```twoslash include benchmark
+/// <reference path="./benchmark.d.ts" />
+/// <reference types="playwright" />
+type Browser = import("playwright").Browser;
+type BrowserContext = import("playwright").BrowserContext;
+type Page = import("playwright").Page;
+type CDPSession = import("playwright").CDPSession;
+type Prettify<T> = {
+    [K in keyof T]: T[K];
+} & {};
+```
+
+Benchmark SDK 提供了生命周期钩子，可以方便地让你在性能测试的任何阶段，自定义一些行为。比如：
+- 屏蔽网络请求
+- 抓包网络请求
+- 自定义性能指标
+- 模拟用户行为
+- 等
+
+## 生命周期图示
+
+<BenchmarkLifecycleSvg className="themed-svg" style={{height: 1000}}/>
+
+不同的 Runner 会有不同的生命周期钩子，后续的钩子函数会显示标注适用的 Runner。
+
+
+## 钩子的函数签名
+
+```typescript twoslash
+type Browser = any;
+type BrowserContext = any;
+type Page = any;
+type CDPSession = any;
+type BrowserStruct = {
+    browser?: Browser;
+    context: BrowserContext;
+    page: Page;
+    session: CDPSession;
+    ac: AbortController;
+};
+type PluginPrimitiveResult = string | number | boolean;
+type PluginExtendedResult = {
+    value: PluginPrimitiveResult;
+    after: string
+};
+type PluginResult = PluginPrimitiveResult | PluginExtendedResult;
+declare class TestCase<HookContext, RunnerOptionsType> {
+    constructor();
+}
+// ---cut---
+type LifeCycleFunction<HookContext, RunnerOptionsType> = (
+    browserStruct: BrowserStruct,
+    context: {
+        hookContext: HookContext;
+        sortAfter: (keyName: string, value: PluginPrimitiveResult) => PluginExtendedResult;
+    },
+    currentCase: TestCase<HookContext, RunnerOptionsType>) => Promise<Record<string, PluginResult> | void> | void;
+```
+
+## beforePageLoad
+
+- 适用的 Runner:
+  - `Initialization<{ phase: "cold" | "warm" }>`
+  - `Runtime`
+  - `MemoryLeak`
+- 描述: 在页面加载前执行的钩子函数，可以用于修改页面加载前的行为。
+
+<details>
+  <summary>示例1: 注入localStorage</summary>
+
+  ```typescript twoslash {11-16}
+  import { UserOptions } from '@bilibili-player/benchmark';
+
+  const config: UserOptions = {
+    runners: {
+      Runtime: {
+        durationMs: 30_000,
+        testCases: [
+          {
+            target: 'https://www.bilibili.com',
+            description: 'B站首页',
+            beforePageLoad: async ({ page }) => {
+              // 使用 addInitScript 注入业务代码
+              await page.addInitScript(() => {
+                localStorage.setItem('test', 'test');
+              });
+            }
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+</details>
+<details>
+  <summary>示例2: 修改请求的请求体或响应体</summary>
+
+  ```typescript title="修改请求的请求体" {10-19}
+  import { UserOptions } from '@bilibili-player/benchmark';
+
+  const config: UserOptions = {
+    runners: {
+      Runtime: {
+        durationMs: 30_000,
+        testCases: [
+          {
+            target: 'https://www.bilibili.com/video/BV1CAxaeHEeH/',
+            description: 'B站播放页',
+            beforePageLoad: async ({ page }) => {
+              await page.route(url =>
+                url.href.startsWith("https://api.bilibili.com/x/v2/dm/wbi/web/seg.so"),
+                async (route, req) => {
+                  const url = new URL(req.url());
+                  url.searchParams.set("oid", "30496917233");
+                  url.searchParams.set("pid", "114682119587571");
+                  await route.continue({ url: url.toString() });
+              });
+            },
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  ```typescript title="修改请求的响应体" {10-17}
+  import { UserOptions } from '@bilibili-player/benchmark';
+
+  const config: UserOptions = {
+    runners: {
+      Runtime: {
+        durationMs: 30_000,
+        testCases: [
+          {
+            target: 'https://www.bilibili.com/video/BV1CAxaeHEeH/',
+            description: 'B站播放页',
+            beforePageLoad: async ({ page }) => {
+              await page.route('/api/**', async route => {
+                if (route.request().postData().includes('my-string'))
+                  await route.fulfill({ body: 'mocked-data' });
+                else
+                  await route.continue();
+              });
+            },
+          }
+        ]
+      }
+    }
+  }
+  ```
+
+  修改请求的别的方式可以参考 [Playwright 的文档](https://playwright.dev/docs/mock)。
+</details>
+
+## onPageLoading
+
+:::danger
+deprecated, 随时会被移除
+:::
+
+## onPageLoaded
+
+- 适用的 Runner:
+  - `Initialization<{ phase: "cold" | "warm" }>`
+  - `Runtime`
+  - `MemoryLeak`
+- 描述: 页面加载完成后执行的钩子函数，可以用于修改页面加载后的行为，比如关闭弹幕，暂停播放等。
+
+注意此钩子和配置选项中 [`delayMs`](../config-reference/config-options#delayms) 的关系。
+
+<OnPageLoadedSvg className="themed-svg" />
+
+```typescript title="onPageLoaded 实现伪代码"
+const gotoPromise = page.goto("https://www.bilibili.com", { waitUntil: "load" });
+const delayPromise = page.waitForTimeout(delayMs);
+await Promise.all([
+  gotoPromise.then(() =>
+    executeHook("onPageLoaded")
+  ),
+  delayPromise,
+]);
+```
+
+举例来说：假如页面加载时间需要 5s
+
+```typescript
+{
+  testCases: [
+    {
+      delayMs: 0,
+      onPageLoaded: async ({ page }) => {
+        // 这里的逻辑会在进入页面后的 5s 执行( 即进入页面 5s 后页面触发 load 事件 )
+      }
+    },
+    {
+      delayMs: 15_000,
+      onPageLoaded: async ({ page }) => {
+        // 假设这里的执行逻辑很快
+        // 这里的逻辑执行完了，也会等待 delayMs 的15s执行完(从页面刚进入就开始算)
+      }
+    }
+  ]
+}
+```
+这样设计是为了严格保证两个页面的时序完全相同(对应上述代码块的第二种情况), 即使因为网络原因页面加载速度有快有慢，仍可以保证页面加载完成后，执行的逻辑是相同的。
+
+## onPageTesting
+
+- 适用的 Runner:
+  - `Runtime<{ performanceTiming?: PerformanceTiming }>`
+  - `MemoryLeak<{ performanceTiming: PerformanceTiming }>`
+- 描述: 页面加载完成后，开始测试的钩子函数，一般用于执行页面的测试逻辑。
+
+```typescript twoslash title="示例: 切10次集" {11-20, 31-40}
+  declare const window: {
+    player: {
+      next: () => Promise<void>;
+    };
+  } & Window;
+  // ---cut---
+  import { UserOptions } from '@bilibili-player/benchmark';
+
+  const config: UserOptions = {
+    runners: {
+      Runtime: {
+        durationMs: 60_000,
+        testCases: [
+          {
+            target: 'https://www.bilibili.com/video/BV1CAxaeHEeH/',
+            description: 'B站播放页',
+            onPageTesting: async ({ page }) => {
+              // 在这里执行页面的测试逻辑，比如页面下滑、不停切集 等持续性的操作，用于记录性能
+              // 如播放器切10次集, 每次切完等10s
+              for (let i = 0; i < 10; ++i) {
+                await page.evaluate(async () => {
+                  await window.player.next();
+                  await new Promise(resolve => setTimeout(resolve, 7000));
+                });
+              }
+            }
+          }
+        ]
+      },
+      MemoryLeak: {
+        intervalMs: 30_000,
+        iterations: 3,
+        testCases: [
+          {
+            target: 'https://www.bilibili.com/video/BV1CAxaeHEeH/',
+            description: 'B站播放页',
+            onPageTesting: async ({ page }) => {
+              // 同上，执行比如 页面下滑、不停切集 等持续性的操作，用于测试内存泄露
+              // 如播放器切10次集, 每次切完等10s
+              for (let i = 0; i < 10; ++i) {
+                await page.evaluate(async () => {
+                  await window.player.next();
+                  await new Promise(resolve => setTimeout(resolve, 7000));
+                });
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+```
+
+## onPageCollecting
+
+- 适用的 Runner:
+  - `MemoryLeak<{ performanceTiming: PerformanceTiming }>`
+- 描述: MemoryLeakRunner 在每次 `onPageTesting` 执行完后，开始收集 Runtime 内存和 CPU 时的钩子函数。
+
+由于 `onPageCollecting` 只适用于 `MemoryLeakRunner`, 这里画出 MemoryLeakRunner 的生命周期图示。
+
+<MemoryLeakLifecycleSvg className="themed-svg" />
+
+## onPageUnload
+
+- 适用的 Runner:
+  - `Initialization<{ phase: "cold" | "warm" }>`
+  - `Runtime`
+  - `MemoryLeak`
+- 描述: 页面关闭前执行的钩子函数，一般用于清理页面的行为或收集数据。
+
+

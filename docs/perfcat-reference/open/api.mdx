@@ -1,0 +1,131 @@
+---
+title: API 相关
+sidebar_position: 2
+---
+
+
+### createJob
+- 类型: `(jobInput: PerfCatJobInput) => Promise<RequestResponse>`
+- 说明：创建一个 Job，返回这次 Job 的 uuid、status 等
+```ts
+try {
+    const { uuid, status } = await perfCat.createJob({
+        triggerType: PerfCat.JobTriggerType.Manual,
+    })
+    console.log(`job status -> ${status}, uuid -> ${uuid}`)
+    // job status -> 'running', uuid -> '245d9-182c-4cdf-8021'
+} catch (e) {
+    // console.log('error msg ->', e.message)
+}
+```
+
+参数类型 `PerfCatJobInput` 说明
+```ts
+interface PerfCatJobInput {
+    /** 触发 Job 的类型 **/
+    triggerType: JobTriggerType
+    /** 关联调用方侧调用记录的唯一ID **/
+    extraJobId?: string
+    /** Job 结果需要推送给的企微用户的工号 **/
+    toWeComUsers?: string[]
+}
+```
+
+参数类型 `RequestResponse` 说明
+```ts
+interface RequestResponse {
+    /** 单次 Job 的唯一ID **/
+    uuid: string
+    /** 创建 Job 完成的描述 **/
+    msg: string
+    /** 创建 Job 后的状态 **/
+    status: JobStatus
+    /** Job 运行所在机器的 hostname **/
+    hostname: string
+}
+```
+
+### cancelJob
+-   类型: `(uuid: string) => Promise<RequestResponse>`
+-   说明：使用 `createJob` 方法返回的 uuid 作为参数，取消对应的 Job
+
+```ts
+try {
+    const { uuid, status } = await perfCat.cancelJob(uuid)
+    console.log(`job status -> ${status}, uuid -> ${uuid}`)
+    // job status -> 'canceled', uuid -> '245d9-182c-4cdf-8021'
+} catch (e) {
+    // console.log('error msg ->', e.message)
+}
+```
+
+### getJobResult
+-   类型: `(uuid: string) => Promise<Job>`
+-   说明：获取任务状态或结果, <b>需要轮询获取</b>
+
+```ts
+try {
+    const jobRes = await perfCat.getJobResult(uuid)
+    console.log(`jobRes -> ${jobRes}`)
+} catch (e) {
+    // console.log('error msg ->', e.message)
+}
+```
+
+参数类型 `Job` 说明
+```ts
+interface Job {
+    /** 单次 Job 的唯一ID **/
+    uuid: string
+    /** Job 的别名 **/
+    alias?: string
+    /** Job 的状态 **/
+    status: JobStatus
+    /** Job 的触发类型 **/
+    triggerType: JobTriggerType
+    /** Job 运行机器的 hostname **/
+    hostname: string
+    /** Job 的 case 配置快照**/
+    benchmarkConfigStr: {
+        content: string
+        hash: string
+    }
+    /** Job 配置快照的 ID **/
+    benchmarkConfigStrId: string
+    /** Job 触发时间戳（ms） **/
+    triggerTime: string
+    /** Job 实时日志 **/
+    log: string | null
+    /** Job 状态详细描述 **/
+    msg: string | null
+    /** Job 启动时间 **/
+    startJobTime: string | null
+    /** Job 结束时间 **/
+    endJobTime: string | null
+    /** Job 当前排队位置 **/
+    waitPosition: number | null
+    /** Job 当前需要等待的时间（ms） **/
+    waitTime: number | null
+    /** Job 对应的 caseId **/
+    caseId: string
+    /** Job 运行结果的 ID **/
+    jobResId: string | null
+    /** Job 运行结果 **/
+    jobRes: JobRes
+}
+```
+
+参数类型 `JobRes` 说明
+```ts
+interface JobRes {
+    uuid: string
+    /** 性能测试结果地址 url **/
+    url: string | null
+    artifactMap: {
+        /** 性能测试结果的原始数据 **/
+        calculatedData?: PromiseSettledResult<any>[]
+    }
+    /** benchmark sdk 版本 **/
+    benchmarkVersion: string
+}
+```

@@ -1,0 +1,119 @@
+---
+title: "插件机制"
+sidebar_position: 1
+---
+
+插件机制内部是基于生命周期钩子实现的，你可以在任何阶段注册你的插件，来实现你的需求。
+
+### 生命周期图示
+
+参考 [生命周期钩子](../lifecycle-hooks#生命周期图示) 章节。
+
+### 基本使用
+
+插件是 testCase 维度的，你可以方便地在每个 testCase 配置中直接注册你的插件。
+
+其实每个生命周期钩子都是一个匿名插件，Benchmark SDK 内部会自动注册这些匿名插件。
+
+```typescript twoslash title="注册匿名插件" {11-16}
+import { UserOptions } from '@bilibili-player/benchmark';
+
+const config: UserOptions = {
+    runners: {
+        Runtime: {
+            durationMs: 60_000,
+            testCases: [
+                {
+                    target: 'https://www.bilibili.com',
+                    description: 'B站首页',
+                    // onPageTesting 就是一个匿名插件
+                    onPageTesting: async ({ page }) => {
+                        await page.evaluate(() => {
+                            window.scrollTo(0, document.body.scrollHeight);
+                        });
+                    }
+                }
+            ],
+        }
+    }
+};
+
+export default config;
+```
+
+### 进阶使用
+
+当涉及到复杂的插件逻辑时，你可以创建一个插件类，继承自 `Plugin` 接口，并实现相关的生命周期钩子，这样可以更好地组织代码和逻辑。
+
+```typescript twoslash title="注册完整插件"
+import type { UserOptions, Plugin, BrowserStruct } from '@bilibili-player/benchmark';
+
+declare const window: {
+    __fpsList__: number[];
+    calcFPS: () => void;
+} & Window;
+
+class FPSPlugin implements Plugin<any, any> {
+    name = "FPSPlugin";
+
+    async onPageTesting({ page }: BrowserStruct) {
+        await page.evaluate(this.renderFPS);
+    }
+
+    async onPageUnload({ page }: BrowserStruct) {
+        const fps = await page.evaluate(() =>
+            Math.round(window.__fpsList__.reduce((a, b) => a + b) / window.__fpsList__.length));
+        return {
+            fps
+        };
+    }
+
+    private renderFPS() {
+        let ticks = 0;
+        let last = Date.now();
+
+        window.__fpsList__ = [60];
+        window.calcFPS = () => {
+            const now = Date.now();
+            if (now > 1000 + last) {
+                let fps = Math.round((ticks * 1000) / (now - last));
+                if (window.__fpsList__.length > 60) {
+                    window.__fpsList__.shift();
+                }
+                window.__fpsList__.push(fps);
+                ticks = 0;
+                last = now;
+            }
+            ticks++;
+
+            requestAnimationFrame(window.calcFPS);
+        }
+
+        window.calcFPS();
+    }
+}
+
+const config: UserOptions = {
+    runners: {
+        Runtime: {
+            durationMs: 60_000,
+            testCases: [
+                {
+                    target: 'https://www.bilibili.com',
+                    description: 'B站首页',
+                    plugins: [ new FPSPlugin() ],
+                },
+            ],
+        }
+    }
+};
+export default config;
+```
+
+以上示例中，我们注册了一个 FPSPlugin 插件，用于监测页面的帧率。
+
+:::info
+
+如果你想在插件中返回数据，必须在生命周期钩子中返回一个对象，这个对象会被记录到测试结果中，且这个对象中的键名就是测试结果中展示的名称
+
+:::

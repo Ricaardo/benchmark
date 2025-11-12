@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试数据可视化 - Benchmark Web</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        .chart-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            margin-top: 15px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-card.green {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .metric-card.blue {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .metric-card.orange {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .metric-card h3 {
+            margin: 0;
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .metric-card p {
+            margin: 5px 0 0 0;
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .url-selector {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .url-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .url-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .url-checkbox label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .url-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            margin: 0 0 10px 0;
+            color: #4a5568;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .comparison-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .best-value {
+            color: #38a169;
+            font-weight: 600;
+        }
+
+        .worst-value {
+            color: #e53e3e;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .nav-tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            color: #718096;
+            transition: all 0.2s;
+        }
+
+        .nav-tab:hover {
+            color: #4a5568;
+        }
+
+        .nav-tab.active {
+            color: #4299e1;
+            border-bottom-color: #4299e1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 测试数据可视化</h1>
+
+        <div class="toolbar" style="margin-bottom: 20px;">
+            <button class="btn-secondary" onclick="window.location.href='/'">← 返回主页</button>
+            <button class="btn-secondary" onclick="window.location.href='/config.html'">⚙️ 配置管理</button>
+            <button class="btn-primary" onclick="loadTestData()">🔄 刷新数据</button>
+        </div>
+
+        <!-- 测试用例选择 -->
+        <div class="card">
+            <h2>📋 选择测试用例</h2>
+            <div class="chart-controls">
+                <div class="control-group">
+                    <label>测试用例</label>
+                    <select id="testcase-selector" onchange="loadTestCaseData()">
+                        <option value="">-- 选择测试用例 --</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>测试类型</label>
+                    <select id="runner-selector" onchange="updateCharts()">
+                        <option value="Initialization">Initialization - 初始化性能</option>
+                        <option value="Runtime">Runtime - 运行时性能</option>
+                        <option value="MemoryLeak">MemoryLeak - 内存泄漏</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>时间范围</label>
+                    <select id="time-range" onchange="filterByTimeRange()">
+                        <option value="all">全部</option>
+                        <option value="today">今天</option>
+                        <option value="week">最近7天</option>
+                        <option value="month">最近30天</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- URL 选择器 -->
+            <div id="url-selector" class="url-selector" style="display: none;">
+                <h3 style="margin-top: 0;">选择要对比的 URL：</h3>
+                <div id="url-checkboxes"></div>
+            </div>
+        </div>
+
+        <!-- 数据概览 -->
+        <div id="metrics-overview" style="display: none;">
+            <div class="card">
+                <h2>📈 数据概览</h2>
+                <div class="metrics-grid" id="metrics-grid"></div>
+            </div>
+        </div>
+
+        <!-- 图表标签页 -->
+        <div id="charts-section" style="display: none;">
+            <div class="card">
+                <div class="nav-tabs">
+                    <button class="nav-tab active" onclick="switchTab('performance')">⚡ 性能对比</button>
+                    <button class="nav-tab" onclick="switchTab('timeline')">📅 时间趋势</button>
+                    <button class="nav-tab" onclick="switchTab('comparison')">📊 详细对比</button>
+                </div>
+
+                <!-- 性能对比标签页 -->
+                <div id="tab-performance" class="tab-content active">
+                    <div class="chart-container">
+                        <h3>加载时间对比</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-loadtime"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>资源大小对比</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-resources"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>性能指标雷达图</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-radar"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 时间趋势标签页 -->
+                <div id="tab-timeline" class="tab-content">
+                    <div class="chart-container">
+                        <h3>性能趋势（按时间）</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-timeline"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>内存使用趋势</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-memory"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详细对比标签页 -->
+                <div id="tab-comparison" class="tab-content">
+                    <div class="chart-container">
+                        <h3>详细数据对比表</h3>
+                        <div id="comparison-table-container"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div id="empty-state" class="card">
+            <div class="empty-state">
+                <h3>暂无测试数据</h3>
+                <p>请先运行测试用例以生成数据</p>
+                <button class="btn-primary" onclick="window.location.href='/'">去运行测试</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 全局变量 ====================
+        let testCases = [];
+        let testResults = [];
+        let selectedUrls = [];
+        let charts = {};
+
+        // Chart.js 默认配置
+        Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+        Chart.defaults.font.size = 12;
+
+        // 颜色方案
+        const COLORS = [
+            '#4299e1', '#48bb78', '#ed8936', '#9f7aea',
+            '#f56565', '#38b2ac', '#ecc94b', '#ed64a6',
+            '#667eea', '#38a169', '#dd6b20', '#805ad5'
+        ];
+
+        // ==================== 数据加载 ====================
+        async function loadTestData() {
+            try {
+                // 加载测试用例列表
+                const response = await fetch('/api/cases');
+                if (response.ok) {
+                    testCases = await response.json();
+                    populateTestCaseSelector();
+                }
+
+                // 加载测试结果（模拟数据，实际应该从后端获取）
+                // TODO: 实现后端 API 获取历史测试结果
+                testResults = loadMockResults();
+
+                if (testCases.length === 0 && testResults.length === 0) {
+                    document.getElementById('empty-state').style.display = 'block';
+                } else {
+                    document.getElementById('empty-state').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('加载数据失败:', error);
+                showToast('加载数据失败', 'error');
+            }
+        }
+
+        function populateTestCaseSelector() {
+            const selector = document.getElementById('testcase-selector');
+            selector.innerHTML = '<option value="">-- 选择测试用例 --</option>';
+
+            testCases.forEach(tc => {
+                const option = document.createElement('option');
+                option.value = tc.id;
+                option.textContent = tc.name;
+                selector.appendChild(option);
+            });
+        }
+
+        function loadTestCaseData() {
+            const testCaseId = document.getElementById('testcase-selector').value;
+            if (!testCaseId) {
+                document.getElementById('url-selector').style.display = 'none';
+                document.getElementById('charts-section').style.display = 'none';
+                document.getElementById('metrics-overview').style.display = 'none';
+                return;
+            }
+
+            const testCase = testCases.find(tc => tc.id == testCaseId);
+            if (!testCase) return;
+
+            // 显示 URL 选择器
+            renderUrlSelector(testCase);
+            document.getElementById('url-selector').style.display = 'block';
+        }
+
+        function renderUrlSelector(testCase) {
+            const container = document.getElementById('url-checkboxes');
+            container.innerHTML = '';
+
+            // 获取 URL 列表
+            let urls = [];
+            if (testCase.urlsWithDesc && testCase.urlsWithDesc.length > 0) {
+                urls = testCase.urlsWithDesc;
+            } else if (testCase.urls) {
+                urls = testCase.urls.map(url => ({ url, description: url }));
+            }
+
+            urls.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'url-checkbox';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `url-${index}`;
+                checkbox.value = item.url;
+                checkbox.checked = true;
+                checkbox.onchange = updateSelectedUrls;
+
+                const colorBox = document.createElement('div');
+                colorBox.className = 'url-color';
+                colorBox.style.background = COLORS[index % COLORS.length];
+
+                const label = document.createElement('label');
+                label.htmlFor = `url-${index}`;
+                label.textContent = `${item.description} (${item.url})`;
+
+                div.appendChild(checkbox);
+                div.appendChild(colorBox);
+                div.appendChild(label);
+                container.appendChild(div);
+            });
+
+            // 默认全选
+            updateSelectedUrls();
+        }
+
+        function updateSelectedUrls() {
+            const checkboxes = document.querySelectorAll('#url-checkboxes input[type="checkbox"]');
+            selectedUrls = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map((cb, index) => ({
+                    url: cb.value,
+                    label: cb.nextElementSibling.nextElementSibling.textContent,
+                    color: COLORS[Array.from(checkboxes).indexOf(cb) % COLORS.length]
+                }));
+
+            if (selectedUrls.length > 0) {
+                updateCharts();
+            }
+        }
+
+        // ==================== 图表渲染 ====================
+        function updateCharts() {
+            if (selectedUrls.length === 0) {
+                document.getElementById('charts-section').style.display = 'none';
+                document.getElementById('metrics-overview').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('charts-section').style.display = 'block';
+            document.getElementById('metrics-overview').style.display = 'block';
+
+            // 生成模拟数据
+            const data = generateMockData();
+
+            // 渲染各种图表
+            renderMetricsOverview(data);
+            renderLoadTimeChart(data);
+            renderResourcesChart(data);
+            renderRadarChart(data);
+            renderTimelineChart(data);
+            renderMemoryChart(data);
+            renderComparisonTable(data);
+        }
+
+        function renderMetricsOverview(data) {
+            const container = document.getElementById('metrics-grid');
+            container.innerHTML = '';
+
+            // 计算平均值
+            const avgLoadTime = (data.reduce((sum, d) => sum + d.loadTime, 0) / data.length).toFixed(2);
+            const avgFCP = (data.reduce((sum, d) => sum + d.fcp, 0) / data.length).toFixed(2);
+            const avgLCP = (data.reduce((sum, d) => sum + d.lcp, 0) / data.length).toFixed(2);
+            const avgTTI = (data.reduce((sum, d) => sum + d.tti, 0) / data.length).toFixed(2);
+
+            const metrics = [
+                { title: avgLoadTime + 's', subtitle: '平均加载时间', class: '' },
+                { title: avgFCP + 's', subtitle: '首次内容绘制(FCP)', class: 'green' },
+                { title: avgLCP + 's', subtitle: '最大内容绘制(LCP)', class: 'blue' },
+                { title: avgTTI + 's', subtitle: '可交互时间(TTI)', class: 'orange' }
+            ];
+
+            metrics.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = `metric-card ${metric.class}`;
+                card.innerHTML = `
+                    <h3>${metric.title}</h3>
+                    <p>${metric.subtitle}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderLoadTimeChart(data) {
+            const ctx = document.getElementById('chart-loadtime').getContext('2d');
+
+            if (charts.loadtime) charts.loadtime.destroy();
+
+            charts.loadtime = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: selectedUrls.map(u => u.label.split('(')[0].trim()),
+                    datasets: [{
+                        label: '加载时间 (秒)',
+                        data: data.map(d => d.loadTime),
+                        backgroundColor: selectedUrls.map(u => u.color + '80'),
+                        borderColor: selectedUrls.map(u => u.color),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `加载时间: ${context.parsed.y.toFixed(2)}s`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '时间 (秒)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderResourcesChart(data) {
+            const ctx = document.getElementById('chart-resources').getContext('2d');
+
+            if (charts.resources) charts.resources.destroy();
+
+            charts.resources = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: selectedUrls.map(u => u.label.split('(')[0].trim()),
+                    datasets: [
+                        {
+                            label: 'JavaScript (KB)',
+                            data: data.map(d => d.jsSize),
+                            backgroundColor: '#4299e180',
+                            borderColor: '#4299e1',
+                            borderWidth: 2
+                        },
+                        {
+                            label: 'CSS (KB)',
+                            data: data.map(d => d.cssSize),
+                            backgroundColor: '#48bb7880',
+                            borderColor: '#48bb78',
+                            borderWidth: 2
+                        },
+                        {
+                            label: '图片 (KB)',
+                            data: data.map(d => d.imageSize),
+                            backgroundColor: '#ed893680',
+                            borderColor: '#ed8936',
+                            borderWidth: 2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(0)} KB`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            stacked: false,
+                            title: {
+                                display: true,
+                                text: '大小 (KB)'
+                            }
+                        },
+                        x: {
+                            stacked: false
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderRadarChart(data) {
+            const ctx = document.getElementById('chart-radar').getContext('2d');
+
+            if (charts.radar) charts.radar.destroy();
+
+            // 标准化数据 (0-100)
+            const normalize = (value, max) => Math.min((value / max) * 100, 100);
+
+            charts.radar = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['加载速度', 'FCP', 'LCP', 'TTI', 'CLS', 'FID'],
+                    datasets: selectedUrls.map((url, index) => ({
+                        label: url.label.split('(')[0].trim(),
+                        data: [
+                            100 - normalize(data[index].loadTime, 5),
+                            100 - normalize(data[index].fcp, 3),
+                            100 - normalize(data[index].lcp, 4),
+                            100 - normalize(data[index].tti, 5),
+                            100 - normalize(data[index].cls * 100, 50),
+                            100 - normalize(data[index].fid, 300)
+                        ],
+                        backgroundColor: url.color + '20',
+                        borderColor: url.color,
+                        borderWidth: 2,
+                        pointBackgroundColor: url.color
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.r.toFixed(0)}/100`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTimelineChart(data) {
+            const ctx = document.getElementById('chart-timeline').getContext('2d');
+
+            if (charts.timeline) charts.timeline.destroy();
+
+            // 生成时间序列数据（模拟多次测试）
+            const timePoints = ['第1次', '第2次', '第3次', '第4次', '第5次'];
+
+            charts.timeline = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: selectedUrls.map((url, index) => ({
+                        label: url.label.split('(')[0].trim(),
+                        data: timePoints.map(() => data[index].loadTime + (Math.random() - 0.5) * 0.5),
+                        borderColor: url.color,
+                        backgroundColor: url.color + '20',
+                        tension: 0.3,
+                        fill: true
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: '加载时间 (秒)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderMemoryChart(data) {
+            const ctx = document.getElementById('chart-memory').getContext('2d');
+
+            if (charts.memory) charts.memory.destroy();
+
+            const timePoints = ['初始', '10s', '20s', '30s', '40s', '50s'];
+
+            charts.memory = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: timePoints,
+                    datasets: selectedUrls.map((url, index) => {
+                        const baseMemory = data[index].memory;
+                        return {
+                            label: url.label.split('(')[0].trim(),
+                            data: timePoints.map((_, i) => baseMemory + i * (Math.random() * 5 + 2)),
+                            borderColor: url.color,
+                            backgroundColor: url.color + '20',
+                            tension: 0.3,
+                            fill: false
+                        };
+                    })
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} MB`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: '内存使用 (MB)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderComparisonTable(data) {
+            const container = document.getElementById('comparison-table-container');
+
+            // 找出最佳和最差值
+            const findBest = (key) => Math.min(...data.map(d => d[key]));
+            const findWorst = (key) => Math.max(...data.map(d => d[key]));
+
+            const metrics = [
+                { key: 'loadTime', label: '加载时间', unit: 's', lower: true },
+                { key: 'fcp', label: 'FCP', unit: 's', lower: true },
+                { key: 'lcp', label: 'LCP', unit: 's', lower: true },
+                { key: 'tti', label: 'TTI', unit: 's', lower: true },
+                { key: 'cls', label: 'CLS', unit: '', lower: true },
+                { key: 'fid', label: 'FID', unit: 'ms', lower: true },
+                { key: 'jsSize', label: 'JS大小', unit: 'KB', lower: true },
+                { key: 'cssSize', label: 'CSS大小', unit: 'KB', lower: true },
+                { key: 'memory', label: '内存使用', unit: 'MB', lower: true }
+            ];
+
+            let html = '<table class="comparison-table"><thead><tr>';
+            html += '<th>指标</th>';
+            selectedUrls.forEach(url => {
+                html += `<th>${url.label.split('(')[0].trim()}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            metrics.forEach(metric => {
+                html += '<tr>';
+                html += `<td><strong>${metric.label}</strong></td>`;
+
+                const values = data.map(d => d[metric.key]);
+                const best = metric.lower ? Math.min(...values) : Math.max(...values);
+                const worst = metric.lower ? Math.max(...values) : Math.min(...values);
+
+                values.forEach(value => {
+                    let className = '';
+                    if (value === best) className = 'best-value';
+                    else if (value === worst) className = 'worst-value';
+
+                    const displayValue = metric.unit === 'KB' ? value.toFixed(0) : value.toFixed(2);
+                    html += `<td class="${className}">${displayValue} ${metric.unit}</td>`;
+                });
+
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // ==================== 标签页切换 ====================
+        function switchTab(tabName) {
+            // 更新标签按钮
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 更新内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        }
+
+        // ==================== 模拟数据 ====================
+        function generateMockData() {
+            return selectedUrls.map(() => ({
+                loadTime: 1 + Math.random() * 2,
+                fcp: 0.5 + Math.random() * 1,
+                lcp: 1 + Math.random() * 1.5,
+                tti: 1.5 + Math.random() * 2,
+                cls: Math.random() * 0.3,
+                fid: 50 + Math.random() * 150,
+                jsSize: 200 + Math.random() * 300,
+                cssSize: 50 + Math.random() * 100,
+                imageSize: 500 + Math.random() * 1000,
+                memory: 30 + Math.random() * 40
+            }));
+        }
+
+        function loadMockResults() {
+            // TODO: 从后端 API 获取真实数据
+            return [];
+        }
+
+        function filterByTimeRange() {
+            // TODO: 实现时间范围过滤
+            updateCharts();
+        }
+
+        function showToast(message, type) {
+            // 简单的提示功能
+            alert(message);
+        }
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTestData();
+        });
+    </script>
+</body>
+</html>
