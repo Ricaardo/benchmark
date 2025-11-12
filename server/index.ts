@@ -1164,10 +1164,23 @@ app.delete('/api/reports/:filename', async (req, res) => {
     }
 });
 
+// 辅助函数：从description中提取URL
+function extractUrlFromDescription(description: string): string {
+    // description格式可能是: "描述文本 - https://example.com" 或直接是URL
+    const urlMatch = description.match(/(https?:\/\/[^\s]+)/);
+    if (urlMatch) {
+        return urlMatch[1];
+    }
+    // 如果没有找到URL，返回整个description作为后备
+    return description;
+}
+
 // 获取测试结果数据（用于可视化）
 app.get('/api/test-results', async (req, res) => {
     try {
         const reportsDir = path.join(__dirname, '../benchmark_report');
+        console.log(`[API] __dirname:`, __dirname);
+        console.log(`[API] reportsDir:`, reportsDir);
 
         // 确保目录存在
         await ensureReportsDir();
@@ -1176,6 +1189,7 @@ app.get('/api/test-results', async (req, res) => {
         try {
             files = await fs.readdir(reportsDir);
         } catch (error) {
+            console.log(`[API] 读取目录失败:`, error);
             return res.json([]);
         }
 
@@ -1192,9 +1206,28 @@ app.get('/api/test-results', async (req, res) => {
                 const content = await fs.readFile(filePath, 'utf-8');
                 const data = JSON.parse(content);
 
-                // 从文件名提取信息：格式通常为 Initialization_2024-01-01_12-00-00.json
-                const fileNameParts = file.replace('.json', '').split('_');
-                const runner = fileNameParts[0] || 'Unknown';
+                // 从文件名提取Runner类型
+                // 支持两种格式：
+                // 1. 新格式：2025-11-12T17-02-22-Runtime-Local.json
+                // 2. 旧格式：Initialization_2024-01-01_12-00-00.json
+                let runner = 'Unknown';
+                const fileNameWithoutExt = file.replace('.json', '');
+
+                // 尝试匹配新格式：包含 -Runtime-, -Initialization-, -MemoryLeak-
+                const newFormatMatch = fileNameWithoutExt.match(/-(Runtime|Initialization|MemoryLeak)-/);
+                if (newFormatMatch) {
+                    runner = newFormatMatch[1];
+                } else {
+                    // 尝试旧格式：以Runner类型开头
+                    const oldFormatMatch = fileNameWithoutExt.match(/^(Runtime|Initialization|MemoryLeak)/);
+                    if (oldFormatMatch) {
+                        runner = oldFormatMatch[1];
+                    } else {
+                        // 作为后备，使用第一个部分
+                        const parts = fileNameWithoutExt.split(/[-_]/);
+                        runner = parts[0] || 'Unknown';
+                    }
+                }
 
                 // 提取测试URL列表和结果
                 const urls: string[] = [];
@@ -1202,8 +1235,53 @@ app.get('/api/test-results', async (req, res) => {
 
                 if (data && typeof data === 'object') {
                     // 尝试从不同的数据结构中提取URL和结果
-                    if (Array.isArray(data)) {
-                        // 如果data直接是数组
+
+                    // 1. 新格式：benchmark SDK 2.x 格式（runtimeRes, initRes等）
+                    if (data.runtimeRes && Array.isArray(data.runtimeRes)) {
+                        console.log(`[API] ${file}: 检测到 Runtime 测试格式`);
+                        data.runtimeRes.forEach((item: any) => {
+                            if (item.description || item.value?.description) {
+                                const desc = item.description || item.value?.description;
+                                const url = extractUrlFromDescription(desc);
+                                urls.push(url);
+                                urlsWithResults.push({
+                                    url: url,
+                                    description: desc,
+                                    metrics: item.value || item
+                                });
+                            }
+                        });
+                    } else if (data.initRes && Array.isArray(data.initRes)) {
+                        console.log(`[API] ${file}: 检测到 Initialization 测试格式`);
+                        data.initRes.forEach((item: any) => {
+                            if (item.description || item.value?.description) {
+                                const desc = item.description || item.value?.description;
+                                const url = extractUrlFromDescription(desc);
+                                urls.push(url);
+                                urlsWithResults.push({
+                                    url: url,
+                                    description: desc,
+                                    metrics: item.value || item
+                                });
+                            }
+                        });
+                    } else if (data.memLeakRes && Array.isArray(data.memLeakRes)) {
+                        console.log(`[API] ${file}: 检测到 MemoryLeak 测试格式`);
+                        data.memLeakRes.forEach((item: any) => {
+                            if (item.description || item.value?.description) {
+                                const desc = item.description || item.value?.description;
+                                const url = extractUrlFromDescription(desc);
+                                urls.push(url);
+                                urlsWithResults.push({
+                                    url: url,
+                                    description: desc,
+                                    metrics: item.value || item
+                                });
+                            }
+                        });
+                    }
+                    // 2. 旧格式：data直接是数组
+                    else if (Array.isArray(data)) {
                         console.log(`[API] ${file}: 解析数组格式，元素数量:`, data.length);
                         data.forEach((item: any) => {
                             if (item.url) {
@@ -1215,8 +1293,9 @@ app.get('/api/test-results', async (req, res) => {
                                 });
                             }
                         });
-                    } else if (data.results && Array.isArray(data.results)) {
-                        // 如果data.results是数组
+                    }
+                    // 3. 旧格式：data.results是数组
+                    else if (data.results && Array.isArray(data.results)) {
                         console.log(`[API] ${file}: 解析data.results数组格式，元素数量:`, data.results.length);
                         data.results.forEach((item: any) => {
                             if (item.url) {
@@ -1228,8 +1307,9 @@ app.get('/api/test-results', async (req, res) => {
                                 });
                             }
                         });
-                    } else {
-                        // 尝试从对象的值中提取
+                    }
+                    // 4. 旧格式：对象的值
+                    else {
                         const values = Object.values(data);
                         console.log(`[API] ${file}: 解析对象格式，键数量:`, Object.keys(data).length);
                         values.forEach(item => {
@@ -1243,8 +1323,8 @@ app.get('/api/test-results', async (req, res) => {
                                 });
                             }
                         });
-                        console.log(`[API] ${file}: 提取到 ${urls.length} 个URL`);
                     }
+                    console.log(`[API] ${file}: 提取到 ${urls.length} 个URL`);
                 }
 
                 results.push({
