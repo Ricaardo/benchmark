@@ -1196,14 +1196,14 @@ app.get('/api/test-results', async (req, res) => {
                 const runner = fileNameParts[0] || 'Unknown';
 
                 // 提取测试URL列表和结果
-                const urls = [];
-                const urlsWithResults = [];
+                const urls: string[] = [];
+                const urlsWithResults: Array<{url: string, description: string, metrics: any}> = [];
 
                 if (data && typeof data === 'object') {
                     // 尝试从不同的数据结构中提取URL和结果
                     if (Array.isArray(data)) {
                         // 如果data直接是数组
-                        data.forEach(item => {
+                        data.forEach((item: any) => {
                             if (item.url) {
                                 urls.push(item.url);
                                 urlsWithResults.push({
@@ -1215,7 +1215,7 @@ app.get('/api/test-results', async (req, res) => {
                         });
                     } else if (data.results && Array.isArray(data.results)) {
                         // 如果data.results是数组
-                        data.results.forEach(item => {
+                        data.results.forEach((item: any) => {
                             if (item.url) {
                                 urls.push(item.url);
                                 urlsWithResults.push({
