@@ -505,12 +505,17 @@ function transformConfigForSDK(config: any): any {
                 continue;
             }
 
-            // 将urls数组转换为testCases数组
-            const urls = rc.urls || [];
-            const testCases = urls.map((url: string) => ({
-                target: url,
-                description: url
-            }));
+            // 处理 testCases：前端可能发送 testCases 或 urls
+            let testCases = rc.testCases;
+
+            if (!testCases || testCases.length === 0) {
+                // 如果没有 testCases，尝试从 urls 构建
+                const urls = rc.urls || [];
+                testCases = urls.map((url: string) => ({
+                    target: url,
+                    description: url
+                }));
+            }
 
             transformed.runners[runnerName] = {
                 enabled: true,
