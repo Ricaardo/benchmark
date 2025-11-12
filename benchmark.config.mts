@@ -1,7 +1,10 @@
 import { type UserOptions } from "@bilibili-player/benchmark";
 
 const config: UserOptions = {
-    mode: "headless",
+    mode: {
+        anonymous: true,
+        headless: true
+    },
     runners: {
         Initialization: {
             testCases: [

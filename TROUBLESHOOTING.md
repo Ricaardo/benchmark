@@ -448,4 +448,77 @@ npm run dev
 
 ---
 
+## 📝 配置文件问题
+
+### ❌ 错误: Type 'string' is not assignable to type 'Mode'
+
+**错误信息**:
+```
+benchmark.config.mts:4:5 - error TS2322: Type 'string' is not assignable to type 'Mode'.
+
+4     mode: "headless",
+      ~~~~
+```
+
+**原因**: `mode` 字段应该是一个对象，而不是字符串
+
+**错误示例**:
+```typescript
+const config: UserOptions = {
+    mode: "headless",  // ❌ 错误：不能使用字符串
+    runners: { ... }
+};
+```
+
+**正确写法**:
+```typescript
+const config: UserOptions = {
+    mode: {
+        anonymous: true,   // 是否匿名模式
+        headless: true     // 是否无头模式
+    },
+    runners: { ... }
+};
+```
+
+**Mode 类型定义**:
+```typescript
+type Mode = {
+    anonymous: boolean;      // 匿名模式（不使用登录凭证）
+    headless: boolean;       // 无头模式（后台运行，不显示浏览器窗口）
+    preparePage?: boolean;   // 可选：是否准备页面
+    usrDataDir?: string;     // 可选：用户数据目录
+};
+```
+
+**常用配置组合**:
+
+| 场景 | anonymous | headless | 说明 |
+|------|-----------|----------|------|
+| **开发调试** | `true` | `false` | 可以看到浏览器窗口，方便调试 |
+| **自动化测试** | `true` | `true` | 后台运行，速度更快 |
+| **需要登录** | `false` | `false` | 使用登录态，显示浏览器 |
+
+**解决方案**:
+
+1. 手动修复 `benchmark.config.mts`:
+   ```bash
+   # 编辑文件
+   vim benchmark.config.mts
+
+   # 将 mode: "headless" 改为
+   mode: {
+       anonymous: true,
+       headless: true
+   }
+   ```
+
+2. 或者删除配置文件，在 Web 界面重新生成：
+   ```bash
+   rm benchmark.config.mts
+   # 访问 http://localhost:3000/config.html 重新配置
+   ```
+
+---
+
 **最后更新**: 2025-10-29

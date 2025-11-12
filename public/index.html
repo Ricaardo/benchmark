@@ -485,6 +485,7 @@
                     <button class="btn-secondary btn-small" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
                 <div class="toolbar-right">
+                    <button class="btn-secondary btn-small" onclick="window.location.href='/charts.html'">📊 数据可视化</button>
                     <button class="btn-secondary btn-small" onclick="exportCases()">📤 导出</button>
                     <button class="btn-secondary btn-small" onclick="importCases()">📥 导入</button>
                     <button class="btn-secondary btn-small" onclick="window.location.href='/api.html'">🔑 API管理</button>
@@ -568,9 +569,11 @@
             </div>
 
             <div class="form-group">
-                <label>测试URL *（每行一个URL，支持多个）</label>
-                <textarea id="case-urls" placeholder="https://www.bilibili.com&#10;https://www.bilibili.com/video/BV1xx411c7mD&#10;https://t.bilibili.com" rows="4"></textarea>
-                <small style="color: #718096; font-size: 0.85em;">每行输入一个URL，可以添加多个测试地址</small>
+                <label>测试URL * <button type="button" class="btn-secondary btn-small" onclick="addUrlItem()" style="padding: 4px 8px; font-size: 0.85em; margin-left: 10px;">➕ 添加URL</button></label>
+                <div id="url-list" style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <!-- URL 项会动态添加到这里 -->
+                </div>
+                <small style="color: #718096; font-size: 0.85em;">可以添加多个测试URL，每个URL可以有独立的描述</small>
             </div>
 
             <div class="form-group">
@@ -583,8 +586,8 @@
 
             <div class="form-group">
                 <label>重复次数</label>
-                <input type="number" id="case-repeat" value="3" min="1" max="100">
-                <small style="color: #718096; font-size: 0.85em; margin-top: 4px; display: block;">所有测试类型共用此参数</small>
+                <input type="number" id="case-repeat" value="1" min="1" max="100">
+                <small style="color: #718096; font-size: 0.85em; margin-top: 4px; display: block;">所有测试类型共用此参数，默认1次不重复</small>
             </div>
 
             <div class="form-group">
@@ -1433,7 +1436,7 @@
                                 <td>${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
                                 <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
                                 <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
-                                <td>${testCase.repeatCount || 3}</td>
+                                <td>${testCase.repeatCount || 1}</td>
                                 <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
@@ -1540,6 +1543,97 @@
             mobileOptions.style.display = deviceType === 'Mobile' ? 'block' : 'none';
         }
 
+        // ==================== URL 列表管理 ====================
+        let urlItems = [];
+        let urlItemCounter = 0;
+
+        // 添加URL项
+        function addUrlItem(url = '', description = '') {
+            const itemId = urlItemCounter++;
+            urlItems.push({ id: itemId, url, description });
+            renderUrlList();
+        }
+
+        // 删除URL项
+        function removeUrlItem(itemId) {
+            urlItems = urlItems.filter(item => item.id !== itemId);
+            renderUrlList();
+        }
+
+        // 渲染URL列表
+        function renderUrlList() {
+            const container = document.getElementById('url-list');
+
+            if (urlItems.length === 0) {
+                container.innerHTML = '<p style="color: #718096; text-align: center; margin: 0;">暂无URL，点击上方"➕ 添加URL"按钮添加</p>';
+                return;
+            }
+
+            container.innerHTML = urlItems.map((item, index) => `
+                <div style="background: white; padding: 12px; border-radius: 4px; margin-bottom: 10px; border: 1px solid #e2e8f0;">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                        <span style="font-weight: 600; color: #4a5568; min-width: 30px;">URL ${index + 1}:</span>
+                        <input type="text"
+                               class="url-input"
+                               data-id="${item.id}"
+                               value="${escapeHtml(item.url)}"
+                               placeholder="https://www.bilibili.com"
+                               style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
+                               oninput="updateUrlItem(${item.id}, 'url', this.value)">
+                        <button type="button"
+                                class="btn-danger btn-small"
+                                onclick="removeUrlItem(${item.id})"
+                                style="padding: 6px 12px; font-size: 0.85em;">🗑️</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-weight: 600; color: #4a5568; min-width: 30px;">描述:</span>
+                        <input type="text"
+                               class="desc-input"
+                               data-id="${item.id}"
+                               value="${escapeHtml(item.description)}"
+                               placeholder="例如：B站首页、视频播放页"
+                               style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
+                               oninput="updateUrlItem(${item.id}, 'description', this.value)">
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 更新URL项
+        function updateUrlItem(itemId, field, value) {
+            const item = urlItems.find(i => i.id === itemId);
+            if (item) {
+                item[field] = value;
+            }
+        }
+
+        // 清空URL列表
+        function clearUrlList() {
+            urlItems = [];
+            urlItemCounter = 0;
+            renderUrlList();
+        }
+
+        // 从旧格式加载URLs（兼容性）
+        function loadUrlsFromOldFormat(urls) {
+            clearUrlList();
+            urls.forEach(url => {
+                addUrlItem(url, url); // 默认描述为URL本身
+            });
+        }
+
+        // 从新格式加载URLs（带描述）
+        function loadUrlsFromNewFormat(urlsWithDesc) {
+            clearUrlList();
+            urlsWithDesc.forEach(item => {
+                if (typeof item === 'string') {
+                    addUrlItem(item, item);
+                } else {
+                    addUrlItem(item.url || '', item.description || item.url || '');
+                }
+            });
+        }
+
         // 显示添加用例模态框
         function showAddCaseModal() {
             document.getElementById('case-modal').classList.add('active');
@@ -1550,9 +1644,10 @@
             document.getElementById('runner-initialization').checked = false;
             document.getElementById('runner-runtime').checked = false;
             document.getElementById('runner-memoryleak').checked = false;
-            document.getElementById('case-urls').value = '';
+            clearUrlList();
+            addUrlItem(); // 添加一个空的URL项
             document.getElementById('case-mode').value = 'headless';
-            document.getElementById('case-repeat').value = '3';
+            document.getElementById('case-repeat').value = '1';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
 
@@ -1611,12 +1706,18 @@
                 document.getElementById('runner-memoryleak').checked = testCase.runner === 'MemoryLeak';
             }
 
-            // 处理URLs - 兼容旧格式（url）和新格式（urls数组）
-            const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
-            document.getElementById('case-urls').value = urls.join('\n');
+            // 处理URLs - 支持新旧格式
+            if (testCase.urlsWithDesc && Array.isArray(testCase.urlsWithDesc)) {
+                // 新格式：带描述的URL数组
+                loadUrlsFromNewFormat(testCase.urlsWithDesc);
+            } else {
+                // 旧格式：纯URL数组
+                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                loadUrlsFromOldFormat(urls);
+            }
 
             document.getElementById('case-mode').value = testCase.mode || 'headless';
-            document.getElementById('case-repeat').value = testCase.repeatCount || 3;
+            document.getElementById('case-repeat').value = testCase.repeatCount || 1;
 
             // 填充 Runner 配置字段
             if (testCase.runners?.Runtime) {
@@ -1684,7 +1785,6 @@
             const initChecked = document.getElementById('runner-initialization').checked;
             const runtimeChecked = document.getElementById('runner-runtime').checked;
             const memoryChecked = document.getElementById('runner-memoryleak').checked;
-            const urlsText = document.getElementById('case-urls').value.trim();
             const mode = document.getElementById('case-mode').value;
             const repeatCount = parseInt(document.getElementById('case-repeat').value);
             const description = document.getElementById('case-description').value.trim();
@@ -1701,22 +1801,43 @@
                 return;
             }
 
-            // 解析多个URL
-            const urls = urlsText.split('\n')
-                .map(url => url.trim())
-                .filter(url => url.length > 0);
-
-            if (urls.length === 0) {
-                showToast('请至少输入一个URL', 'error');
+            // 从 urlItems 收集 URL 和描述
+            if (urlItems.length === 0) {
+                showToast('请至少添加一个URL', 'error');
                 return;
             }
 
-            // 验证所有URL格式
-            const invalidUrls = urls.filter(url => !isValidURL(url));
+            // 验证 URL 格式并构建数据结构
+            const urlsWithDesc = [];
+            const invalidUrls = [];
+
+            for (const item of urlItems) {
+                const url = item.url.trim();
+                const desc = item.description.trim();
+
+                if (!url) {
+                    showToast('存在空的URL，请填写或删除', 'error');
+                    return;
+                }
+
+                if (!isValidURL(url)) {
+                    invalidUrls.push(url);
+                    continue;
+                }
+
+                urlsWithDesc.push({
+                    url: url,
+                    description: desc || url  // 如果没有描述，使用URL本身
+                });
+            }
+
             if (invalidUrls.length > 0) {
                 showToast(`以下URL格式无效：\n${invalidUrls.join('\n')}`, 'error');
                 return;
             }
+
+            // 为了兼容性，也保留纯URL数组
+            const urls = urlsWithDesc.map(item => item.url);
 
             // 读取高级配置值
             const runtimeDuration = parseInt(document.getElementById('runtime-duration').value) || 60000;
@@ -1833,6 +1954,7 @@
                     testCase.name = name;
                     testCase.runners = runners;
                     testCase.urls = urls;
+                    testCase.urlsWithDesc = urlsWithDesc;  // 新增：带描述的URL数组
                     testCase.mode = mode;
                     testCase.repeatCount = repeatCount;
                     testCase.description = description;
@@ -1850,6 +1972,7 @@
                     name,
                     runners,
                     urls,
+                    urlsWithDesc,  // 新增：带描述的URL数组
                     mode,
                     repeatCount,
                     description,
@@ -1898,20 +2021,32 @@
             document.getElementById('current-status').className = 'status-badge status-running';
 
             try {
-                // 获取URLs - 兼容旧格式
-                const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                // 获取URLs - 支持新格式（带描述）和旧格式
+                let urlsData = [];
                 const mode = testCase.mode || 'headless';
 
-                if (urls.length === 0) {
+                if (testCase.urlsWithDesc && testCase.urlsWithDesc.length > 0) {
+                    // 新格式：带描述的URL数组
+                    urlsData = testCase.urlsWithDesc;
+                } else {
+                    // 旧格式：纯URL数组
+                    const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
+                    urlsData = urls.map(url => ({
+                        url: url,
+                        description: url
+                    }));
+                }
+
+                if (urlsData.length === 0) {
                     throw new Error('测试用例没有配置URL');
                 }
 
                 // 构建 testCases 数组 - 将 URLs 转换为 testCases 并应用高级配置
                 const advConfig = testCase.advancedConfig || {};
-                const testCasesArray = urls.map(url => {
+                const testCasesArray = urlsData.map(item => {
                     const tc = {
-                        target: url,
-                        description: `${testCase.name} - ${url}`
+                        target: item.url,
+                        description: item.description || item.url  // 使用自定义描述或URL本身
                     };
 
                     // 应用高级配置
@@ -2009,7 +2144,7 @@
                 appendOutput(`[系统] 任务ID: ${result.taskId}`);
                 appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
                 appendOutput(`[系统] 测试类型: ${enabledRunners.join(' + ')}`);
-                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount || 1} 次`);
+                appendOutput(`[系统] 测试 ${urlsData.length} 个URL, 重复 ${testCase.repeatCount || 1} 次`);
             } catch (error) {
                 testCase.status = 'error';
                 renderCases();
@@ -2325,13 +2460,13 @@
                     id: Date.now(),
                     name: '📊 示例1: B站首页 - 基础性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3, iterations: 7 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 7 },
                         Runtime: { enabled: false },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com'],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '测试B站首页的初始化性能（冷启动）',
                     tags: ['示例', 'bilibili', '基础'],
                     status: 'idle',
@@ -2343,12 +2478,12 @@
                     name: '🎬 示例2: B站视频页 - Runtime性能监控',
                     runners: {
                         Initialization: { enabled: false },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '监控视频页30秒运行时性能，测试FPS和长任务',
                     tags: ['示例', 'bilibili', 'runtime'],
                     status: 'idle',
@@ -2366,11 +2501,11 @@
                     runners: {
                         Initialization: { enabled: false },
                         Runtime: { enabled: false },
-                        MemoryLeak: { enabled: true, repeatCount: 3, intervalMs: 30000, iterations: 3, onPageTesting: '// 模拟视频切换操作\nawait page.evaluate(() => {\n  // 触发可能的内存泄漏操作\n  window.scrollTo(0, document.body.scrollHeight);\n});' }
+                        MemoryLeak: { enabled: true, repeatCount: 1, intervalMs: 30000, iterations: 3, onPageTesting: '// 模拟视频切换操作\nawait page.evaluate(() => {\n  // 触发可能的内存泄漏操作\n  window.scrollTo(0, document.body.scrollHeight);\n});' }
                     },
                     urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '检测视频页面的内存泄漏问题，重复执行页面操作',
                     tags: ['示例', 'bilibili', '内存泄漏'],
                     status: 'idle',
@@ -2381,8 +2516,8 @@
                     id: Date.now() + 3,
                     name: '🚀 示例4: 多页面对比测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
                     urls: [
@@ -2392,7 +2527,7 @@
                         'https://space.bilibili.com'
                     ],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '对比测试B站不同页面的性能表现',
                     tags: ['示例', 'bilibili', '多页面'],
                     status: 'idle',
@@ -2403,13 +2538,13 @@
                     id: Date.now() + 4,
                     name: '📱 示例5: 移动端模拟 - 性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 1, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://m.bilibili.com'],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '模拟移动设备测试B站移动端性能',
                     tags: ['示例', 'bilibili', '移动端'],
                     status: 'idle',
@@ -2422,13 +2557,13 @@
                     id: Date.now() + 5,
                     name: '🚫 示例6: 阻止资源加载 - 优化测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Initialization: { enabled: true, repeatCount: 1, iterations: 5 },
                         Runtime: { enabled: false },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com'],
                     mode: 'headless',
-                    repeatCount: 3,
+                    repeatCount: 1,
                     description: '阻止图片和字体加载，测试核心页面性能',
                     tags: ['示例', 'bilibili', '资源优化'],
                     status: 'idle',
