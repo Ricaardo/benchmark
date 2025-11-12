@@ -664,49 +664,180 @@
         function addTestCase(runner) {
             const container = document.getElementById(`${runner}-test-cases`);
             const index = container.children.length;
+            const tcId = `tc-${runner}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
             const testCase = document.createElement('div');
             testCase.className = 'test-case';
 
-            // MemoryLeak的testCase需要额外的onPageTesting字段
+            // 基础配置
+            let basicFields = `
+                <div class="test-case-header">
+                    <strong>测试用例 #${index + 1}</strong>
+                    <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
+                </div>
+                <div class="form-group">
+                    <label>目标 URL *</label>
+                    <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
+                </div>
+                <div class="form-group">
+                    <label>描述 *</label>
+                    <input type="text" class="test-description" placeholder="测试用例描述" required>
+                </div>
+            `;
+
+            // MemoryLeak特有字段
             if (runner === 'memory') {
-                testCase.innerHTML = `
-                    <div class="test-case-header">
-                        <strong>测试用例 #${index + 1}</strong>
-                        <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
-                    </div>
-                    <div class="form-group">
-                        <label>目标 URL</label>
-                        <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>描述</label>
-                        <input type="text" class="test-description" placeholder="测试用例描述" required>
-                    </div>
-                    <div class="form-group">
-                        <label>页面操作代码 (onPageTesting - 可选)</label>
-                        <textarea class="test-onPageTesting code-editor" placeholder="// 针对此URL的特定操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4"></textarea>
-                        <small>此测试用例专用的页面操作代码，优先级高于全局配置。留空则使用全局配置或静置页面。</small>
-                    </div>
-                `;
-            } else {
-                testCase.innerHTML = `
-                    <div class="test-case-header">
-                        <strong>测试用例 #${index + 1}</strong>
-                        <button class="btn-danger btn-small" onclick="removeTestCase(this)">删除</button>
-                    </div>
-                    <div class="form-group">
-                        <label>目标 URL</label>
-                        <input type="text" class="test-target" placeholder="https://www.bilibili.com" required>
-                    </div>
-                    <div class="form-group">
-                        <label>描述</label>
-                        <input type="text" class="test-description" placeholder="测试用例描述" required>
-                    </div>
+                basicFields += `
+                <div class="form-group">
+                    <label>页面操作代码 (onPageTesting - 可选)</label>
+                    <textarea class="test-onPageTesting code-editor" placeholder="// 针对此URL的特定操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4"></textarea>
+                    <small>此测试用例专用的页面操作代码，优先级高于全局配置。留空则使用全局配置或静置页面。</small>
+                </div>
                 `;
             }
 
+            // 高级配置区域
+            const advancedFields = `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <strong style="color: #667eea;">⚙️ 高级配置 (可选)</strong>
+                        <button type="button" class="btn-secondary btn-small" onclick="toggleAdvanced('${tcId}')" style="padding: 4px 10px;">展开/折叠</button>
+                    </div>
+                    <div id="${tcId}-advanced" style="display: none;">
+                        <!-- TestCase级别延迟 -->
+                        <div class="form-group">
+                            <label>延迟时间 (delayMs) - testCase级别</label>
+                            <input type="number" class="test-delayMs" placeholder="留空使用Runner级别的delayMs" step="1000">
+                            <small>此testCase专用的延迟时间，优先级高于Runner配置</small>
+                        </div>
+
+                        <!-- Cookie -->
+                        <div class="form-group">
+                            <label>Cookie（JSON格式或字符串）</label>
+                            <textarea class="test-cookie code-editor" placeholder='示例：[{"name":"SESSDATA","value":"xxx"}]' rows="3"></textarea>
+                            <small>设置Cookie，可以是字符串或JSON数组格式（仅本地测试）</small>
+                        </div>
+
+                        <!-- HTTP Headers -->
+                        <div class="form-group">
+                            <label>HTTP 请求头 (extraHTTPHeaders)</label>
+                            <textarea class="test-headers code-editor" placeholder='示例：{"x1-bilispy-color":"test"}' rows="3"></textarea>
+                            <small>自定义HTTP请求头（JSON格式），常用于染色环境</small>
+                        </div>
+
+                        <!-- Block List -->
+                        <div class="form-group">
+                            <label>URL 屏蔽列表 (blockList)</label>
+                            <textarea class="test-blocklist code-editor" placeholder='示例：["**/*bili-comments.*.js", "/ads/**"]' rows="3"></textarea>
+                            <small>屏蔽的URL列表（JSON数组），支持glob模式</small>
+                        </div>
+
+                        <!-- Custom CSS -->
+                        <div class="form-group">
+                            <label>自定义 CSS (customCss)</label>
+                            <textarea class="test-customcss code-editor" placeholder=".bili-header { display: none; }" rows="3"></textarea>
+                            <small>注入自定义CSS样式</small>
+                        </div>
+
+                        <!-- Device Options -->
+                        <div class="form-group">
+                            <label>设备类型</label>
+                            <select class="test-devicetype">
+                                <option value="">默认 (Desktop)</option>
+                                <option value="Desktop">Desktop</option>
+                                <option value="Mobile">Mobile</option>
+                            </select>
+                        </div>
+                        <div class="test-device-desktop" style="display: none;">
+                            <div class="form-group">
+                                <label style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="checkbox" class="test-device-fullscreen">
+                                    <span>全屏模式 (fullscreen)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="test-device-mobile" style="display: none;">
+                            <div class="form-group">
+                                <label>Mobile 预设</label>
+                                <select class="test-device-preset">
+                                    <option value="">无</option>
+                                    <option value="android">Android</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Lifecycle Hooks -->
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ddd;">
+                            <strong style="display: block; margin-bottom: 10px; color: #667eea;">🔗 生命周期钩子</strong>
+
+                            <div class="form-group">
+                                <label>beforePageLoad</label>
+                                <textarea class="test-hook-beforepageload code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面加载前执行&#10;}" rows="3"></textarea>
+                                <small>页面加载前执行的钩子函数</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label>onPageLoaded</label>
+                                <textarea class="test-hook-onpageloaded code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面加载完成后执行&#10;}" rows="3"></textarea>
+                                <small>页面加载完成后执行的钩子函数</small>
+                            </div>
+
+                            ${runner !== 'memory' && runner !== 'runtime' ? '' : `
+                            <div class="form-group">
+                                <label>onPageTesting</label>
+                                <textarea class="test-hook-onpagetesting code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 测试过程中执行&#10;}" rows="3"></textarea>
+                                <small>测试过程中执行的钩子函数 (Runtime/MemoryLeak)</small>
+                            </div>
+                            `}
+
+                            ${runner !== 'memory' ? '' : `
+                            <div class="form-group">
+                                <label>onPageCollecting</label>
+                                <textarea class="test-hook-onpagecollecting code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 数据收集时执行&#10;}" rows="3"></textarea>
+                                <small>数据收集时执行的钩子函数 (仅MemoryLeak)</small>
+                            </div>
+                            `}
+
+                            <div class="form-group">
+                                <label>onPageUnload</label>
+                                <textarea class="test-hook-onpageunload code-editor" placeholder="async ({ page, context, session }) => {&#10;  // 页面卸载前执行&#10;}" rows="3"></textarea>
+                                <small>页面卸载前执行的钩子函数</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            testCase.innerHTML = basicFields + advancedFields;
+
+            // 添加设备类型切换事件
             container.appendChild(testCase);
+
+            const deviceTypeSelect = testCase.querySelector('.test-devicetype');
+            if (deviceTypeSelect) {
+                deviceTypeSelect.addEventListener('change', function() {
+                    const desktopDiv = testCase.querySelector('.test-device-desktop');
+                    const mobileDiv = testCase.querySelector('.test-device-mobile');
+                    if (this.value === 'Desktop') {
+                        desktopDiv.style.display = 'block';
+                        mobileDiv.style.display = 'none';
+                    } else if (this.value === 'Mobile') {
+                        desktopDiv.style.display = 'none';
+                        mobileDiv.style.display = 'block';
+                    } else {
+                        desktopDiv.style.display = 'none';
+                        mobileDiv.style.display = 'none';
+                    }
+                });
+            }
+        }
+
+        // 切换高级配置显示
+        function toggleAdvanced(tcId) {
+            const advancedDiv = document.getElementById(`${tcId}-advanced`);
+            if (advancedDiv) {
+                advancedDiv.style.display = advancedDiv.style.display === 'none' ? 'block' : 'none';
+            }
         }
 
         // 删除测试用例
@@ -735,6 +866,87 @@
                                 testCase.onPageTesting = onPageTesting;
                             }
                         }
+                    }
+
+                    // 收集高级配置
+                    const delayMsEl = tc.querySelector('.test-delayMs');
+                    if (delayMsEl && delayMsEl.value) {
+                        testCase.delayMs = parseInt(delayMsEl.value);
+                    }
+
+                    const cookieEl = tc.querySelector('.test-cookie');
+                    if (cookieEl && cookieEl.value.trim()) {
+                        try {
+                            testCase.cookie = JSON.parse(cookieEl.value.trim());
+                        } catch {
+                            testCase.cookie = cookieEl.value.trim();
+                        }
+                    }
+
+                    const headersEl = tc.querySelector('.test-headers');
+                    if (headersEl && headersEl.value.trim()) {
+                        try {
+                            testCase.extraHTTPHeaders = JSON.parse(headersEl.value.trim());
+                        } catch (e) {
+                            console.error('Invalid JSON for extraHTTPHeaders:', e);
+                        }
+                    }
+
+                    const blocklistEl = tc.querySelector('.test-blocklist');
+                    if (blocklistEl && blocklistEl.value.trim()) {
+                        try {
+                            testCase.blockList = JSON.parse(blocklistEl.value.trim());
+                        } catch (e) {
+                            console.error('Invalid JSON for blockList:', e);
+                        }
+                    }
+
+                    const customCssEl = tc.querySelector('.test-customcss');
+                    if (customCssEl && customCssEl.value.trim()) {
+                        testCase.customCss = customCssEl.value.trim();
+                    }
+
+                    // 设备选项
+                    const deviceTypeEl = tc.querySelector('.test-devicetype');
+                    if (deviceTypeEl && deviceTypeEl.value) {
+                        if (deviceTypeEl.value === 'Desktop') {
+                            const fullscreenEl = tc.querySelector('.test-device-fullscreen');
+                            testCase.deviceOptions = ['Desktop', { fullscreen: fullscreenEl ? fullscreenEl.checked : false }];
+                        } else if (deviceTypeEl.value === 'Mobile') {
+                            const presetEl = tc.querySelector('.test-device-preset');
+                            testCase.deviceOptions = ['Mobile', { preset: presetEl && presetEl.value ? presetEl.value : undefined }];
+                        }
+                    }
+
+                    // 生命周期钩子
+                    const hooks = {};
+                    const beforePageLoadEl = tc.querySelector('.test-hook-beforepageload');
+                    if (beforePageLoadEl && beforePageLoadEl.value.trim()) {
+                        hooks.beforePageLoad = beforePageLoadEl.value.trim();
+                    }
+
+                    const onPageLoadedEl = tc.querySelector('.test-hook-onpageloaded');
+                    if (onPageLoadedEl && onPageLoadedEl.value.trim()) {
+                        hooks.onPageLoaded = onPageLoadedEl.value.trim();
+                    }
+
+                    const onPageTestingEl = tc.querySelector('.test-hook-onpagetesting');
+                    if (onPageTestingEl && onPageTestingEl.value.trim()) {
+                        hooks.onPageTesting = onPageTestingEl.value.trim();
+                    }
+
+                    const onPageCollectingEl = tc.querySelector('.test-hook-onpagecollecting');
+                    if (onPageCollectingEl && onPageCollectingEl.value.trim()) {
+                        hooks.onPageCollecting = onPageCollectingEl.value.trim();
+                    }
+
+                    const onPageUnloadEl = tc.querySelector('.test-hook-onpageunload');
+                    if (onPageUnloadEl && onPageUnloadEl.value.trim()) {
+                        hooks.onPageUnload = onPageUnloadEl.value.trim();
+                    }
+
+                    if (Object.keys(hooks).length > 0) {
+                        testCase.hooks = hooks;
                     }
 
                     testCases.push(testCase);
