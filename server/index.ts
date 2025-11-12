@@ -217,6 +217,12 @@ function createTask(name: string, runner: string, config: any): string {
     };
 
     tasks.set(taskId, task);
+
+    const runningCount = getRunningTasksCount();
+    const pendingCount = Array.from(tasks.values()).filter(t => t.status === 'pending').length;
+    console.log(`[TaskManager] 任务已创建: ${name} (ID: ${taskId})`);
+    console.log(`[TaskManager] 当前状态 - 运行中: ${runningCount}/${MAX_CONCURRENT_TASKS}, 等待中: ${pendingCount}`);
+
     broadcastTaskList();
 
     return taskId;
@@ -225,15 +231,26 @@ function createTask(name: string, runner: string, config: any): string {
 // 启动任务
 async function startTask(taskId: string) {
     const task = tasks.get(taskId);
-    if (!task || task.status !== 'pending') return;
+    if (!task) {
+        console.log(`[TaskManager] ❌ 任务不存在: ${taskId}`);
+        return;
+    }
+
+    if (task.status !== 'pending') {
+        console.log(`[TaskManager] ⚠️ 任务状态不是 pending: ${task.name} (状态: ${task.status})`);
+        return;
+    }
 
     // 检查并发限制
-    if (getRunningTasksCount() >= MAX_CONCURRENT_TASKS) {
-        appendTaskOutput(taskId, `[系统] 等待其他任务完成...(当前并发: ${getRunningTasksCount()}/${MAX_CONCURRENT_TASKS})\n`);
+    const runningCount = getRunningTasksCount();
+    if (runningCount >= MAX_CONCURRENT_TASKS) {
+        console.log(`[TaskManager] ⏳ 并发已满，任务等待: ${task.name} (${runningCount}/${MAX_CONCURRENT_TASKS})`);
+        appendTaskOutput(taskId, `[系统] 等待其他任务完成...(当前并发: ${runningCount}/${MAX_CONCURRENT_TASKS})\n`);
         return;
     }
 
     task.status = 'running';
+    console.log(`[TaskManager] ▶️ 启动任务: ${task.name} (${runningCount + 1}/${MAX_CONCURRENT_TASKS})`);
     appendTaskOutput(taskId, `[系统] 任务开始执行: ${task.name}\n`);
     appendTaskOutput(taskId, `[系统] Runner: ${task.runner}\n`);
 
@@ -260,6 +277,8 @@ async function startTask(taskId: string) {
             task.endTime = new Date();
             task.process = null;
 
+            const statusEmoji = code === 0 ? '✅' : '❌';
+            console.log(`[TaskManager] ${statusEmoji} 任务${code === 0 ? '完成' : '失败'}: ${task.name} (退出码: ${code})`);
             appendTaskOutput(taskId, `\n[系统] 任务${code === 0 ? '完成' : '失败'} (退出码: ${code})\n`);
 
             // 清理配置文件
@@ -288,6 +307,8 @@ async function startTask(taskId: string) {
             });
 
             // 尝试启动下一个待执行的任务
+            const pendingCount = Array.from(tasks.values()).filter(t => t.status === 'pending').length;
+            console.log(`[TaskManager] 🔄 检查待执行任务... (等待中: ${pendingCount})`);
             startNextPendingTask();
         });
 
@@ -318,14 +339,31 @@ async function startTask(taskId: string) {
     }
 }
 
-// 启动下一个待执行的任务
+// 启动下一个待执行的任务（支持填满并发空位）
 function startNextPendingTask() {
-    if (getRunningTasksCount() >= MAX_CONCURRENT_TASKS) return;
+    // 获取所有待执行的任务
+    const pendingTasks = Array.from(tasks.values())
+        .filter(t => t.status === 'pending')
+        .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()); // 按创建时间排序
 
-    const pendingTask = Array.from(tasks.values()).find(t => t.status === 'pending');
-    if (pendingTask) {
-        setTimeout(() => startTask(pendingTask.id), 1000);
+    // 计算还能启动多少任务
+    const availableSlots = MAX_CONCURRENT_TASKS - getRunningTasksCount();
+
+    if (availableSlots <= 0 || pendingTasks.length === 0) {
+        return;
     }
+
+    // 启动多个任务填满空位
+    const tasksToStart = pendingTasks.slice(0, availableSlots);
+
+    console.log(`[TaskManager] 启动 ${tasksToStart.length} 个待执行任务 (可用空位: ${availableSlots})`);
+
+    tasksToStart.forEach((task, index) => {
+        // 延迟启动，避免同时启动导致资源竞争
+        setTimeout(() => {
+            startTask(task.id);
+        }, index * 500); // 每个任务间隔500ms启动
+    });
 }
 
 // 停止任务
