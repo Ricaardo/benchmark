@@ -245,10 +245,28 @@ function generateConfig(config: any): string {
     const mode = config.mode || { anonymous: true, headless: false };
     const { runners } = config;
 
+    // Root级别配置
+    const rootOptions: string[] = [];
+
+    // CPU节流
+    if (config.cpuThrottlingRate && config.cpuThrottlingRate !== 1) {
+        rootOptions.push(`cpuThrottlingRate: ${config.cpuThrottlingRate}`);
+    }
+
+    // 本地端口
+    if (config.port) {
+        rootOptions.push(`port: ${config.port}`);
+    }
+
+    // Chrome可执行文件路径
+    if (config.executablePath) {
+        rootOptions.push(`executablePath: ${JSON.stringify(config.executablePath)}`);
+    }
+
     const runnersArray: string[] = [];
 
     if (runners.Initialization && runners.Initialization.enabled) {
-        const testCases = runners.Initialization.testCases || [];
+        const { testCases = [], iterations = 7, includeWarmNavigation = false } = runners.Initialization;
         const testCasesStr = testCases.map((tc: any) =>
             `                {\n` +
             `                    target: ${JSON.stringify(tc.target)},\n` +
@@ -256,15 +274,27 @@ function generateConfig(config: any): string {
             `                }`
         ).join(',\n');
 
+        const initOptions: string[] = [
+            `testCases: [\n${testCasesStr}\n            ]`
+        ];
+
+        if (iterations !== 7) {
+            initOptions.push(`iterations: ${iterations}`);
+        }
+
+        if (includeWarmNavigation) {
+            initOptions.push(`includeWarmNavigation: ${includeWarmNavigation}`);
+        }
+
         runnersArray.push(
             `        Initialization: {\n` +
-            `            testCases: [\n${testCasesStr}\n            ]\n` +
+            `            ${initOptions.join(',\n            ')}\n` +
             `        }`
         );
     }
 
     if (runners.Runtime && runners.Runtime.enabled) {
-        const { testCases = [], durationMs = 60000, delayMs = 10000 } = runners.Runtime;
+        const { testCases = [], durationMs = 60000, delayMs = 10000, metrics = ['runtime', 'longtask'] } = runners.Runtime;
         const testCasesStr = testCases.map((tc: any) =>
             `                {\n` +
             `                    target: ${JSON.stringify(tc.target)},\n` +
@@ -272,17 +302,28 @@ function generateConfig(config: any): string {
             `                }`
         ).join(',\n');
 
+        const runtimeOptions: string[] = [
+            `testCases: [\n${testCasesStr}\n            ]`,
+            `durationMs: ${durationMs}`
+        ];
+
+        if (delayMs !== 10000) {
+            runtimeOptions.push(`delayMs: ${delayMs}`);
+        }
+
+        if (metrics && metrics.length > 0 && JSON.stringify(metrics) !== JSON.stringify(['runtime', 'longtask'])) {
+            runtimeOptions.push(`metrics: ${JSON.stringify(metrics)}`);
+        }
+
         runnersArray.push(
             `        Runtime: {\n` +
-            `            testCases: [\n${testCasesStr}\n            ],\n` +
-            `            durationMs: ${durationMs},\n` +
-            `            delayMs: ${delayMs}\n` +
+            `            ${runtimeOptions.join(',\n            ')}\n` +
             `        }`
         );
     }
 
     if (runners.MemoryLeak && runners.MemoryLeak.enabled) {
-        const { testCases = [], intervalMs = 60000, iterations = 3, onPageTesting = '' } = runners.MemoryLeak;
+        const { testCases = [], intervalMs = 60000, iterations = 3, delayMs = 10000, coolDownMs = 3000, onPageTesting = '' } = runners.MemoryLeak;
         const globalOnPageTesting = onPageTesting.trim();
 
         const testCasesWithHandler = testCases.map((tc: any) => {
@@ -305,22 +346,45 @@ function generateConfig(config: any): string {
             );
         }).join(',\n');
 
+        const memoryOptions: string[] = [
+            `testCases: [\n${testCasesWithHandler}\n            ]`,
+            `intervalMs: ${intervalMs}`,
+            `iterations: ${iterations}`
+        ];
+
+        if (delayMs !== 10000) {
+            memoryOptions.push(`delayMs: ${delayMs}`);
+        }
+
+        if (coolDownMs !== 3000) {
+            memoryOptions.push(`coolDownMs: ${coolDownMs}`);
+        }
+
         runnersArray.push(
             `        MemoryLeak: {\n` +
-            `            testCases: [\n${testCasesWithHandler}\n            ],\n` +
-            `            intervalMs: ${intervalMs},\n` +
-            `            iterations: ${iterations}\n` +
+            `            ${memoryOptions.join(',\n            ')}\n` +
             `        }`
         );
     }
 
+    // 构建完整配置字符串
+    const configParts: string[] = [];
+
+    // Mode配置
+    configParts.push(`mode: ${JSON.stringify(mode, null, 4).replace(/\n/g, '\n    ')}`);
+
+    // Root配置
+    if (rootOptions.length > 0) {
+        configParts.push(...rootOptions);
+    }
+
+    // Runners配置
+    configParts.push(`runners: {\n${runnersArray.join(',\n')}\n    }`);
+
     return `import { type UserOptions } from "@bilibili-player/benchmark";
 
 const config: UserOptions = {
-    mode: ${JSON.stringify(mode, null, 8)},
-    runners: {
-${runnersArray.join(',\n')}
-    }
+    ${configParts.join(',\n    ')}
 };
 
 export default config;`;

@@ -391,6 +391,46 @@
                         <small>启用后浏览器将在后台运行，不显示窗口（推荐调试时关闭）</small>
                     </div>
                 </div>
+
+                <!-- Mode Advanced Options -->
+                <div id="mode-advanced" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd; display: none;">
+                    <div class="form-group">
+                        <label>用户数据目录 (usrDataDir) - 非匿名模式</label>
+                        <input type="text" id="mode-usrdatadir" placeholder="/path/to/user/data/dir">
+                        <small>指定用户数据目录路径（仅非匿名模式）</small>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="mode-preparepage">
+                            <span>准备页面 (preparePage) - 非匿名+非无头模式</span>
+                        </label>
+                        <small>是否准备页面（仅在非匿名且非无头模式下可用）</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Root Global Configuration -->
+            <div style="background: #f5f5f5; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #333;">⚙️ 全局配置 (Root)</h3>
+
+                <div class="form-group">
+                    <label>CPU 节流倍数 (cpuThrottlingRate)</label>
+                    <input type="number" id="cpu-throttling" value="1" min="1" step="1">
+                    <small>模拟慢速CPU，1表示无节流，2表示2倍慢速，4表示4倍慢速（必须是2的倍数）</small>
+                </div>
+
+                <div class="form-group">
+                    <label>本地服务端口 (port) - 仅测试本地HTML文件时使用</label>
+                    <input type="number" id="local-port" placeholder="3000 / 8000 / 8080">
+                    <small>当测试目标是本地HTML文件时启动的服务端口，留空使用默认值（3000/8000/8080之一）</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Chrome 可执行文件路径 (executablePath) - 可选</label>
+                    <input type="text" id="executable-path" placeholder="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome">
+                    <small>自定义Chrome可执行文件路径，留空使用系统默认Chrome</small>
+                </div>
             </div>
 
             <!-- Initialization Runner -->
@@ -404,6 +444,21 @@
                 </div>
                 <div id="init-config" style="display: none;">
                     <p style="color: #666; margin-bottom: 15px;">测试页面初始化加载性能，每个测试用例运行一次。</p>
+
+                    <div class="form-group">
+                        <label>迭代次数</label>
+                        <input type="number" id="init-iterations" value="7" min="1" max="20">
+                        <small>InitializationRunner 的迭代次数，默认为 7 次，值必须为正整数</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="init-include-warm">
+                            <span>包含热启动测试 (includeWarmNavigation)</span>
+                        </label>
+                        <small>是否包含热启动的初始化测试，默认为 false（只测试冷启动）</small>
+                    </div>
+
                     <div class="test-cases" id="init-test-cases"></div>
                     <button class="btn-secondary btn-small" onclick="addTestCase('init')">➕ 添加测试用例</button>
                 </div>
@@ -431,6 +486,33 @@
                         <label>延迟时间 (毫秒)</label>
                         <input type="number" id="runtime-delay" value="10000" step="1000">
                         <small>开始测试前的等待时间，默认 10000ms (10秒)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>收集的指标类型 (metrics)</label>
+                        <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-runtime" checked style="margin-right: 8px;">
+                                <strong>runtime</strong> - 运行时性能指标
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-longtask" checked style="margin-right: 8px;">
+                                <strong>longtask</strong> - 长任务检测
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-longanimationframe" style="margin-right: 8px;">
+                                <strong>longAnimationFrame</strong> - 长动画帧检测
+                            </label>
+                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                <input type="checkbox" id="metric-fps" style="margin-right: 8px;">
+                                <strong>fps</strong> - 帧率监测
+                            </label>
+                            <label style="display: block; margin-bottom: 0; cursor: pointer;">
+                                <input type="checkbox" id="metric-system" style="margin-right: 8px;">
+                                <strong>system</strong> - 系统指标（仅本地Mac系统可用）
+                            </label>
+                        </div>
+                        <small>RuntimeRunner 收集的指标类型，默认为 ['runtime', 'longtask']</small>
                     </div>
 
                     <div class="test-cases" id="runtime-test-cases"></div>
@@ -463,6 +545,18 @@
                     </div>
 
                     <div class="form-group">
+                        <label>延迟时间 (毫秒)</label>
+                        <input type="number" id="memory-delay" value="10000" step="1000">
+                        <small>进入页面后的等待时间，确保页面稳定加载，默认 10000ms (10秒)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>冷静时间 (毫秒)</label>
+                        <input type="number" id="memory-cooldown" value="3000" step="1000">
+                        <small>GC 完成和页面操作完成后的等待时间，默认 3000ms (3秒)</small>
+                    </div>
+
+                    <div class="form-group">
                         <label>全局页面操作代码 (onPageTesting - 默认值)</label>
                         <textarea id="memory-testing-code" class="code-editor" placeholder="// 全局默认的页面操作代码&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面"></textarea>
                         <small>在每次迭代中执行的页面操作代码（作为所有测试用例的默认值）。<strong>留空表示静置页面</strong>。各测试用例可以覆盖此全局配置。</small>
@@ -485,11 +579,33 @@
         // 使用相对路径，动态获取 API 地址
         const API_BASE = `${window.location.origin}/api`;
         let config = {
-            mode: { anonymous: true, headless: false },
+            mode: { anonymous: true, headless: false, usrDataDir: '', preparePage: false },
+            cpuThrottlingRate: 1,
+            port: null,
+            executablePath: '',
             runners: {
-                Initialization: { enabled: false, testCases: [] },
-                Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000 },
-                MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+                Initialization: {
+                    enabled: false,
+                    testCases: [],
+                    iterations: 7,
+                    includeWarmNavigation: false
+                },
+                Runtime: {
+                    enabled: false,
+                    testCases: [],
+                    durationMs: 60000,
+                    delayMs: 10000,
+                    metrics: ['runtime', 'longtask']
+                },
+                MemoryLeak: {
+                    enabled: false,
+                    testCases: [],
+                    intervalMs: 60000,
+                    iterations: 3,
+                    delayMs: 10000,
+                    coolDownMs: 3000,
+                    onPageTesting: ''
+                }
             }
         };
 
@@ -634,10 +750,20 @@
                 // Mode configuration
                 config.mode.anonymous = document.getElementById('mode-anonymous').checked;
                 config.mode.headless = document.getElementById('mode-headless').checked;
+                config.mode.usrDataDir = document.getElementById('mode-usrdatadir').value.trim();
+                config.mode.preparePage = document.getElementById('mode-preparepage').checked;
+
+                // Root global configuration
+                config.cpuThrottlingRate = parseInt(document.getElementById('cpu-throttling').value) || 1;
+                const portValue = document.getElementById('local-port').value.trim();
+                config.port = portValue ? parseInt(portValue) : null;
+                config.executablePath = document.getElementById('executable-path').value.trim();
 
                 // Initialization
                 config.runners.Initialization.enabled = document.getElementById('init-enabled').checked;
                 config.runners.Initialization.testCases = collectTestCases('init');
+                config.runners.Initialization.iterations = parseInt(document.getElementById('init-iterations').value) || 7;
+                config.runners.Initialization.includeWarmNavigation = document.getElementById('init-include-warm').checked;
 
                 // Runtime
                 config.runners.Runtime.enabled = document.getElementById('runtime-enabled').checked;
@@ -645,11 +771,22 @@
                 config.runners.Runtime.durationMs = parseInt(document.getElementById('runtime-duration').value);
                 config.runners.Runtime.delayMs = parseInt(document.getElementById('runtime-delay').value);
 
+                // Runtime metrics
+                const metrics = [];
+                if (document.getElementById('metric-runtime').checked) metrics.push('runtime');
+                if (document.getElementById('metric-longtask').checked) metrics.push('longtask');
+                if (document.getElementById('metric-longanimationframe').checked) metrics.push('longAnimationFrame');
+                if (document.getElementById('metric-fps').checked) metrics.push('fps');
+                if (document.getElementById('metric-system').checked) metrics.push('system');
+                config.runners.Runtime.metrics = metrics.length > 0 ? metrics : ['runtime', 'longtask'];
+
                 // MemoryLeak
                 config.runners.MemoryLeak.enabled = document.getElementById('memory-enabled').checked;
                 config.runners.MemoryLeak.testCases = collectTestCases('memory');
                 config.runners.MemoryLeak.intervalMs = parseInt(document.getElementById('memory-interval').value);
                 config.runners.MemoryLeak.iterations = parseInt(document.getElementById('memory-iterations').value);
+                config.runners.MemoryLeak.delayMs = parseInt(document.getElementById('memory-delay').value) || 10000;
+                config.runners.MemoryLeak.coolDownMs = parseInt(document.getElementById('memory-cooldown').value) || 3000;
                 config.runners.MemoryLeak.onPageTesting = document.getElementById('memory-testing-code').value;
 
                 // 验证至少启用一个 runner
@@ -688,9 +825,18 @@
                 // 恢复 Mode 配置
                 document.getElementById('mode-anonymous').checked = config.mode?.anonymous ?? true;
                 document.getElementById('mode-headless').checked = config.mode?.headless ?? false;
+                document.getElementById('mode-usrdatadir').value = config.mode?.usrDataDir || '';
+                document.getElementById('mode-preparepage').checked = config.mode?.preparePage ?? false;
+
+                // 恢复 Root 全局配置
+                document.getElementById('cpu-throttling').value = config.cpuThrottlingRate || 1;
+                document.getElementById('local-port').value = config.port || '';
+                document.getElementById('executable-path').value = config.executablePath || '';
 
                 // 恢复 Initialization
                 document.getElementById('init-enabled').checked = config.runners.Initialization.enabled;
+                document.getElementById('init-iterations').value = config.runners.Initialization.iterations || 7;
+                document.getElementById('init-include-warm').checked = config.runners.Initialization.includeWarmNavigation || false;
                 toggleRunner('init');
                 restoreTestCases('init', config.runners.Initialization.testCases);
 
@@ -698,6 +844,15 @@
                 document.getElementById('runtime-enabled').checked = config.runners.Runtime.enabled;
                 document.getElementById('runtime-duration').value = config.runners.Runtime.durationMs;
                 document.getElementById('runtime-delay').value = config.runners.Runtime.delayMs;
+
+                // 恢复 Runtime metrics
+                const metrics = config.runners.Runtime.metrics || ['runtime', 'longtask'];
+                document.getElementById('metric-runtime').checked = metrics.includes('runtime');
+                document.getElementById('metric-longtask').checked = metrics.includes('longtask');
+                document.getElementById('metric-longanimationframe').checked = metrics.includes('longAnimationFrame');
+                document.getElementById('metric-fps').checked = metrics.includes('fps');
+                document.getElementById('metric-system').checked = metrics.includes('system');
+
                 toggleRunner('runtime');
                 restoreTestCases('runtime', config.runners.Runtime.testCases);
 
@@ -705,6 +860,8 @@
                 document.getElementById('memory-enabled').checked = config.runners.MemoryLeak.enabled;
                 document.getElementById('memory-interval').value = config.runners.MemoryLeak.intervalMs;
                 document.getElementById('memory-iterations').value = config.runners.MemoryLeak.iterations;
+                document.getElementById('memory-delay').value = config.runners.MemoryLeak.delayMs || 10000;
+                document.getElementById('memory-cooldown').value = config.runners.MemoryLeak.coolDownMs || 3000;
                 document.getElementById('memory-testing-code').value = config.runners.MemoryLeak.onPageTesting || '';
                 toggleRunner('memory');
                 restoreTestCases('memory', config.runners.MemoryLeak.testCases);
