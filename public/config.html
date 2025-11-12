@@ -1101,6 +1101,80 @@
                         onPageTestingEl.value = tc.onPageTesting;
                     }
                 }
+
+                // 恢复高级配置
+                if (tc.delayMs !== undefined) {
+                    const el = lastCase.querySelector('.test-delayMs');
+                    if (el) el.value = tc.delayMs;
+                }
+
+                if (tc.cookie) {
+                    const el = lastCase.querySelector('.test-cookie');
+                    if (el) {
+                        el.value = typeof tc.cookie === 'string' ? tc.cookie : JSON.stringify(tc.cookie, null, 2);
+                    }
+                }
+
+                if (tc.extraHTTPHeaders) {
+                    const el = lastCase.querySelector('.test-headers');
+                    if (el) el.value = JSON.stringify(tc.extraHTTPHeaders, null, 2);
+                }
+
+                if (tc.blockList) {
+                    const el = lastCase.querySelector('.test-blocklist');
+                    if (el) el.value = JSON.stringify(tc.blockList, null, 2);
+                }
+
+                if (tc.customCss) {
+                    const el = lastCase.querySelector('.test-customcss');
+                    if (el) el.value = tc.customCss;
+                }
+
+                // 恢复设备选项
+                if (tc.deviceOptions) {
+                    const deviceTypeEl = lastCase.querySelector('.test-devicetype');
+                    if (deviceTypeEl && Array.isArray(tc.deviceOptions)) {
+                        deviceTypeEl.value = tc.deviceOptions[0];
+                        // 触发change事件以显示对应的选项
+                        deviceTypeEl.dispatchEvent(new Event('change'));
+
+                        if (tc.deviceOptions[0] === 'Desktop' && tc.deviceOptions[1]) {
+                            const fullscreenEl = lastCase.querySelector('.test-device-fullscreen');
+                            if (fullscreenEl) fullscreenEl.checked = tc.deviceOptions[1].fullscreen || false;
+                        } else if (tc.deviceOptions[0] === 'Mobile' && tc.deviceOptions[1]) {
+                            const presetEl = lastCase.querySelector('.test-device-preset');
+                            if (presetEl) presetEl.value = tc.deviceOptions[1].preset || '';
+                        }
+                    }
+                }
+
+                // 恢复生命周期钩子
+                if (tc.hooks) {
+                    if (tc.hooks.beforePageLoad) {
+                        const el = lastCase.querySelector('.test-hook-beforepageload');
+                        if (el) el.value = tc.hooks.beforePageLoad;
+                    }
+
+                    if (tc.hooks.onPageLoaded) {
+                        const el = lastCase.querySelector('.test-hook-onpageloaded');
+                        if (el) el.value = tc.hooks.onPageLoaded;
+                    }
+
+                    if (tc.hooks.onPageTesting) {
+                        const el = lastCase.querySelector('.test-hook-onpagetesting');
+                        if (el) el.value = tc.hooks.onPageTesting;
+                    }
+
+                    if (tc.hooks.onPageCollecting) {
+                        const el = lastCase.querySelector('.test-hook-onpagecollecting');
+                        if (el) el.value = tc.hooks.onPageCollecting;
+                    }
+
+                    if (tc.hooks.onPageUnload) {
+                        const el = lastCase.querySelector('.test-hook-onpageunload');
+                        if (el) el.value = tc.hooks.onPageUnload;
+                    }
+                }
             });
         }
 

@@ -240,6 +240,85 @@ function transformConfigForSDK(config: any): any {
     return transformed;
 }
 
+// 生成单个testCase的配置字符串
+function generateTestCase(tc: any, runnerType: string): string {
+    const lines: string[] = [];
+
+    // 基础字段
+    lines.push(`target: ${JSON.stringify(tc.target)}`);
+    lines.push(`description: ${JSON.stringify(tc.description)}`);
+
+    // TestCase级别的delayMs
+    if (tc.delayMs !== undefined) {
+        lines.push(`delayMs: ${tc.delayMs}`);
+    }
+
+    // Cookie
+    if (tc.cookie) {
+        if (typeof tc.cookie === 'string') {
+            lines.push(`cookie: ${JSON.stringify(tc.cookie)}`);
+        } else {
+            lines.push(`cookie: ${JSON.stringify(tc.cookie)}`);
+        }
+    }
+
+    // extraHTTPHeaders
+    if (tc.extraHTTPHeaders) {
+        lines.push(`extraHTTPHeaders: ${JSON.stringify(tc.extraHTTPHeaders)}`);
+    }
+
+    // blockList
+    if (tc.blockList) {
+        lines.push(`blockList: ${JSON.stringify(tc.blockList)}`);
+    }
+
+    // customCss
+    if (tc.customCss) {
+        lines.push(`customCss: ${JSON.stringify(tc.customCss)}`);
+    }
+
+    // deviceOptions
+    if (tc.deviceOptions && Array.isArray(tc.deviceOptions)) {
+        const [deviceType, options] = tc.deviceOptions;
+        if (Object.keys(options || {}).length > 0) {
+            lines.push(`deviceOptions: [${JSON.stringify(deviceType)}, ${JSON.stringify(options)}]`);
+        } else {
+            lines.push(`deviceOptions: [${JSON.stringify(deviceType)}, {}]`);
+        }
+    }
+
+    // 生命周期钩子
+    if (tc.hooks) {
+        if (tc.hooks.beforePageLoad) {
+            lines.push(`beforePageLoad: async ({ page, context, session }: any) => {\n                        ${tc.hooks.beforePageLoad}\n                    }`);
+        }
+
+        if (tc.hooks.onPageLoaded) {
+            lines.push(`onPageLoaded: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageLoaded}\n                    }`);
+        }
+
+        if (tc.hooks.onPageTesting && (runnerType === 'Runtime' || runnerType === 'MemoryLeak')) {
+            lines.push(`onPageTesting: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageTesting}\n                    }`);
+        }
+
+        if (tc.hooks.onPageCollecting && runnerType === 'MemoryLeak') {
+            lines.push(`onPageCollecting: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageCollecting}\n                    }`);
+        }
+
+        if (tc.hooks.onPageUnload) {
+            lines.push(`onPageUnload: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageUnload}\n                    }`);
+        }
+    }
+
+    // MemoryLeak特殊处理：如果有旧的onPageTesting字段（向后兼容）
+    if (runnerType === 'MemoryLeak' && tc.onPageTesting && !tc.hooks?.onPageTesting) {
+        const onPageTestingCode = tc.onPageTesting.trim() || `// 在这里写你怀疑会触发内存泄露的页面操作\n                        // 若为空，则静置页面`;
+        lines.push(`onPageTesting: async ({ context, page, session }: any) => {\n                        ${onPageTestingCode}\n                    }`);
+    }
+
+    return `                {\n                    ${lines.join(',\n                    ')}\n                }`;
+}
+
 // 生成配置文件内容（改进版本）
 function generateConfig(config: any): string {
     const mode = config.mode || { anonymous: true, headless: false };
@@ -267,12 +346,7 @@ function generateConfig(config: any): string {
 
     if (runners.Initialization && runners.Initialization.enabled) {
         const { testCases = [], iterations = 7, includeWarmNavigation = false } = runners.Initialization;
-        const testCasesStr = testCases.map((tc: any) =>
-            `                {\n` +
-            `                    target: ${JSON.stringify(tc.target)},\n` +
-            `                    description: ${JSON.stringify(tc.description)}\n` +
-            `                }`
-        ).join(',\n');
+        const testCasesStr = testCases.map((tc: any) => generateTestCase(tc, 'Initialization')).join(',\n');
 
         const initOptions: string[] = [
             `testCases: [\n${testCasesStr}\n            ]`
@@ -295,12 +369,7 @@ function generateConfig(config: any): string {
 
     if (runners.Runtime && runners.Runtime.enabled) {
         const { testCases = [], durationMs = 60000, delayMs = 10000, metrics = ['runtime', 'longtask'] } = runners.Runtime;
-        const testCasesStr = testCases.map((tc: any) =>
-            `                {\n` +
-            `                    target: ${JSON.stringify(tc.target)},\n` +
-            `                    description: ${JSON.stringify(tc.description)}\n` +
-            `                }`
-        ).join(',\n');
+        const testCasesStr = testCases.map((tc: any) => generateTestCase(tc, 'Runtime')).join(',\n');
 
         const runtimeOptions: string[] = [
             `testCases: [\n${testCasesStr}\n            ]`,
@@ -326,28 +395,18 @@ function generateConfig(config: any): string {
         const { testCases = [], intervalMs = 60000, iterations = 3, delayMs = 10000, coolDownMs = 3000, onPageTesting = '' } = runners.MemoryLeak;
         const globalOnPageTesting = onPageTesting.trim();
 
-        const testCasesWithHandler = testCases.map((tc: any) => {
-            // 优先使用testCase级别的onPageTesting，否则使用全局的onPageTesting
-            let onPageTestingCode = tc.onPageTesting ? tc.onPageTesting.trim() : globalOnPageTesting;
-
-            // 如果两者都没有，使用注释说明
-            if (!onPageTestingCode) {
-                onPageTestingCode = `// 在这里写你怀疑会触发内存泄露的页面操作\n                        // 若为空，则静置页面`;
+        // 如果有全局的onPageTesting，将其注入到testCase中（向后兼容）
+        const testCasesWithGlobal = testCases.map((tc: any) => {
+            if (globalOnPageTesting && !tc.onPageTesting && !tc.hooks?.onPageTesting) {
+                return { ...tc, onPageTesting: globalOnPageTesting };
             }
+            return tc;
+        });
 
-            return (
-                `                {\n` +
-                `                    target: ${JSON.stringify(tc.target)},\n` +
-                `                    description: ${JSON.stringify(tc.description)},\n` +
-                `                    onPageTesting: async ({ context, page, session }: any) => {\n` +
-                `                        ${onPageTestingCode}\n` +
-                `                    }\n` +
-                `                }`
-            );
-        }).join(',\n');
+        const testCasesStr = testCasesWithGlobal.map((tc: any) => generateTestCase(tc, 'MemoryLeak')).join(',\n');
 
         const memoryOptions: string[] = [
-            `testCases: [\n${testCasesWithHandler}\n            ]`,
+            `testCases: [\n${testCasesStr}\n            ]`,
             `intervalMs: ${intervalMs}`,
             `iterations: ${iterations}`
         ];
