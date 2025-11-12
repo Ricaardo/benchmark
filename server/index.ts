@@ -1181,6 +1181,7 @@ app.get('/api/test-results', async (req, res) => {
 
         // 查找所有 JSON 报告文件
         const jsonFiles = files.filter(f => f.endsWith('.json'));
+        console.log(`[API] 找到 ${jsonFiles.length} 个JSON报告文件:`, jsonFiles);
 
         const results = [];
 
@@ -1203,6 +1204,7 @@ app.get('/api/test-results', async (req, res) => {
                     // 尝试从不同的数据结构中提取URL和结果
                     if (Array.isArray(data)) {
                         // 如果data直接是数组
+                        console.log(`[API] ${file}: 解析数组格式，元素数量:`, data.length);
                         data.forEach((item: any) => {
                             if (item.url) {
                                 urls.push(item.url);
@@ -1215,6 +1217,7 @@ app.get('/api/test-results', async (req, res) => {
                         });
                     } else if (data.results && Array.isArray(data.results)) {
                         // 如果data.results是数组
+                        console.log(`[API] ${file}: 解析data.results数组格式，元素数量:`, data.results.length);
                         data.results.forEach((item: any) => {
                             if (item.url) {
                                 urls.push(item.url);
@@ -1227,7 +1230,9 @@ app.get('/api/test-results', async (req, res) => {
                         });
                     } else {
                         // 尝试从对象的值中提取
-                        Object.values(data).forEach(item => {
+                        const values = Object.values(data);
+                        console.log(`[API] ${file}: 解析对象格式，键数量:`, Object.keys(data).length);
+                        values.forEach(item => {
                             if (typeof item === 'object' && item !== null && (item as any).url) {
                                 const url = (item as any).url;
                                 urls.push(url);
@@ -1238,6 +1243,7 @@ app.get('/api/test-results', async (req, res) => {
                                 });
                             }
                         });
+                        console.log(`[API] ${file}: 提取到 ${urls.length} 个URL`);
                     }
                 }
 
