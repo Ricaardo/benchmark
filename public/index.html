@@ -588,7 +588,7 @@
             </div>
 
             <div class="form-group">
-                <label>高级配置</label>
+                <label>Runner 配置</label>
                 <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
 
                     <!-- Runtime 配置 -->
@@ -626,7 +626,98 @@
                         </div>
                     </div>
 
-                    <p id="no-advanced-config" style="color: #9ca3af; margin: 0;">选择 Runtime 或 MemoryLeak 后显示高级配置</p>
+                    <p id="no-runner-config" style="color: #9ca3af; margin: 0;">选择 Runtime 或 MemoryLeak 后显示配置</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>TestCase 高级配置 (应用到所有 URLs)</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (delayMs)</label>
+                        <input type="number" id="testcase-delay" placeholder="留空使用默认值" min="0" step="1000" style="width: 100%; padding: 8px;">
+                        <small style="color: #718096; font-size: 0.85em;">TestCase级别的延迟时间（毫秒）</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">Cookie (JSON 或字符串)</label>
+                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">设置页面的 Cookie</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">额外 HTTP 头 (extraHTTPHeaders)</label>
+                        <textarea id="testcase-headers" placeholder='{"User-Agent": "...", "Authorization": "..."}' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">JSON格式的额外HTTP请求头</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">阻止列表 (blockList)</label>
+                        <textarea id="testcase-blocklist" placeholder='["*.jpg", "*.png", "https://analytics.example.com/**"]' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">JSON数组格式，支持glob模式，阻止匹配的资源加载</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">自定义 CSS (customCss)</label>
+                        <textarea id="testcase-css" placeholder="body { background: red; }" rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">注入到页面的自定义CSS样式</small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">设备选项 (deviceOptions)</label>
+                        <select id="testcase-device-type" style="width: 100%; padding: 8px; margin-bottom: 8px;">
+                            <option value="">不设置（使用默认）</option>
+                            <option value="Desktop">Desktop - 桌面设备</option>
+                            <option value="Mobile">Mobile - 移动设备</option>
+                        </select>
+                        <div id="device-desktop-options" style="display: none; margin-top: 8px;">
+                            <label style="cursor: pointer;">
+                                <input type="checkbox" id="device-fullscreen"> 全屏模式 (fullscreen)
+                            </label>
+                        </div>
+                        <div id="device-mobile-options" style="display: none; margin-top: 8px;">
+                            <select id="device-mobile-preset" style="width: 100%; padding: 8px;">
+                                <option value="android">Android</option>
+                                <option value="iphone">iPhone</option>
+                            </select>
+                        </div>
+                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>生命周期钩子 (Lifecycle Hooks)</label>
+                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔧 beforePageLoad</label>
+                        <textarea id="hook-beforepageload" placeholder="// 页面加载前执行&#10;// 例如：await page.setViewportSize({ width: 1920, height: 1080 });" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载之前执行</small>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">✅ onPageLoaded</label>
+                        <textarea id="hook-onpageloaded" placeholder="// 页面加载完成后执行&#10;// 例如：await page.waitForSelector('.content');" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载完成后执行</small>
+                    </div>
+
+                    <div id="hook-onpagetesting-container" style="margin-bottom: 10px; display: none;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔄 onPageTesting</label>
+                        <textarea id="hook-onpagetesting" placeholder="// Runtime/MemoryLeak 测试期间执行&#10;// 例如：await page.click('.button');" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行</small>
+                    </div>
+
+                    <div id="hook-onpagecollecting-container" style="margin-bottom: 10px; display: none;">
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">📊 onPageCollecting</label>
+                        <textarea id="hook-onpagecollecting" placeholder="// MemoryLeak 收集数据时执行&#10;// 例如：await page.evaluate(() => window.gc());" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 MemoryLeak 收集数据时执行</small>
+                    </div>
+
+                    <div>
+                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🏁 onPageUnload</label>
+                        <textarea id="hook-onpageunload" placeholder="// 页面卸载前执行&#10;// 例如：await page.evaluate(() => console.log('cleanup'));" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">在页面卸载前执行</small>
+                    </div>
                 </div>
             </div>
 
@@ -708,6 +799,7 @@
             // 添加高级配置事件监听
             document.getElementById('runner-runtime').addEventListener('change', updateAdvancedConfigDisplay);
             document.getElementById('runner-memoryleak').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('testcase-device-type').addEventListener('change', updateDeviceOptionsDisplay);
         };
 
         // 渲染用例列表
@@ -844,11 +936,31 @@
 
             const runtimeConfig = document.getElementById('runtime-config');
             const memoryLeakConfig = document.getElementById('memoryleak-config');
-            const noConfig = document.getElementById('no-advanced-config');
+            const noConfig = document.getElementById('no-runner-config');
 
             runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
             memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
             noConfig.style.display = (!runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+
+            // 根据选择的runner显示/隐藏生命周期钩子
+            const onPageTestingContainer = document.getElementById('hook-onpagetesting-container');
+            const onPageCollectingContainer = document.getElementById('hook-onpagecollecting-container');
+
+            // onPageTesting 只在 Runtime 或 MemoryLeak 时显示
+            onPageTestingContainer.style.display = (runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
+
+            // onPageCollecting 只在 MemoryLeak 时显示
+            onPageCollectingContainer.style.display = memoryLeakChecked ? 'block' : 'none';
+        }
+
+        // 更新设备选项显示
+        function updateDeviceOptionsDisplay() {
+            const deviceType = document.getElementById('testcase-device-type').value;
+            const desktopOptions = document.getElementById('device-desktop-options');
+            const mobileOptions = document.getElementById('device-mobile-options');
+
+            desktopOptions.style.display = deviceType === 'Desktop' ? 'block' : 'none';
+            mobileOptions.style.display = deviceType === 'Mobile' ? 'block' : 'none';
         }
 
         // 显示添加用例模态框
@@ -856,7 +968,7 @@
             document.getElementById('case-modal').classList.add('active');
             document.querySelector('.modal-header').textContent = '➕ 添加测试用例';
 
-            // 清空表单
+            // 清空表单 - 基础字段
             document.getElementById('case-name').value = '';
             document.getElementById('runner-initialization').checked = false;
             document.getElementById('runner-runtime').checked = false;
@@ -864,16 +976,36 @@
             document.getElementById('case-urls').value = '';
             document.getElementById('case-mode').value = 'headless';
             document.getElementById('case-repeat').value = '3';
+            document.getElementById('case-description').value = '';
+            document.getElementById('case-tags').value = '';
+
+            // 清空 Runner 配置
             document.getElementById('runtime-duration').value = '60000';
             document.getElementById('runtime-delay').value = '10000';
             document.getElementById('memoryleak-interval').value = '60000';
             document.getElementById('memoryleak-iterations').value = '3';
             document.getElementById('memoryleak-onpagetesting').value = '';
-            document.getElementById('case-description').value = '';
-            document.getElementById('case-tags').value = '';
 
-            // 更新高级配置显示
+            // 清空 TestCase 高级配置
+            document.getElementById('testcase-delay').value = '';
+            document.getElementById('testcase-cookie').value = '';
+            document.getElementById('testcase-headers').value = '';
+            document.getElementById('testcase-blocklist').value = '';
+            document.getElementById('testcase-css').value = '';
+            document.getElementById('testcase-device-type').value = '';
+            document.getElementById('device-fullscreen').checked = false;
+            document.getElementById('device-mobile-preset').value = 'android';
+
+            // 清空生命周期钩子
+            document.getElementById('hook-beforepageload').value = '';
+            document.getElementById('hook-onpageloaded').value = '';
+            document.getElementById('hook-onpagetesting').value = '';
+            document.getElementById('hook-onpagecollecting').value = '';
+            document.getElementById('hook-onpageunload').value = '';
+
+            // 更新显示
             updateAdvancedConfigDisplay();
+            updateDeviceOptionsDisplay();
 
             // 移除编辑模式标记
             delete document.getElementById('case-modal').dataset.editId;
@@ -909,7 +1041,7 @@
             document.getElementById('case-mode').value = testCase.mode || 'headless';
             document.getElementById('case-repeat').value = testCase.repeatCount || 3;
 
-            // 填充高级配置字段
+            // 填充 Runner 配置字段
             if (testCase.runners?.Runtime) {
                 document.getElementById('runtime-duration').value = testCase.runners.Runtime.durationMs || 60000;
                 document.getElementById('runtime-delay').value = testCase.runners.Runtime.delayMs || 10000;
@@ -928,11 +1060,42 @@
                 document.getElementById('memoryleak-onpagetesting').value = '';
             }
 
+            // 填充 TestCase 高级配置字段
+            const advConfig = testCase.advancedConfig || {};
+            document.getElementById('testcase-delay').value = advConfig.delayMs || '';
+            document.getElementById('testcase-cookie').value = advConfig.cookie ? (typeof advConfig.cookie === 'string' ? advConfig.cookie : JSON.stringify(advConfig.cookie, null, 2)) : '';
+            document.getElementById('testcase-headers').value = advConfig.extraHTTPHeaders ? JSON.stringify(advConfig.extraHTTPHeaders, null, 2) : '';
+            document.getElementById('testcase-blocklist').value = advConfig.blockList ? JSON.stringify(advConfig.blockList, null, 2) : '';
+            document.getElementById('testcase-css').value = advConfig.customCss || '';
+
+            // 恢复 deviceOptions
+            if (advConfig.deviceOptions && Array.isArray(advConfig.deviceOptions)) {
+                document.getElementById('testcase-device-type').value = advConfig.deviceOptions[0];
+                if (advConfig.deviceOptions[0] === 'Desktop' && advConfig.deviceOptions[1]) {
+                    document.getElementById('device-fullscreen').checked = advConfig.deviceOptions[1].fullscreen || false;
+                } else if (advConfig.deviceOptions[0] === 'Mobile' && advConfig.deviceOptions[1]) {
+                    document.getElementById('device-mobile-preset').value = advConfig.deviceOptions[1].preset || 'android';
+                }
+            } else {
+                document.getElementById('testcase-device-type').value = '';
+                document.getElementById('device-fullscreen').checked = false;
+                document.getElementById('device-mobile-preset').value = 'android';
+            }
+
+            // 填充生命周期钩子
+            const hooks = advConfig.hooks || {};
+            document.getElementById('hook-beforepageload').value = hooks.beforePageLoad || '';
+            document.getElementById('hook-onpageloaded').value = hooks.onPageLoaded || '';
+            document.getElementById('hook-onpagetesting').value = hooks.onPageTesting || '';
+            document.getElementById('hook-onpagecollecting').value = hooks.onPageCollecting || '';
+            document.getElementById('hook-onpageunload').value = hooks.onPageUnload || '';
+
             document.getElementById('case-description').value = testCase.description || '';
             document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
 
-            // 更新高级配置显示
+            // 更新显示
             updateAdvancedConfigDisplay();
+            updateDeviceOptionsDisplay();
 
             // 标记为编辑模式
             document.getElementById('case-modal').dataset.editId = id;
@@ -1006,6 +1169,84 @@
                 }
             };
 
+            // 收集 TestCase 高级配置
+            const advancedConfig = {};
+
+            // delayMs
+            const tcDelayMs = document.getElementById('testcase-delay').value.trim();
+            if (tcDelayMs) {
+                advancedConfig.delayMs = parseInt(tcDelayMs);
+            }
+
+            // cookie
+            const cookieValue = document.getElementById('testcase-cookie').value.trim();
+            if (cookieValue) {
+                try {
+                    advancedConfig.cookie = JSON.parse(cookieValue);
+                } catch {
+                    advancedConfig.cookie = cookieValue; // 作为字符串
+                }
+            }
+
+            // extraHTTPHeaders
+            const headersValue = document.getElementById('testcase-headers').value.trim();
+            if (headersValue) {
+                try {
+                    advancedConfig.extraHTTPHeaders = JSON.parse(headersValue);
+                } catch (e) {
+                    console.error('Invalid JSON for extraHTTPHeaders:', e);
+                }
+            }
+
+            // blockList
+            const blockListValue = document.getElementById('testcase-blocklist').value.trim();
+            if (blockListValue) {
+                try {
+                    advancedConfig.blockList = JSON.parse(blockListValue);
+                } catch (e) {
+                    console.error('Invalid JSON for blockList:', e);
+                }
+            }
+
+            // customCss
+            const cssValue = document.getElementById('testcase-css').value.trim();
+            if (cssValue) {
+                advancedConfig.customCss = cssValue;
+            }
+
+            // deviceOptions
+            const deviceType = document.getElementById('testcase-device-type').value;
+            if (deviceType) {
+                if (deviceType === 'Desktop') {
+                    const fullscreen = document.getElementById('device-fullscreen').checked;
+                    advancedConfig.deviceOptions = ['Desktop', { fullscreen }];
+                } else if (deviceType === 'Mobile') {
+                    const preset = document.getElementById('device-mobile-preset').value;
+                    advancedConfig.deviceOptions = ['Mobile', { preset }];
+                }
+            }
+
+            // 生命周期钩子
+            const hooks = {};
+            const beforePageLoad = document.getElementById('hook-beforepageload').value.trim();
+            if (beforePageLoad) hooks.beforePageLoad = beforePageLoad;
+
+            const onPageLoaded = document.getElementById('hook-onpageloaded').value.trim();
+            if (onPageLoaded) hooks.onPageLoaded = onPageLoaded;
+
+            const onPageTesting = document.getElementById('hook-onpagetesting').value.trim();
+            if (onPageTesting) hooks.onPageTesting = onPageTesting;
+
+            const onPageCollecting = document.getElementById('hook-onpagecollecting').value.trim();
+            if (onPageCollecting) hooks.onPageCollecting = onPageCollecting;
+
+            const onPageUnload = document.getElementById('hook-onpageunload').value.trim();
+            if (onPageUnload) hooks.onPageUnload = onPageUnload;
+
+            if (Object.keys(hooks).length > 0) {
+                advancedConfig.hooks = hooks;
+            }
+
             const editId = document.getElementById('case-modal').dataset.editId;
 
             if (editId) {
@@ -1019,6 +1260,7 @@
                     testCase.repeatCount = repeatCount;
                     testCase.description = description;
                     testCase.tags = tags;
+                    testCase.advancedConfig = advancedConfig;
                     // 移除旧的字段（如果存在）
                     delete testCase.url;
                     delete testCase.runner;
@@ -1035,6 +1277,7 @@
                     repeatCount,
                     description,
                     tags,
+                    advancedConfig,
                     status: 'idle',
                     createdAt: new Date().toISOString()
                 };
@@ -1081,6 +1324,26 @@
                     throw new Error('测试用例没有配置URL');
                 }
 
+                // 构建 testCases 数组 - 将 URLs 转换为 testCases 并应用高级配置
+                const advConfig = testCase.advancedConfig || {};
+                const testCasesArray = urls.map(url => {
+                    const tc = {
+                        target: url,
+                        description: `${testCase.name} - ${url}`
+                    };
+
+                    // 应用高级配置
+                    if (advConfig.delayMs !== undefined) tc.delayMs = advConfig.delayMs;
+                    if (advConfig.cookie) tc.cookie = advConfig.cookie;
+                    if (advConfig.extraHTTPHeaders) tc.extraHTTPHeaders = advConfig.extraHTTPHeaders;
+                    if (advConfig.blockList) tc.blockList = advConfig.blockList;
+                    if (advConfig.customCss) tc.customCss = advConfig.customCss;
+                    if (advConfig.deviceOptions) tc.deviceOptions = advConfig.deviceOptions;
+                    if (advConfig.hooks) tc.hooks = advConfig.hooks;
+
+                    return tc;
+                });
+
                 // 构建runners配置 - 兼容新旧格式
                 let runnersConfig = {};
                 let enabledRunners = [];
@@ -1089,16 +1352,17 @@
                     // 新格式：多runner支持
                     if (testCase.runners.Initialization?.enabled) {
                         runnersConfig.Initialization = {
-                            repeatCount: testCase.runners.Initialization.repeatCount || testCase.repeatCount || 3,
-                            urls: urls
+                            enabled: true,
+                            testCases: testCasesArray,
+                            iterations: testCase.runners.Initialization.iterations || 7
                         };
                         enabledRunners.push('Initialization');
                     }
 
                     if (testCase.runners.Runtime?.enabled) {
                         runnersConfig.Runtime = {
-                            repeatCount: testCase.runners.Runtime.repeatCount || testCase.repeatCount || 3,
-                            urls: urls,
+                            enabled: true,
+                            testCases: testCasesArray,
                             durationMs: testCase.runners.Runtime.durationMs || 60000,
                             delayMs: testCase.runners.Runtime.delayMs || 10000
                         };
@@ -1106,20 +1370,28 @@
                     }
 
                     if (testCase.runners.MemoryLeak?.enabled) {
+                        // 为 MemoryLeak 处理 onPageTesting（向后兼容）
+                        const memoryTestCases = testCasesArray.map(tc => {
+                            const mtc = { ...tc };
+                            if (testCase.runners.MemoryLeak.onPageTesting) {
+                                mtc.onPageTesting = testCase.runners.MemoryLeak.onPageTesting;
+                            }
+                            return mtc;
+                        });
+
                         runnersConfig.MemoryLeak = {
-                            repeatCount: testCase.runners.MemoryLeak.repeatCount || testCase.repeatCount || 3,
-                            urls: urls,
+                            enabled: true,
+                            testCases: memoryTestCases,
                             intervalMs: testCase.runners.MemoryLeak.intervalMs || 60000,
-                            iterations: testCase.runners.MemoryLeak.iterations || 3,
-                            onPageTesting: testCase.runners.MemoryLeak.onPageTesting || ''
+                            iterations: testCase.runners.MemoryLeak.iterations || 3
                         };
                         enabledRunners.push('MemoryLeak');
                     }
                 } else if (testCase.runner) {
                     // 旧格式：单个runner
                     runnersConfig[testCase.runner] = {
-                        repeatCount: testCase.repeatCount || 3,
-                        urls: urls
+                        enabled: true,
+                        testCases: testCasesArray
                     };
                     enabledRunners.push(testCase.runner);
                 }
