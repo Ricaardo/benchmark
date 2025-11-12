@@ -690,6 +690,9 @@ function generateConfig(config: any): string {
         rootOptions.push(`executablePath: ${JSON.stringify(config.executablePath)}`);
     }
 
+    // 报告路径 - 确保报告保存到benchmark_report目录
+    rootOptions.push(`reportPath: 'benchmark_report'`);
+
     const runnersArray: string[] = [];
 
     if (runners.Initialization && runners.Initialization.enabled) {
@@ -1158,6 +1161,56 @@ app.delete('/api/reports/:filename', async (req, res) => {
     } catch (error) {
         console.error('Failed to delete report:', error);
         res.status(500).json({ error: 'Failed to delete report' });
+    }
+});
+
+// 获取测试结果数据（用于可视化）
+app.get('/api/test-results', async (req, res) => {
+    try {
+        const reportsDir = path.join(__dirname, '../benchmark_report');
+
+        // 确保目录存在
+        await ensureReportsDir();
+
+        let files: string[];
+        try {
+            files = await fs.readdir(reportsDir);
+        } catch (error) {
+            return res.json([]);
+        }
+
+        // 查找所有 JSON 报告文件
+        const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+        const results = [];
+
+        for (const file of jsonFiles) {
+            try {
+                const filePath = path.join(reportsDir, file);
+                const content = await fs.readFile(filePath, 'utf-8');
+                const data = JSON.parse(content);
+
+                // 提取测试结果数据
+                if (data && data.results) {
+                    results.push({
+                        filename: file,
+                        timestamp: data.timestamp || new Date().toISOString(),
+                        runner: data.runner || 'Unknown',
+                        results: data.results
+                    });
+                }
+            } catch (error) {
+                console.error(`Failed to parse ${file}:`, error);
+            }
+        }
+
+        // 按时间戳排序（最新的在前）
+        results.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+        res.json(results);
+    } catch (error) {
+        console.error('Failed to load test results:', error);
+        res.status(500).json({ error: 'Failed to load test results' });
     }
 });
 
