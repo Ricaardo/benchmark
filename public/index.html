@@ -641,30 +641,113 @@
 
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">Cookie (JSON 或字符串)</label>
+
+                        <!-- Cookie预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择Cookie预设...</option>
+                                <option value="bilibili_login">B站登录态</option>
+                                <option value="youtube_login">YouTube登录态</option>
+                                <option value="custom_simple">简单Cookie</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-cookie')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">设置页面的 Cookie</small>
+                        <small id="cookie-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">设置页面的 Cookie</small>
                     </div>
 
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">额外 HTTP 头 (extraHTTPHeaders)</label>
+
+                        <!-- HTTP Headers预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="headers-preset" onchange="applyHeadersPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择User-Agent预设...</option>
+                                <option value="mobile_chrome">📱 移动端Chrome</option>
+                                <option value="mobile_safari">📱 移动端Safari (iPhone)</option>
+                                <option value="desktop_chrome">🖥️ 桌面端Chrome (Win)</option>
+                                <option value="desktop_mac">🖥️ 桌面端Safari (Mac)</option>
+                                <option value="with_auth">🔑 Bearer Token认证</option>
+                                <option value="api_key">🔑 API Key认证</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-headers')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="testcase-headers" placeholder='{"User-Agent": "...", "Authorization": "..."}' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">JSON格式的额外HTTP请求头</small>
+                        <small id="headers-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">JSON格式的额外HTTP请求头</small>
                     </div>
 
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">阻止列表 (blockList)</label>
+
+                        <!-- BlockList预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="blocklist-preset" onchange="applyBlocklistPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择阻止列表预设...</option>
+                                <option value="block_images">🖼️ 阻止图片</option>
+                                <option value="block_videos">🎬 阻止视频文件</option>
+                                <option value="block_ads">🚫 阻止广告</option>
+                                <option value="block_analytics">📊 阻止统计分析</option>
+                                <option value="block_fonts">🔤 阻止字体</option>
+                                <option value="performance_mode">⚡ 性能模式（推荐）</option>
+                                <option value="bilibili_ads">🅱️ B站广告</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-blocklist')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="testcase-blocklist" placeholder='["*.jpg", "*.png", "https://analytics.example.com/**"]' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">JSON数组格式，支持glob模式，阻止匹配的资源加载</small>
+                        <small style="color: #718096; font-size: 0.85em;">JSON数组格式，支持glob模式，阻止匹配的资源加载 | 💡 可提升性能</small>
                     </div>
 
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">自定义 CSS (customCss)</label>
+
+                        <!-- CSS预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="css-preset" onchange="applyCssPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择CSS预设...</option>
+                                <option value="hide_ads">🚫 隐藏广告元素</option>
+                                <option value="hide_headers">⬆️ 隐藏头部导航</option>
+                                <option value="hide_footers">⬇️ 隐藏页脚</option>
+                                <option value="focus_video">🎯 视频聚焦模式</option>
+                                <option value="dark_mode">🌙 暗黑模式</option>
+                                <option value="performance_boost">⚡ 性能提升</option>
+                                <option value="bilibili_clean">🅱️ B站净化</option>
+                            </select>
+                            <button type="button" onclick="clearConfig('testcase-css')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="testcase-css" placeholder="body { background: red; }" rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
                         <small style="color: #718096; font-size: 0.85em;">注入到页面的自定义CSS样式</small>
                     </div>
 
                     <div>
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">设备选项 (deviceOptions)</label>
+
+                        <!-- Device预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="device-preset" onchange="applyDevicePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择设备预设...</option>
+                                <optgroup label="🖥️ 桌面设备">
+                                    <option value="desktop_fullhd">Full HD (1920x1080 全屏)</option>
+                                    <option value="desktop_normal">标准桌面 (1920x1080 窗口)</option>
+                                    <option value="desktop_2k">2K (2560x1440)</option>
+                                    <option value="desktop_4k">4K (3840x2160)</option>
+                                    <option value="desktop_small">小屏笔记本 (1366x768)</option>
+                                </optgroup>
+                                <optgroup label="📱 移动设备">
+                                    <option value="mobile_android">Android 标准</option>
+                                    <option value="mobile_iphone">iPhone 标准</option>
+                                    <option value="mobile_iphone_pro">iPhone Pro</option>
+                                    <option value="mobile_iphone_pro_max">iPhone Pro Max</option>
+                                    <option value="mobile_ipad">iPad</option>
+                                    <option value="mobile_galaxy_s21">Galaxy S21</option>
+                                </optgroup>
+                            </select>
+                            <button type="button" onclick="clearDeviceConfig()" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <select id="testcase-device-type" style="width: 100%; padding: 8px; margin-bottom: 8px;">
                             <option value="">不设置（使用默认）</option>
                             <option value="Desktop">Desktop - 桌面设备</option>
@@ -681,7 +764,7 @@
                                 <option value="iphone">iPhone</option>
                             </select>
                         </div>
-                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
+                        <small id="device-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
                     </div>
                 </div>
             </div>
@@ -691,32 +774,122 @@
                 <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔧 beforePageLoad</label>
+
+                        <!-- beforePageLoad预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-beforepageload-preset" onchange="applyHookPreset('beforePageLoad', 'hook-beforepageload')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="set_viewport_1080p">🖥️ 设置视口 1080P</option>
+                                <option value="set_viewport_720p">🖥️ 设置视口 720P</option>
+                                <option value="set_viewport_mobile">📱 设置移动端视口</option>
+                                <option value="enable_console_log">📋 启用控制台日志</option>
+                                <option value="block_notifications">🔕 阻止通知权限</option>
+                                <option value="set_geolocation">🌍 设置地理位置</option>
+                                <option value="inject_script">💉 注入全局脚本</option>
+                                <option value="disable_animations">⚡ 禁用CSS动画</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-beforepageload')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="hook-beforepageload" placeholder="// 页面加载前执行&#10;// 例如：await page.setViewportSize({ width: 1920, height: 1080 });" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">在页面加载之前执行</small>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载之前执行 | 用于设置环境</small>
                     </div>
 
                     <div style="margin-bottom: 10px;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">✅ onPageLoaded</label>
+
+                        <!-- onPageLoaded预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpageloaded-preset" onchange="applyHookPreset('onPageLoaded', 'hook-onpageloaded')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="wait_for_video">📹 等待视频加载</option>
+                                <option value="wait_for_content">📄 等待内容加载</option>
+                                <option value="wait_network_idle">🌐 等待网络空闲</option>
+                                <option value="check_no_errors">🐛 检查页面错误</option>
+                                <option value="scroll_to_load">📜 滚动触发懒加载</option>
+                                <option value="remove_overlays">❌ 移除弹窗遮罩</option>
+                                <option value="bilibili_wait_player">🅱️ B站等待播放器</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpageloaded')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="hook-onpageloaded" placeholder="// 页面加载完成后执行&#10;// 例如：await page.waitForSelector('.content');" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">在页面加载完成后执行</small>
+                        <small style="color: #718096; font-size: 0.85em;">在页面加载完成后执行 | 用于验证和等待</small>
                     </div>
 
                     <div id="hook-onpagetesting-container" style="margin-bottom: 10px; display: none;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🔄 onPageTesting</label>
-                        <textarea id="hook-onpagetesting" placeholder="// Runtime/MemoryLeak 测试期间执行&#10;// 例如：await page.click('.button');" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行</small>
+
+                        <!-- 预设操作选择器 -->
+                        <div style="margin-bottom: 10px; padding: 10px; background: #edf2f7; border-radius: 6px; border: 1px solid #cbd5e0;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <label style="margin: 0; font-weight: 500; font-size: 0.9em;">✨ 快速预设：</label>
+                                <select id="preset-category" onchange="updatePresetOperations()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <option value="">-- 选择分类 --</option>
+                                    <option value="bilibili">B站播放器</option>
+                                    <option value="bilibiliLive">B站直播</option>
+                                    <option value="generic">通用视频</option>
+                                    <option value="interaction">页面交互</option>
+                                    <option value="performance">性能测试</option>
+                                </select>
+                                <select id="preset-operation" onchange="updatePresetParams()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;" disabled>
+                                    <option value="">-- 选择操作 --</option>
+                                </select>
+                            </div>
+
+                            <!-- 参数配置区域 -->
+                            <div id="preset-params" style="display: none; margin-bottom: 8px;"></div>
+
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" onclick="insertPresetCode()" class="btn-small" style="padding: 6px 12px; background: #4299e1; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">插入代码</button>
+                                <button type="button" onclick="previewPresetCode()" class="btn-small" style="padding: 6px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">预览代码</button>
+                                <button type="button" onclick="clearHookCode('hook-onpagetesting')" class="btn-small" style="padding: 6px 12px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                            </div>
+                        </div>
+
+                        <textarea id="hook-onpagetesting" placeholder="// Runtime/MemoryLeak 测试期间执行&#10;// 例如：await page.click('.button');&#10;// 或使用上方预设快速插入常用操作" rows="6" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行 | 💡 支持多个操作组合</small>
                     </div>
 
                     <div id="hook-onpagecollecting-container" style="margin-bottom: 10px; display: none;">
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">📊 onPageCollecting</label>
+
+                        <!-- onPageCollecting预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpagecollecting-preset" onchange="applyHookPreset('onPageCollecting', 'hook-onpagecollecting')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="force_gc">🗑️ 强制垃圾回收</option>
+                                <option value="pause_video">⏸️ 暂停视频</option>
+                                <option value="clear_cache">🧹 清理页面缓存</option>
+                                <option value="stop_animations">⏹️ 停止所有动画</option>
+                                <option value="collect_metrics">📊 收集性能指标</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpagecollecting')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="hook-onpagecollecting" placeholder="// MemoryLeak 收集数据时执行&#10;// 例如：await page.evaluate(() => window.gc());" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">仅在 MemoryLeak 收集数据时执行</small>
+                        <small style="color: #718096; font-size: 0.85em;">仅在 MemoryLeak 收集数据时执行 | 建议使用GC预设</small>
                     </div>
 
                     <div>
                         <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">🏁 onPageUnload</label>
+
+                        <!-- onPageUnload预设选择器 -->
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                            <select id="hook-onpageunload-preset" onchange="applyHookPreset('onPageUnload', 'hook-onpageunload')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择预设...</option>
+                                <option value="save_screenshot">📸 保存截图</option>
+                                <option value="log_final_state">📝 记录最终状态</option>
+                                <option value="collect_errors">❗ 收集错误日志</option>
+                                <option value="cleanup_listeners">🧹 清理事件监听</option>
+                                <option value="close_connections">🔌 关闭连接</option>
+                                <option value="export_data">📤 导出数据</option>
+                            </select>
+                            <button type="button" onclick="clearHookCode('hook-onpageunload')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+
                         <textarea id="hook-onpageunload" placeholder="// 页面卸载前执行&#10;// 例如：await page.evaluate(() => console.log('cleanup'));" rows="3" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small style="color: #718096; font-size: 0.85em;">在页面卸载前执行</small>
+                        <small style="color: #718096; font-size: 0.85em;">在页面卸载前执行 | 用于清理和保存</small>
                     </div>
                 </div>
             </div>
@@ -738,13 +911,378 @@
         </div>
     </div>
 
+    <!-- 引入预设库 -->
+    <script src="operation-presets.js"></script>
+    <script src="config-presets.js"></script>
+    <script src="hook-presets.js"></script>
+
     <script>
         // 数据存储
         let testCases = JSON.parse(localStorage.getItem('testCases') || '[]');
         let selectedCases = new Set();
-        let currentRunning = null;
+        let currentRunning = null; // 保留用于向后兼容
         let runningQueue = [];
         let completedToday = 0;
+
+        // 新增：后端任务管理
+        let backendTasks = new Map(); // taskId -> task对象
+        const MAX_CONCURRENT = 3;
+
+        // ==================== 预设系统 ====================
+        let currentPresetParams = {}; // 当前预设的参数值
+
+        // 更新预设操作列表
+        function updatePresetOperations() {
+            const category = document.getElementById('preset-category').value;
+            const operationSelect = document.getElementById('preset-operation');
+            const paramsDiv = document.getElementById('preset-params');
+
+            // 清空并重置
+            operationSelect.innerHTML = '<option value="">-- 选择操作 --</option>';
+            paramsDiv.style.display = 'none';
+            paramsDiv.innerHTML = '';
+            currentPresetParams = {};
+
+            if (!category || !OperationPresets[category]) {
+                operationSelect.disabled = true;
+                return;
+            }
+
+            operationSelect.disabled = false;
+            const operations = OperationPresets[category].operations;
+
+            Object.keys(operations).forEach(key => {
+                const op = operations[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `${op.name} - ${op.description}`;
+                operationSelect.appendChild(option);
+            });
+        }
+
+        // 更新预设参数配置UI
+        function updatePresetParams() {
+            const category = document.getElementById('preset-category').value;
+            const operation = document.getElementById('preset-operation').value;
+            const paramsDiv = document.getElementById('preset-params');
+
+            paramsDiv.style.display = 'none';
+            paramsDiv.innerHTML = '';
+            currentPresetParams = {};
+
+            if (!category || !operation) return;
+
+            const preset = OperationPresets[category].operations[operation];
+            if (!preset.params || preset.params.length === 0) return;
+
+            paramsDiv.style.display = 'block';
+
+            preset.params.forEach(param => {
+                const paramGroup = document.createElement('div');
+                paramGroup.style.marginBottom = '8px';
+
+                const label = document.createElement('label');
+                label.textContent = param.label + ':';
+                label.style.display = 'block';
+                label.style.marginBottom = '4px';
+                label.style.fontSize = '0.85em';
+                label.style.fontWeight = '500';
+
+                let input;
+                if (param.type === 'select') {
+                    input = document.createElement('select');
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+
+                    param.options.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt.value;
+                        option.textContent = opt.label;
+                        if (opt.value === param.default) {
+                            option.selected = true;
+                        }
+                        input.appendChild(option);
+                    });
+                } else if (param.type === 'number') {
+                    input = document.createElement('input');
+                    input.type = 'number';
+                    input.value = param.default || 0;
+                    if (param.min !== undefined) input.min = param.min;
+                    if (param.max !== undefined) input.max = param.max;
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+                } else {
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = param.default || '';
+                    input.style.width = '100%';
+                    input.style.padding = '6px';
+                    input.style.border = '1px solid #cbd5e0';
+                    input.style.borderRadius = '4px';
+                    input.style.fontSize = '0.85em';
+                }
+
+                input.dataset.paramName = param.name;
+                paramGroup.appendChild(label);
+                paramGroup.appendChild(input);
+                paramsDiv.appendChild(paramGroup);
+
+                // 初始化参数值
+                currentPresetParams[param.name] = input.value;
+
+                // 监听参数变化
+                input.addEventListener('change', () => {
+                    currentPresetParams[param.name] = input.value;
+                });
+                input.addEventListener('input', () => {
+                    currentPresetParams[param.name] = input.value;
+                });
+            });
+        }
+
+        // 生成预设代码
+        function generatePresetCode() {
+            const category = document.getElementById('preset-category').value;
+            const operation = document.getElementById('preset-operation').value;
+
+            if (!category || !operation) {
+                showToast('请先选择预设分类和操作', 'error');
+                return null;
+            }
+
+            const preset = OperationPresets[category].operations[operation];
+            if (!preset) {
+                showToast('预设不存在', 'error');
+                return null;
+            }
+
+            // 构建参数对象
+            const params = {};
+            Object.keys(currentPresetParams).forEach(key => {
+                const value = currentPresetParams[key];
+                // 尝试转换数字类型
+                if (!isNaN(value) && value !== '') {
+                    params[key] = Number(value);
+                } else {
+                    params[key] = value;
+                }
+            });
+
+            return preset.code(params);
+        }
+
+        // 插入预设代码
+        function insertPresetCode() {
+            const code = generatePresetCode();
+            if (!code) return;
+
+            const textarea = document.getElementById('hook-onpagetesting');
+            const currentCode = textarea.value.trim();
+
+            if (currentCode) {
+                // 如果已有代码，追加到末尾
+                textarea.value = currentCode + '\n\n' + code;
+            } else {
+                textarea.value = code;
+            }
+
+            showToast('预设代码已插入', 'success');
+        }
+
+        // 预览预设代码
+        function previewPresetCode() {
+            const code = generatePresetCode();
+            if (!code) return;
+
+            // 使用alert显示（简单实现，可以后续改为更美观的模态框）
+            alert('生成的代码预览：\n\n' + code);
+        }
+
+        // 清空hook代码
+        function clearHookCode(hookId) {
+            if (!confirm('确定要清空当前代码吗？')) return;
+            document.getElementById(hookId).value = '';
+            showToast('代码已清空', 'success');
+        }
+
+        // ==================== 配置预设系统 ====================
+
+        // 应用Cookie预设
+        function applyCookiePreset() {
+            const presetKey = document.getElementById('cookie-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.cookies.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-cookie');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            if (preset.instruction) {
+                document.getElementById('cookie-instruction').textContent = '💡 ' + preset.instruction;
+                document.getElementById('cookie-instruction').style.color = '#e67e22';
+            }
+
+            showToast(`已应用Cookie预设: ${preset.name}`, 'success');
+        }
+
+        // 应用HTTP Headers预设
+        function applyHeadersPreset() {
+            const presetKey = document.getElementById('headers-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.headers.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-headers');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            if (preset.instruction) {
+                document.getElementById('headers-instruction').textContent = '💡 ' + preset.instruction;
+                document.getElementById('headers-instruction').style.color = '#e67e22';
+            }
+
+            showToast(`已应用Headers预设: ${preset.name}`, 'success');
+        }
+
+        // 应用BlockList预设
+        function applyBlocklistPreset() {
+            const presetKey = document.getElementById('blocklist-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.blocklist.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-blocklist');
+            textarea.value = JSON.stringify(preset.value, null, 2);
+
+            showToast(`已应用BlockList预设: ${preset.name}`, 'success');
+        }
+
+        // 应用CSS预设
+        function applyCssPreset() {
+            const presetKey = document.getElementById('css-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.customCss.presets[presetKey];
+            if (!preset) return;
+
+            const textarea = document.getElementById('testcase-css');
+            textarea.value = preset.value;
+
+            showToast(`已应用CSS预设: ${preset.name}`, 'success');
+        }
+
+        // 应用Device预设
+        function applyDevicePreset() {
+            const presetKey = document.getElementById('device-preset').value;
+            if (!presetKey) return;
+
+            const preset = ConfigPresets.devices.presets[presetKey];
+            if (!preset) return;
+
+            const deviceType = preset.type;
+            const deviceTypeSelect = document.getElementById('testcase-device-type');
+            deviceTypeSelect.value = deviceType;
+
+            // 触发设备类型变化事件
+            updateDeviceOptionsDisplay();
+
+            // 设置具体选项
+            if (deviceType === 'Desktop') {
+                const fullscreenOption = preset.value[1]?.fullscreen;
+                document.getElementById('device-fullscreen').checked = fullscreenOption || false;
+            } else if (deviceType === 'Mobile') {
+                const mobilePresetName = preset.value[1]?.preset || 'iphone';
+                document.getElementById('device-mobile-preset').value = mobilePresetName;
+            }
+
+            const instruction = document.getElementById('device-instruction');
+            instruction.textContent = `已应用: ${preset.displayText}`;
+            instruction.style.color = '#27ae60';
+
+            showToast(`已应用设备预设: ${preset.name}`, 'success');
+        }
+
+        // 清空设备配置
+        function clearDeviceConfig() {
+            document.getElementById('device-preset').value = '';
+            document.getElementById('testcase-device-type').value = '';
+            document.getElementById('device-fullscreen').checked = false;
+            document.getElementById('device-mobile-preset').value = 'android';
+            updateDeviceOptionsDisplay();
+
+            const instruction = document.getElementById('device-instruction');
+            instruction.textContent = '模拟不同设备类型';
+            instruction.style.color = '#718096';
+
+            showToast('设备配置已清空', 'success');
+        }
+
+        // 通用清空配置
+        function clearConfig(elementId) {
+            document.getElementById(elementId).value = '';
+
+            // 重置instruction样式
+            const instructionId = elementId.replace('testcase-', '') + '-instruction';
+            const instructionEl = document.getElementById(instructionId);
+            if (instructionEl) {
+                instructionEl.style.color = '#718096';
+            }
+
+            // 重置对应的预设选择器
+            const presetSelectId = elementId.replace('testcase-', '') + '-preset';
+            const presetSelect = document.getElementById(presetSelectId);
+            if (presetSelect) {
+                presetSelect.value = '';
+            }
+
+            showToast('配置已清空', 'success');
+        }
+
+        // ==================== 钩子函数预设系统 ====================
+
+        // 应用钩子函数预设
+        function applyHookPreset(hookName, textareaId) {
+            const presetSelectId = textareaId + '-preset';
+            const presetSelect = document.getElementById(presetSelectId);
+            const presetKey = presetSelect.value;
+
+            if (!presetKey) return;
+
+            const hookPresets = HookPresets[hookName];
+            if (!hookPresets || !hookPresets.presets[presetKey]) {
+                showToast('预设不存在', 'error');
+                return;
+            }
+
+            const preset = hookPresets.presets[presetKey];
+            const textarea = document.getElementById(textareaId);
+            const currentCode = textarea.value.trim();
+
+            if (currentCode) {
+                // 如果已有代码，询问是替换还是追加
+                if (confirm(`当前已有代码，是否追加新预设？\n\n点击"确定"追加，点击"取消"替换`)) {
+                    textarea.value = currentCode + '\n\n' + preset.code;
+                    showToast(`已追加预设: ${preset.name}`, 'success');
+                } else {
+                    textarea.value = preset.code;
+                    showToast(`已替换为预设: ${preset.name}`, 'success');
+                }
+            } else {
+                textarea.value = preset.code;
+                showToast(`已应用预设: ${preset.name}`, 'success');
+            }
+
+            // 重置下拉框
+            presetSelect.value = '';
+        }
 
         // WebSocket连接
         let ws = null;
@@ -778,7 +1316,7 @@
         function handleWebSocketMessage(data) {
             switch (data.type) {
                 case 'status':
-                    updateStatus(data.status, data.runner);
+                    updateStatus(data.data.status, data.data.currentRunner);
                     break;
                 case 'output':
                     appendOutput(data.data);
@@ -786,7 +1324,42 @@
                 case 'progress':
                     updateProgress(data.current, data.total);
                     break;
+                case 'tasks':
+                    // 新增：处理任务列表更新
+                    updateTasksList(data.data);
+                    break;
+                case 'task_update':
+                    // 新增：处理单个任务更新
+                    updateSingleTask(data.data);
+                    break;
             }
+        }
+
+        // 新增：更新任务列表
+        function updateTasksList(tasks) {
+            backendTasks.clear();
+            tasks.forEach(task => {
+                backendTasks.set(task.id, task);
+            });
+            updateStats();
+            updateQueueDisplay();
+        }
+
+        // 新增：更新单个任务
+        function updateSingleTask(task) {
+            backendTasks.set(task.id, task);
+
+            // 如果有输出，追加到输出区域
+            if (task.output) {
+                const outputArea = document.getElementById('output-area');
+                if (outputArea) {
+                    outputArea.value = task.output;
+                    outputArea.scrollTop = outputArea.scrollHeight;
+                }
+            }
+
+            updateStats();
+            updateQueueDisplay();
         }
 
         // 初始化
@@ -864,7 +1437,7 @@
                                 <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})" ${currentRunning ? 'disabled' : ''}>▶ 运行</button>
+                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})">▶ 运行</button>
                                         <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
                                         <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
                                     </div>
@@ -883,7 +1456,11 @@
         // 更新统计信息
         function updateStats() {
             document.getElementById('total-cases').textContent = testCases.length;
-            document.getElementById('running-cases').textContent = currentRunning ? 1 : 0;
+
+            // 统计后端运行中的任务数
+            const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
+            document.getElementById('running-cases').textContent = runningCount;
+
             document.getElementById('completed-today').textContent = completedToday;
         }
 
@@ -1304,10 +1881,15 @@
         // 运行单个用例
         async function runCase(id) {
             const testCase = testCases.find(tc => tc.id === id);
-            if (!testCase || currentRunning) return;
+            if (!testCase) return;
 
-            currentRunning = testCase.id;
-            testCase.status = 'running';
+            // 移除单任务限制，允许并发执行
+            const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
+            if (runningCount >= MAX_CONCURRENT) {
+                showToast(`当前已有 ${runningCount} 个任务在运行，将进入队列等待`, 'info');
+            }
+
+            testCase.status = 'pending';
             renderCases();
 
             document.getElementById('status-card').style.display = 'block';
@@ -1400,12 +1982,12 @@
                     throw new Error('测试用例没有启用任何测试类型');
                 }
 
-                // 发送请求 - 注意：对于多runner，后端需要调整
+                // 发送请求到后端任务API
                 const response = await fetch('/api/start', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        runner: enabledRunners[0], // 暂时使用第一个runner（后端需要调整支持多runner）
+                        name: testCase.name, // 添加任务名称
                         config: {
                             mode: {
                                 anonymous: true,
@@ -1419,53 +2001,143 @@
                 const result = await response.json();
 
                 if (!result.success) {
-                    throw new Error(result.message || '启动测试失败');
+                    throw new Error(result.message || result.error || '启动测试失败');
                 }
 
-                appendOutput(`[系统] 测试用例 "${testCase.name}" 已启动`);
+                showToast(`任务已创建: ${testCase.name}`, 'success');
+                appendOutput(`[系统] 测试用例 "${testCase.name}" 已提交到任务队列`);
+                appendOutput(`[系统] 任务ID: ${result.taskId}`);
                 appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
                 appendOutput(`[系统] 测试类型: ${enabledRunners.join(' + ')}`);
-                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount} 次`);
+                appendOutput(`[系统] 测试 ${urls.length} 个URL, 重复 ${testCase.repeatCount || 1} 次`);
             } catch (error) {
                 testCase.status = 'error';
-                currentRunning = null;
                 renderCases();
                 showToast('运行失败: ' + error.message, 'error');
                 appendOutput(`[错误] ${error.message}`);
             }
         }
 
-        // 更新队列显示
+        // 更新队列显示 - 显示后端任务状态
         function updateQueueDisplay() {
             const queueCard = document.getElementById('queue-card');
             const queueList = document.getElementById('queue-list');
 
-            if (runningQueue.length === 0) {
+            const tasks = Array.from(backendTasks.values());
+
+            if (tasks.length === 0) {
                 queueCard.style.display = 'none';
                 return;
             }
 
             queueCard.style.display = 'block';
 
-            const queueHTML = runningQueue.map((id, index) => {
-                const testCase = testCases.find(tc => tc.id === id);
-                if (!testCase) return '';
+            // 按状态排序：running -> pending -> completed -> error
+            const sortedTasks = tasks.sort((a, b) => {
+                const statusOrder = { running: 0, pending: 1, completed: 2, error: 3 };
+                return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+            });
 
-                const isFirst = index === 0 && currentRunning;
-                const statusText = isFirst ? '🔄 正在运行' : `⏳ 等待中 (${index})`;
+            const queueHTML = sortedTasks.map(task => {
+                const statusIcons = {
+                    running: '🔄',
+                    pending: '⏳',
+                    completed: '✅',
+                    error: '❌'
+                };
+                const statusTexts = {
+                    running: '正在运行',
+                    pending: '等待中',
+                    completed: '已完成',
+                    error: '失败'
+                };
+                const bgColors = {
+                    running: '#fef3c7',
+                    pending: '#f3f4f6',
+                    completed: '#d1fae5',
+                    error: '#fee2e2'
+                };
+
+                const icon = statusIcons[task.status] || '❓';
+                const statusText = statusTexts[task.status] || '未知';
+                const bgColor = bgColors[task.status] || '#f3f4f6';
 
                 return `
-                    <div style="padding: 10px; margin-bottom: 8px; background: ${isFirst ? '#fef3c7' : '#f3f4f6'}; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="padding: 10px; margin-bottom: 8px; background: ${bgColor}; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
-                            <strong>${escapeHtml(testCase.name)}</strong>
-                            <span style="margin-left: 10px; color: #6b7280; font-size: 0.9em;">${statusText}</span>
+                            <strong>${escapeHtml(task.name)}</strong>
+                            <span style="margin-left: 10px; color: #6b7280; font-size: 0.9em;">${icon} ${statusText}</span>
+                            <span style="margin-left: 10px; color: #9ca3af; font-size: 0.85em;">${task.runner}</span>
                         </div>
-                        ${!isFirst ? `<button class="btn-danger btn-small" onclick="removeFromQueue(${index})" style="margin-left: 10px;">移除</button>` : ''}
+                        <div>
+                            ${task.status === 'running' ? `
+                                <button class="btn-danger btn-small" onclick="stopTask('${task.id}')" style="margin-left: 5px;" title="优雅停止（最多等待5秒）">停止</button>
+                                <button class="btn-danger btn-small" onclick="stopTask('${task.id}', true)" style="margin-left: 5px; background: #991b1b;" title="立即强制终止进程">强制停止</button>
+                            ` : ''}
+                            ${task.status === 'pending' ? `<button class="btn-danger btn-small" onclick="deleteTask('${task.id}')" style="margin-left: 5px;">取消</button>` : ''}
+                            ${(task.status === 'completed' || task.status === 'error') ? `<button class="btn-secondary btn-small" onclick="deleteTask('${task.id}')" style="margin-left: 5px;">移除</button>` : ''}
+                        </div>
                     </div>
                 `;
             }).join('');
 
             queueList.innerHTML = queueHTML || '<p style="color: #9ca3af;">队列为空</p>';
+        }
+
+        // 新增：停止任务
+        async function stopTask(taskId, force = false) {
+            const task = backendTasks.get(taskId);
+            if (!task) {
+                showToast('任务不存在', 'error');
+                return;
+            }
+
+            // 如果是强制停止，先确认
+            if (force) {
+                if (!confirm(`确定要强制停止任务"${task.name}"吗？\n\n这将立即终止进程，可能导致数据丢失。`)) {
+                    return;
+                }
+            } else {
+                // 普通停止也需要确认
+                if (!confirm(`确定要停止任务"${task.name}"吗？\n\n进程将被优雅关闭（最多等待5秒）。`)) {
+                    return;
+                }
+            }
+
+            try {
+                const response = await fetch(`/api/tasks/${taskId}/stop`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ force })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast(force ? '任务已强制停止' : '任务停止中...', 'success');
+                } else {
+                    showToast('停止任务失败: ' + (result.error || '未知错误'), 'error');
+                }
+            } catch (error) {
+                showToast('停止任务失败: ' + error.message, 'error');
+            }
+        }
+
+        // 新增：删除任务
+        async function deleteTask(taskId) {
+            try {
+                const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    showToast('任务已删除', 'success');
+                    backendTasks.delete(taskId);
+                    updateQueueDisplay();
+                } else {
+                    showToast('删除任务失败', 'error');
+                }
+            } catch (error) {
+                showToast('删除任务失败: ' + error.message, 'error');
+            }
         }
 
         // 从队列中移除任务

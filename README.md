@@ -2,6 +2,21 @@
 
 通过 Web 界面触发和管理 Bilibili Player 的性能测试。
 
+## 📖 文档导航
+
+| 文档 | 说明 |
+|------|------|
+| [README.md](README.md) | 📘 主文档 - 功能说明和使用指南（当前文档） |
+| [QUICKSTART.md](QUICKSTART.md) | 🚀 快速开始 - 5分钟快速上手 |
+| [INSTALL.md](INSTALL.md) | 📦 安装指南 - 依赖安装和环境配置 |
+| [CONFIG_PRESETS_GUIDE.md](CONFIG_PRESETS_GUIDE.md) | 🎨 配置预设系统 - 零代码快速配置指南 |
+| [BILIBILI_LIVE_PRESETS.md](BILIBILI_LIVE_PRESETS.md) | 🔴 B站直播预设 - 直播测试专用操作指南 |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | 🚢 部署指南 - 生产环境部署方案 |
+| [IMPORTANT.md](IMPORTANT.md) | ⚠️ 重要说明 - 关于 benchmark 包的说明 |
+| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 🔧 故障排查 - 常见问题解决方案 |
+| [SUMMARY.md](SUMMARY.md) | 📊 项目总结 - 架构设计和技术说明 |
+| [CHANGELOG.md](CHANGELOG.md) | 📝 更新日志 - 版本更新记录 |
+
 ## 功能特性
 
 - 🎯 **Web 界面控制** - 通过浏览器启动/停止性能测试

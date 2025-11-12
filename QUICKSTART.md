@@ -264,8 +264,10 @@ const PORT = 3001; // 改为其他端口
 ## 📚 更多资源
 
 - 完整文档: [README.md](README.md)
+- 安装指南: [INSTALL.md](INSTALL.md)
+- 部署指南: [DEPLOYMENT.md](DEPLOYMENT.md)
+- 故障排查: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 - 配置模板: [config.template.json](config.template.json)
-- 官方文档: https://github.com/bilibili/bilibili-player
 
 ---
 

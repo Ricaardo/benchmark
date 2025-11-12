@@ -212,20 +212,25 @@ A: 可以！`benchmark.config.mts` 是标准配置文件，可以在任何安装
 ### 📚 相关文档
 
 - [INSTALL.md](INSTALL.md) - 完整安装指南
-- [QUICKSTART.md](QUICKSTART.md) - 快速开始（含限制说明）
+- [QUICKSTART.md](QUICKSTART.md) - 快速开始
 - [README.md](README.md) - 功能说明
+- [CONFIG_PRESETS_GUIDE.md](CONFIG_PRESETS_GUIDE.md) - 配置预设系统完整指南
+- [BILIBILI_LIVE_PRESETS.md](BILIBILI_LIVE_PRESETS.md) - B站直播测试预设指南
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - 故障排查
+- [DEPLOYMENT.md](DEPLOYMENT.md) - 部署指南
 
 ### ✅ 验证清单
 
 **如果你只需要配置功能**：
-- [ ] 可以访问 http://localhost:3000
+
+- [ ] 可以访问 <http://localhost:3000>
 - [ ] 可以访问配置页面
 - [ ] 可以添加测试用例
 - [ ] 可以保存配置
 - [ ] 生成了 benchmark.config.mts 文件
 
 **如果你需要运行测试**：
+
 - [ ] 已安装 @bilibili-player/benchmark
 - [ ] `npm list @bilibili-player/benchmark` 显示已安装
 - [ ] 可以在 Web 界面启动测试
@@ -234,9 +239,9 @@ A: 可以！`benchmark.config.mts` 是标准配置文件，可以在任何安装
 
 ### 🎯 下一步
 
-1. **阅读完整文档**：[START_HERE.md](START_HERE.md)
-2. **了解安装选项**：[INSTALL.md](INSTALL.md)
-3. **开始配置测试**：访问 http://localhost:3000/config.html
+1. **了解安装选项**：[INSTALL.md](INSTALL.md)
+2. **快速开始**：[QUICKSTART.md](QUICKSTART.md)
+3. **开始配置测试**：访问 <http://localhost:3000/config.html>
 
 ---
 

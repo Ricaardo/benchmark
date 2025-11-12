@@ -367,21 +367,38 @@ function startNextPendingTask() {
 }
 
 // 停止任务
-function stopTask(taskId: string) {
+function stopTask(taskId: string, force: boolean = false) {
     const task = tasks.get(taskId);
     if (!task || !task.process) return false;
 
     try {
-        task.process.kill('SIGTERM');
+        if (force) {
+            // 强制停止：立即发送 SIGKILL
+            console.log(`[TaskManager] 💥 强制停止任务: ${task.name} (ID: ${taskId})`);
+            task.process.kill('SIGKILL');
+            appendTaskOutput(taskId, '\n\n💥 任务被强制停止（SIGKILL）\n');
+        } else {
+            // 优雅停止：先发送 SIGTERM，5秒后如果还没停止则发送 SIGKILL
+            console.log(`[TaskManager] ⚠️ 停止任务: ${task.name} (ID: ${taskId})`);
+            task.process.kill('SIGTERM');
 
-        task.killTimeout = setTimeout(() => {
-            if (task.process && !task.process.killed) {
-                console.warn(`Task ${taskId} did not terminate gracefully, forcing SIGKILL...`);
-                task.process.kill('SIGKILL');
-            }
-        }, 5000);
+            task.killTimeout = setTimeout(() => {
+                if (task.process && !task.process.killed) {
+                    console.warn(`Task ${taskId} did not terminate gracefully, forcing SIGKILL...`);
+                    task.process.kill('SIGKILL');
+                    appendTaskOutput(taskId, '\n[系统] 进程未响应，已强制终止\n');
+                    broadcastTaskUpdate(taskId);
+                    broadcastTaskList();
+                }
+            }, 5000);
 
-        appendTaskOutput(taskId, '\n\n⚠️ 任务被用户停止\n');
+            appendTaskOutput(taskId, '\n\n⚠️ 任务被用户停止\n');
+        }
+
+        // 立即广播状态更新，让前端及时看到变化
+        broadcastTaskUpdate(taskId);
+        broadcastTaskList();
+
         return true;
     } catch (error) {
         console.error('Error stopping task:', error);
@@ -855,9 +872,13 @@ app.get('/api/tasks/:taskId', (req, res) => {
 // 停止任务
 app.post('/api/tasks/:taskId/stop', (req, res) => {
     const { taskId } = req.params;
+    const { force = false } = req.body;
 
-    if (stopTask(taskId)) {
-        res.json({ success: true, message: 'Task stopped' });
+    if (stopTask(taskId, force)) {
+        res.json({
+            success: true,
+            message: force ? 'Task force stopped' : 'Task stopping...'
+        });
     } else {
         res.status(400).json({ error: 'Task not found or not running' });
     }
