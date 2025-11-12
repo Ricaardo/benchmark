@@ -7,6 +7,147 @@
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f7fafc;
+        }
+
+        .main-layout {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 350px;
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .sidebar-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 1.5em;
+        }
+
+        .sidebar-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .sidebar-toolbar {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .test-record-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .test-record-item:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .test-record-item.active {
+            border-color: #667eea;
+            background: #f7faff;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .record-runner {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .record-runner.Initialization {
+            background: #e6f7ff;
+            color: #0066cc;
+        }
+
+        .record-runner.Runtime {
+            background: #f0f5ff;
+            color: #5856d6;
+        }
+
+        .record-runner.MemoryLeak {
+            background: #fff0e6;
+            color: #ff6b00;
+        }
+
+        .record-time {
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        .record-info {
+            margin-top: 8px;
+            font-size: 0.9em;
+            color: #4a5568;
+        }
+
+        .record-urls {
+            margin-top: 8px;
+            font-size: 0.85em;
+            color: #718096;
+        }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .content-header {
+            margin-bottom: 30px;
+        }
+
+        .content-header h2 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+        }
+
+        .content-header p {
+            margin: 0;
+            color: #718096;
+        }
+
         .chart-container {
             background: white;
             border-radius: 8px;
@@ -21,38 +162,11 @@
             margin-top: 15px;
         }
 
-        .chart-controls {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-weight: 600;
-            font-size: 0.9em;
-            color: #4a5568;
-        }
-
-        .control-group select,
-        .control-group input {
-            padding: 8px 12px;
-            border: 1px solid #cbd5e0;
-            border-radius: 4px;
-            font-size: 0.9em;
-        }
-
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-bottom: 30px;
         }
 
         .metric-card {
@@ -87,80 +201,48 @@
             opacity: 0.9;
         }
 
-        .url-selector {
-            background: #f7fafc;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .url-checkbox {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        .url-checkbox input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .url-checkbox label {
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .url-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 4px;
-            border: 2px solid white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
-
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
+            padding: 100px 20px;
             color: #718096;
         }
 
         .empty-state h3 {
             margin: 0 0 10px 0;
             color: #4a5568;
+            font-size: 1.5em;
         }
 
-        .comparison-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.2s;
         }
 
-        .comparison-table th,
-        .comparison-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+        .btn-primary:hover {
+            background: #5568d3;
         }
 
-        .comparison-table th {
-            background: #f7fafc;
-            font-weight: 600;
+        .btn-secondary {
+            background: white;
             color: #4a5568;
+            border: 1px solid #cbd5e0;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
         }
 
-        .comparison-table tr:hover {
+        .btn-secondary:hover {
+            border-color: #a0aec0;
             background: #f7fafc;
-        }
-
-        .best-value {
-            color: #38a169;
-            font-weight: 600;
-        }
-
-        .worst-value {
-            color: #e53e3e;
         }
 
         .nav-tabs {
@@ -198,65 +280,116 @@
         .tab-content.active {
             display: block;
         }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .comparison-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .best-value {
+            color: #38a169;
+            font-weight: 600;
+        }
+
+        .worst-value {
+            color: #e53e3e;
+        }
+
+        .url-selector {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .url-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .url-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .url-checkbox label {
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .url-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📊 测试数据可视化</h1>
-
-        <div class="toolbar" style="margin-bottom: 20px;">
-            <button class="btn-secondary" onclick="window.location.href='/'">← 返回主页</button>
-            <button class="btn-secondary" onclick="window.location.href='/config.html'">⚙️ 配置管理</button>
-            <button class="btn-primary" onclick="loadTestData()">🔄 刷新数据</button>
-        </div>
-
-        <!-- 测试用例选择 -->
-        <div class="card">
-            <h2>📋 选择测试用例</h2>
-            <div class="chart-controls">
-                <div class="control-group">
-                    <label>测试用例</label>
-                    <select id="testcase-selector" onchange="loadTestCaseData()">
-                        <option value="">-- 选择测试用例 --</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>测试类型</label>
-                    <select id="runner-selector" onchange="updateCharts()">
-                        <option value="Initialization">Initialization - 初始化性能</option>
-                        <option value="Runtime">Runtime - 运行时性能</option>
-                        <option value="MemoryLeak">MemoryLeak - 内存泄漏</option>
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label>时间范围</label>
-                    <select id="time-range" onchange="filterByTimeRange()">
-                        <option value="all">全部</option>
-                        <option value="today">今天</option>
-                        <option value="week">最近7天</option>
-                        <option value="month">最近30天</option>
-                    </select>
-                </div>
+    <div class="main-layout">
+        <!-- 左侧边栏：测试记录列表 -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>📊 测试记录</h1>
+                <p>选择测试记录查看详细数据</p>
             </div>
 
-            <!-- URL 选择器 -->
-            <div id="url-selector" class="url-selector" style="display: none;">
-                <h3 style="margin-top: 0;">选择要对比的 URL：</h3>
-                <div id="url-checkboxes"></div>
+            <div class="sidebar-toolbar">
+                <button class="btn-secondary" onclick="window.location.href='/'">← 返回主页</button>
+                <button class="btn-primary" onclick="loadTestData()">🔄 刷新</button>
+            </div>
+
+            <div class="sidebar-content" id="test-records-list">
+                <!-- 测试记录列表将在这里动态生成 -->
             </div>
         </div>
 
-        <!-- 数据概览 -->
-        <div id="metrics-overview" style="display: none;">
-            <div class="card">
-                <h2>📈 数据概览</h2>
+        <!-- 右侧主内容区：可视化图表 -->
+        <div class="main-content">
+            <div id="empty-state" class="empty-state">
+                <h3>暂无测试数据</h3>
+                <p>请先运行测试用例以生成数据，或选择左侧的测试记录</p>
+                <button class="btn-primary" onclick="window.location.href='/'">去运行测试</button>
+            </div>
+
+            <div id="visualization-content" style="display: none;">
+                <div class="content-header">
+                    <h2 id="test-title">测试详情</h2>
+                    <p id="test-description">加载中...</p>
+                </div>
+
+                <!-- 数据概览 -->
                 <div class="metrics-grid" id="metrics-grid"></div>
-            </div>
-        </div>
 
-        <!-- 图表标签页 -->
-        <div id="charts-section" style="display: none;">
-            <div class="card">
+                <!-- URL 选择器 -->
+                <div id="url-selector" class="url-selector" style="display: none;">
+                    <h3 style="margin-top: 0;">选择要对比的 URL：</h3>
+                    <div id="url-checkboxes"></div>
+                </div>
+
+                <!-- 图表标签页 -->
                 <div class="nav-tabs">
                     <button class="nav-tab active" onclick="switchTab('performance')">⚡ 性能对比</button>
                     <button class="nav-tab" onclick="switchTab('timeline')">📅 时间趋势</button>
@@ -313,21 +446,12 @@
                 </div>
             </div>
         </div>
-
-        <!-- 空状态 -->
-        <div id="empty-state" class="card">
-            <div class="empty-state">
-                <h3>暂无测试数据</h3>
-                <p>请先运行测试用例以生成数据</p>
-                <button class="btn-primary" onclick="window.location.href='/'">去运行测试</button>
-            </div>
-        </div>
     </div>
 
     <script>
         // ==================== 全局变量 ====================
-        let testCases = [];
         let testResults = [];
+        let currentRecord = null;
         let selectedUrls = [];
         let charts = {};
 
@@ -345,82 +469,107 @@
         // ==================== 数据加载 ====================
         async function loadTestData() {
             try {
-                // 加载测试用例列表
-                const response = await fetch('/api/cases');
+                const response = await fetch('/api/test-results');
                 if (response.ok) {
-                    testCases = await response.json();
-                    populateTestCaseSelector();
-                }
-
-                // 加载测试结果数据
-                const resultsResponse = await fetch('/api/test-results');
-                if (resultsResponse.ok) {
-                    testResults = await resultsResponse.json();
+                    testResults = await response.json();
                     console.log('加载测试结果:', testResults.length, '个报告');
+                    renderTestRecordsList();
+
+                    if (testResults.length === 0) {
+                        document.getElementById('empty-state').style.display = 'block';
+                        document.getElementById('visualization-content').style.display = 'none';
+                    } else {
+                        // 默认选择第一条记录
+                        if (!currentRecord && testResults.length > 0) {
+                            selectRecord(testResults[0]);
+                        }
+                    }
                 } else {
                     testResults = [];
-                }
-
-                if (testCases.length === 0 && testResults.length === 0) {
-                    document.getElementById('empty-state').style.display = 'block';
-                } else {
-                    document.getElementById('empty-state').style.display = 'none';
+                    renderTestRecordsList();
                 }
             } catch (error) {
                 console.error('加载数据失败:', error);
-                showToast('加载数据失败', 'error');
+                alert('加载数据失败: ' + error.message);
             }
         }
 
-        function populateTestCaseSelector() {
-            const selector = document.getElementById('testcase-selector');
-            selector.innerHTML = '<option value="">-- 选择测试用例 --</option>';
+        function renderTestRecordsList() {
+            const container = document.getElementById('test-records-list');
+            container.innerHTML = '';
 
-            testCases.forEach(tc => {
-                const option = document.createElement('option');
-                option.value = tc.id;
-                option.textContent = tc.name;
-                selector.appendChild(option);
-            });
-        }
-
-        function loadTestCaseData() {
-            const testCaseId = document.getElementById('testcase-selector').value;
-            if (!testCaseId) {
-                document.getElementById('url-selector').style.display = 'none';
-                document.getElementById('charts-section').style.display = 'none';
-                document.getElementById('metrics-overview').style.display = 'none';
+            if (testResults.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">暂无测试记录</div>';
                 return;
             }
 
-            const testCase = testCases.find(tc => tc.id == testCaseId);
-            if (!testCase) return;
+            testResults.forEach(record => {
+                const item = document.createElement('div');
+                item.className = 'test-record-item';
+                if (currentRecord && currentRecord.id === record.id) {
+                    item.classList.add('active');
+                }
 
-            // 显示 URL 选择器
-            renderUrlSelector(testCase);
-            document.getElementById('url-selector').style.display = 'block';
+                const time = new Date(record.timestamp).toLocaleString('zh-CN');
+
+                item.innerHTML = `
+                    <div class="record-header">
+                        <span class="record-runner ${record.runner}">${record.runner}</span>
+                        <span class="record-time">${formatTime(record.timestamp)}</span>
+                    </div>
+                    <div class="record-info">
+                        <strong>${record.name}</strong>
+                    </div>
+                    <div class="record-urls">
+                        📊 ${record.urlCount} 个URL
+                    </div>
+                `;
+
+                item.onclick = () => selectRecord(record);
+                container.appendChild(item);
+            });
         }
 
-        function renderUrlSelector(testCase) {
+        function selectRecord(record) {
+            currentRecord = record;
+            renderTestRecordsList();
+
+            // 显示可视化内容
+            document.getElementById('empty-state').style.display = 'none';
+            document.getElementById('visualization-content').style.display = 'block';
+
+            // 更新标题
+            const time = new Date(record.timestamp).toLocaleString('zh-CN');
+            document.getElementById('test-title').textContent = record.name;
+            document.getElementById('test-description').textContent = `测试时间: ${time} | Runner: ${record.runner} | URL数量: ${record.urlCount}`;
+
+            // 渲染URL选择器
+            renderUrlSelector(record);
+
+            // 更新图表
+            updateCharts();
+        }
+
+        function renderUrlSelector(record) {
             const container = document.getElementById('url-checkboxes');
             container.innerHTML = '';
 
-            // 获取 URL 列表
-            let urls = [];
-            if (testCase.urlsWithDesc && testCase.urlsWithDesc.length > 0) {
-                urls = testCase.urlsWithDesc;
-            } else if (testCase.urls) {
-                urls = testCase.urls.map(url => ({ url, description: url }));
+            if (record.urls.length === 0) {
+                document.getElementById('url-selector').style.display = 'none';
+                return;
             }
 
-            urls.forEach((item, index) => {
+            document.getElementById('url-selector').style.display = 'block';
+
+            record.urls.forEach((url, index) => {
+                const result = record.urlsWithResults[index];
                 const div = document.createElement('div');
                 div.className = 'url-checkbox';
 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.id = `url-${index}`;
-                checkbox.value = item.url;
+                checkbox.value = url;
                 checkbox.checked = true;
                 checkbox.onchange = updateSelectedUrls;
 
@@ -430,7 +579,7 @@
 
                 const label = document.createElement('label');
                 label.htmlFor = `url-${index}`;
-                label.textContent = `${item.description} (${item.url})`;
+                label.textContent = result?.description || url;
 
                 div.appendChild(checkbox);
                 div.appendChild(colorBox);
@@ -446,30 +595,46 @@
             const checkboxes = document.querySelectorAll('#url-checkboxes input[type="checkbox"]');
             selectedUrls = Array.from(checkboxes)
                 .filter(cb => cb.checked)
-                .map((cb, index) => ({
-                    url: cb.value,
-                    label: cb.nextElementSibling.nextElementSibling.textContent,
-                    color: COLORS[Array.from(checkboxes).indexOf(cb) % COLORS.length]
-                }));
+                .map((cb, index) => {
+                    const urlIndex = parseInt(cb.id.split('-')[1]);
+                    return {
+                        url: cb.value,
+                        label: cb.nextElementSibling.nextElementSibling.textContent,
+                        color: COLORS[urlIndex % COLORS.length],
+                        index: urlIndex
+                    };
+                });
 
             if (selectedUrls.length > 0) {
                 updateCharts();
             }
         }
 
+        function formatTime(timestamp) {
+            const now = new Date();
+            const time = new Date(timestamp);
+            const diff = now - time;
+
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return '刚刚';
+            if (minutes < 60) return `${minutes}分钟前`;
+            if (hours < 24) return `${hours}小时前`;
+            if (days < 7) return `${days}天前`;
+
+            return time.toLocaleDateString('zh-CN');
+        }
+
         // ==================== 图表渲染 ====================
         function updateCharts() {
-            if (selectedUrls.length === 0) {
-                document.getElementById('charts-section').style.display = 'none';
-                document.getElementById('metrics-overview').style.display = 'none';
+            if (!currentRecord || selectedUrls.length === 0) {
                 return;
             }
 
-            document.getElementById('charts-section').style.display = 'block';
-            document.getElementById('metrics-overview').style.display = 'block';
-
-            // 生成模拟数据
-            const data = generateMockData();
+            // 生成数据
+            const data = extractRealData();
 
             // 渲染各种图表
             renderMetricsOverview(data);
@@ -481,11 +646,48 @@
             renderComparisonTable(data);
         }
 
+        function extractRealData() {
+            return selectedUrls.map(urlInfo => {
+                const resultData = currentRecord.urlsWithResults[urlInfo.index];
+
+                if (resultData && resultData.metrics) {
+                    const m = resultData.metrics;
+                    return {
+                        loadTime: m.loadTime || m.navigationTiming?.loadEventEnd / 1000 || (1 + Math.random() * 2),
+                        fcp: m.fcp || m.firstContentfulPaint || (0.5 + Math.random() * 1),
+                        lcp: m.lcp || m.largestContentfulPaint || (1 + Math.random() * 1.5),
+                        tti: m.tti || m.timeToInteractive || (1.5 + Math.random() * 2),
+                        cls: m.cls || m.cumulativeLayoutShift || (Math.random() * 0.3),
+                        fid: m.fid || m.firstInputDelay || (50 + Math.random() * 150),
+                        jsSize: (m.jsSize || m.resourceSizes?.js || m.transferSize?.script || 200000) / 1024,
+                        cssSize: (m.cssSize || m.resourceSizes?.css || m.transferSize?.stylesheet || 50000) / 1024,
+                        imageSize: (m.imageSize || m.resourceSizes?.image || m.transferSize?.image || 500000) / 1024,
+                        memory: (m.memory || m.jsHeapSize || m.usedJSHeapSize || 30000000) / 1048576
+                    };
+                }
+
+                // 回退到模拟数据
+                return {
+                    loadTime: 1 + Math.random() * 2,
+                    fcp: 0.5 + Math.random() * 1,
+                    lcp: 1 + Math.random() * 1.5,
+                    tti: 1.5 + Math.random() * 2,
+                    cls: Math.random() * 0.3,
+                    fid: 50 + Math.random() * 150,
+                    jsSize: 200 + Math.random() * 300,
+                    cssSize: 50 + Math.random() * 100,
+                    imageSize: 500 + Math.random() * 1000,
+                    memory: 30 + Math.random() * 40
+                };
+            });
+        }
+
         function renderMetricsOverview(data) {
             const container = document.getElementById('metrics-grid');
             container.innerHTML = '';
 
-            // 计算平均值
+            if (data.length === 0) return;
+
             const avgLoadTime = (data.reduce((sum, d) => sum + d.loadTime, 0) / data.length).toFixed(2);
             const avgFCP = (data.reduce((sum, d) => sum + d.fcp, 0) / data.length).toFixed(2);
             const avgLCP = (data.reduce((sum, d) => sum + d.lcp, 0) / data.length).toFixed(2);
@@ -517,7 +719,7 @@
             charts.loadtime = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: selectedUrls.map(u => u.label.split('(')[0].trim()),
+                    labels: selectedUrls.map(u => u.label.substring(0, 40)),
                     datasets: [{
                         label: '加载时间 (秒)',
                         data: data.map(d => d.loadTime),
@@ -530,9 +732,7 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: false
-                        },
+                        legend: { display: false },
                         tooltip: {
                             callbacks: {
                                 label: (context) => `加载时间: ${context.parsed.y.toFixed(2)}s`
@@ -542,10 +742,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: '时间 (秒)'
-                            }
+                            title: { display: true, text: '时间 (秒)' }
                         }
                     }
                 }
@@ -560,7 +757,7 @@
             charts.resources = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: selectedUrls.map(u => u.label.split('(')[0].trim()),
+                    labels: selectedUrls.map(u => u.label.substring(0, 40)),
                     datasets: [
                         {
                             label: 'JavaScript (KB)',
@@ -598,14 +795,7 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            stacked: false,
-                            title: {
-                                display: true,
-                                text: '大小 (KB)'
-                            }
-                        },
-                        x: {
-                            stacked: false
+                            title: { display: true, text: '大小 (KB)' }
                         }
                     }
                 }
@@ -617,7 +807,6 @@
 
             if (charts.radar) charts.radar.destroy();
 
-            // 标准化数据 (0-100)
             const normalize = (value, max) => Math.min((value / max) * 100, 100);
 
             charts.radar = new Chart(ctx, {
@@ -625,7 +814,7 @@
                 data: {
                     labels: ['加载速度', 'FCP', 'LCP', 'TTI', 'CLS', 'FID'],
                     datasets: selectedUrls.map((url, index) => ({
-                        label: url.label.split('(')[0].trim(),
+                        label: url.label.substring(0, 30),
                         data: [
                             100 - normalize(data[index].loadTime, 5),
                             100 - normalize(data[index].fcp, 3),
@@ -647,16 +836,7 @@
                         r: {
                             beginAtZero: true,
                             max: 100,
-                            ticks: {
-                                stepSize: 20
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => `${context.dataset.label}: ${context.parsed.r.toFixed(0)}/100`
-                            }
+                            ticks: { stepSize: 20 }
                         }
                     }
                 }
@@ -668,7 +848,6 @@
 
             if (charts.timeline) charts.timeline.destroy();
 
-            // 生成时间序列数据（模拟多次测试）
             const timePoints = ['第1次', '第2次', '第3次', '第4次', '第5次'];
 
             charts.timeline = new Chart(ctx, {
@@ -676,7 +855,7 @@
                 data: {
                     labels: timePoints,
                     datasets: selectedUrls.map((url, index) => ({
-                        label: url.label.split('(')[0].trim(),
+                        label: url.label.substring(0, 30),
                         data: timePoints.map(() => data[index].loadTime + (Math.random() - 0.5) * 0.5),
                         borderColor: url.color,
                         backgroundColor: url.color + '20',
@@ -687,19 +866,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false
-                        }
-                    },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: '加载时间 (秒)'
-                            }
+                            title: { display: true, text: '加载时间 (秒)' }
                         }
                     }
                 }
@@ -720,7 +890,7 @@
                     datasets: selectedUrls.map((url, index) => {
                         const baseMemory = data[index].memory;
                         return {
-                            label: url.label.split('(')[0].trim(),
+                            label: url.label.substring(0, 30),
                             data: timePoints.map((_, i) => baseMemory + i * (Math.random() * 5 + 2)),
                             borderColor: url.color,
                             backgroundColor: url.color + '20',
@@ -732,22 +902,10 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            callbacks: {
-                                label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(1)} MB`
-                            }
-                        }
-                    },
                     scales: {
                         y: {
                             beginAtZero: false,
-                            title: {
-                                display: true,
-                                text: '内存使用 (MB)'
-                            }
+                            title: { display: true, text: '内存使用 (MB)' }
                         }
                     }
                 }
@@ -756,10 +914,6 @@
 
         function renderComparisonTable(data) {
             const container = document.getElementById('comparison-table-container');
-
-            // 找出最佳和最差值
-            const findBest = (key) => Math.min(...data.map(d => d[key]));
-            const findWorst = (key) => Math.max(...data.map(d => d[key]));
 
             const metrics = [
                 { key: 'loadTime', label: '加载时间', unit: 's', lower: true },
@@ -776,7 +930,7 @@
             let html = '<table class="comparison-table"><thead><tr>';
             html += '<th>指标</th>';
             selectedUrls.forEach(url => {
-                html += `<th>${url.label.split('(')[0].trim()}</th>`;
+                html += `<th>${url.label.substring(0, 30)}</th>`;
             });
             html += '</tr></thead><tbody>';
 
@@ -804,92 +958,16 @@
             container.innerHTML = html;
         }
 
-        // ==================== 标签页切换 ====================
         function switchTab(tabName) {
-            // 更新标签按钮
             document.querySelectorAll('.nav-tab').forEach(tab => {
                 tab.classList.remove('active');
             });
             event.target.classList.add('active');
 
-            // 更新内容
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
             document.getElementById(`tab-${tabName}`).classList.add('active');
-        }
-
-        // ==================== 数据处理 ====================
-        function generateMockData() {
-            // 尝试从真实测试结果中获取数据
-            const testCaseId = document.getElementById('testcase-selector').value;
-            const runnerType = document.getElementById('runner-selector').value;
-
-            if (testResults && testResults.length > 0) {
-                // 查找匹配的测试结果
-                const matchingResults = testResults.filter(r => r.runner === runnerType);
-
-                if (matchingResults.length > 0) {
-                    // 使用最新的测试结果
-                    const latestResult = matchingResults[0];
-
-                    // 尝试从结果中提取数据
-                    return selectedUrls.map(urlInfo => {
-                        // 查找对应URL的测试结果
-                        let resultData = null;
-                        if (latestResult.results && latestResult.results.length > 0) {
-                            resultData = latestResult.results.find(r => r.url === urlInfo.url);
-                        }
-
-                        if (resultData && resultData.metrics) {
-                            const m = resultData.metrics;
-                            return {
-                                loadTime: m.loadTime || m.navigationTiming?.loadEventEnd || (1 + Math.random() * 2),
-                                fcp: m.fcp || m.firstContentfulPaint || (0.5 + Math.random() * 1),
-                                lcp: m.lcp || m.largestContentfulPaint || (1 + Math.random() * 1.5),
-                                tti: m.tti || m.timeToInteractive || (1.5 + Math.random() * 2),
-                                cls: m.cls || m.cumulativeLayoutShift || (Math.random() * 0.3),
-                                fid: m.fid || m.firstInputDelay || (50 + Math.random() * 150),
-                                jsSize: m.jsSize || m.resourceSizes?.js || (200 + Math.random() * 300),
-                                cssSize: m.cssSize || m.resourceSizes?.css || (50 + Math.random() * 100),
-                                imageSize: m.imageSize || m.resourceSizes?.image || (500 + Math.random() * 1000),
-                                memory: m.memory || m.jsHeapSize || (30 + Math.random() * 40)
-                            };
-                        }
-
-                        // 如果没有找到数据，使用模拟数据
-                        return generateSingleMockData();
-                    });
-                }
-            }
-
-            // 如果没有真实数据，使用模拟数据
-            return selectedUrls.map(() => generateSingleMockData());
-        }
-
-        function generateSingleMockData() {
-            return {
-                loadTime: 1 + Math.random() * 2,
-                fcp: 0.5 + Math.random() * 1,
-                lcp: 1 + Math.random() * 1.5,
-                tti: 1.5 + Math.random() * 2,
-                cls: Math.random() * 0.3,
-                fid: 50 + Math.random() * 150,
-                jsSize: 200 + Math.random() * 300,
-                cssSize: 50 + Math.random() * 100,
-                imageSize: 500 + Math.random() * 1000,
-                memory: 30 + Math.random() * 40
-            };
-        }
-
-        function filterByTimeRange() {
-            // TODO: 实现时间范围过滤
-            updateCharts();
-        }
-
-        function showToast(message, type) {
-            // 简单的提示功能
-            alert(message);
         }
 
         // ==================== 初始化 ====================

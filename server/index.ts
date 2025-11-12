@@ -1187,18 +1187,71 @@ app.get('/api/test-results', async (req, res) => {
         for (const file of jsonFiles) {
             try {
                 const filePath = path.join(reportsDir, file);
+                const fileStats = await fs.stat(filePath);
                 const content = await fs.readFile(filePath, 'utf-8');
                 const data = JSON.parse(content);
 
-                // 提取测试结果数据
-                if (data && data.results) {
-                    results.push({
-                        filename: file,
-                        timestamp: data.timestamp || new Date().toISOString(),
-                        runner: data.runner || 'Unknown',
-                        results: data.results
-                    });
+                // 从文件名提取信息：格式通常为 Initialization_2024-01-01_12-00-00.json
+                const fileNameParts = file.replace('.json', '').split('_');
+                const runner = fileNameParts[0] || 'Unknown';
+
+                // 提取测试URL列表和结果
+                const urls = [];
+                const urlsWithResults = [];
+
+                if (data && typeof data === 'object') {
+                    // 尝试从不同的数据结构中提取URL和结果
+                    if (Array.isArray(data)) {
+                        // 如果data直接是数组
+                        data.forEach(item => {
+                            if (item.url) {
+                                urls.push(item.url);
+                                urlsWithResults.push({
+                                    url: item.url,
+                                    description: item.description || item.url,
+                                    metrics: item
+                                });
+                            }
+                        });
+                    } else if (data.results && Array.isArray(data.results)) {
+                        // 如果data.results是数组
+                        data.results.forEach(item => {
+                            if (item.url) {
+                                urls.push(item.url);
+                                urlsWithResults.push({
+                                    url: item.url,
+                                    description: item.description || item.url,
+                                    metrics: item
+                                });
+                            }
+                        });
+                    } else {
+                        // 尝试从对象的值中提取
+                        Object.values(data).forEach(item => {
+                            if (typeof item === 'object' && item !== null && (item as any).url) {
+                                const url = (item as any).url;
+                                urls.push(url);
+                                urlsWithResults.push({
+                                    url,
+                                    description: (item as any).description || url,
+                                    metrics: item
+                                });
+                            }
+                        });
+                    }
                 }
+
+                results.push({
+                    id: file.replace('.json', ''),
+                    filename: file,
+                    timestamp: fileStats.mtime.toISOString(),
+                    runner: runner,
+                    name: `${runner} 测试`,
+                    urlCount: urls.length,
+                    urls: urls,
+                    urlsWithResults: urlsWithResults,
+                    rawData: data
+                });
             } catch (error) {
                 console.error(`Failed to parse ${file}:`, error);
             }
