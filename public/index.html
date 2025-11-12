@@ -1407,7 +1407,10 @@
                     body: JSON.stringify({
                         runner: enabledRunners[0], // 暂时使用第一个runner（后端需要调整支持多runner）
                         config: {
-                            mode: mode,
+                            mode: {
+                                anonymous: true,
+                                headless: mode === 'headless'
+                            },
                             runners: runnersConfig
                         }
                     })

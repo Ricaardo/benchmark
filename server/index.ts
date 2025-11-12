@@ -1015,6 +1015,15 @@ app.post('/api/stop', (req, res) => {
 
 // 强制重置状态（新增接口，用于错误恢复）
 app.post('/api/reset', (req, res) => {
+    // 停止所有运行中的任务
+    Array.from(tasks.values())
+        .filter(t => t.status === 'running')
+        .forEach(t => stopTask(t.id));
+
+    // 清空所有任务
+    tasks.clear();
+
+    // 重置向后兼容的状态变量
     if (currentBenchmark) {
         forceKillProcess(currentBenchmark);
     }
@@ -1023,17 +1032,12 @@ app.post('/api/reset', (req, res) => {
     benchmarkStatus = 'idle';
     benchmarkOutput = '';
     currentRunner = '';
-    isStarting = false;
-
-    if (killTimeout) {
-        clearTimeout(killTimeout);
-        killTimeout = null;
-    }
 
     // 广播状态更新
     broadcastStatus();
+    broadcastTaskList();
 
-    res.json({ success: true, message: 'Status reset successfully' });
+    res.json({ success: true, message: 'All tasks stopped and status reset successfully' });
 });
 
 // 获取测试报告列表（改进版本）
