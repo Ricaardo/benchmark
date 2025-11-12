@@ -1648,97 +1648,172 @@
             const presets = [
                 {
                     id: Date.now(),
-                    name: 'B站首页-初始化测试',
+                    name: '📊 示例1: B站首页 - 基础性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 7 },
                         Runtime: { enabled: false },
                         MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com'],
                     mode: 'headless',
                     repeatCount: 3,
-                    description: '仅测试B站首页的初始化性能',
-                    tags: ['bilibili', '首页', '初始化'],
+                    description: '测试B站首页的初始化性能（冷启动）',
+                    tags: ['示例', 'bilibili', '基础'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
                 },
                 {
                     id: Date.now() + 1,
-                    name: 'B站视频页-全面性能测试',
+                    name: '🎬 示例2: B站视频页 - Runtime性能监控',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3, onPageTesting: 'await page.click(".bpx-player-ctrl-btn");' }
+                        Initialization: { enabled: false },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: false }
                     },
                     urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
                     mode: 'headless',
                     repeatCount: 3,
-                    description: '对视频页进行全面测试：初始化 + 运行时 + 内存泄漏',
-                    tags: ['bilibili', '视频', '综合测试'],
+                    description: '监控视频页30秒运行时性能，测试FPS和长任务',
+                    tags: ['示例', 'bilibili', 'runtime'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        hooks: {
+                            onPageLoaded: 'console.log("页面加载完成，开始监控...");',
+                            onPageTesting: '// 点击播放按钮\nawait page.click(".bpx-player-ctrl-btn");'
+                        }
+                    }
                 },
                 {
                     id: Date.now() + 2,
-                    name: 'B站多页面-初始化+运行时',
+                    name: '🧠 示例3: 内存泄漏检测 - 视频切换',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 3 },
-                        Runtime: { enabled: true, repeatCount: 3, durationMs: 60000, delayMs: 10000 },
+                        Initialization: { enabled: false },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: true, repeatCount: 3, intervalMs: 30000, iterations: 3, onPageTesting: '// 模拟视频切换操作\nawait page.evaluate(() => {\n  // 触发可能的内存泄漏操作\n  window.scrollTo(0, document.body.scrollHeight);\n});' }
+                    },
+                    urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '检测视频页面的内存泄漏问题，重复执行页面操作',
+                    tags: ['示例', 'bilibili', '内存泄漏'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
+                },
+                {
+                    id: Date.now() + 3,
+                    name: '🚀 示例4: 多页面对比测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
                     urls: [
                         'https://www.bilibili.com',
                         'https://www.bilibili.com/video/BV1xx411c7mD',
-                        'https://t.bilibili.com'
+                        'https://t.bilibili.com',
+                        'https://space.bilibili.com'
                     ],
                     mode: 'headless',
                     repeatCount: 3,
-                    description: '测试多个页面的初始化和运行时性能',
-                    tags: ['bilibili', '多页面', '双测试'],
+                    description: '对比测试B站不同页面的性能表现',
+                    tags: ['示例', 'bilibili', '多页面'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
-                },
-                {
-                    id: Date.now() + 3,
-                    name: 'B站首页-内存泄漏专项',
-                    runners: {
-                        Initialization: { enabled: false },
-                        Runtime: { enabled: false },
-                        MemoryLeak: { enabled: true, repeatCount: 5, intervalMs: 60000, iterations: 3, onPageTesting: '' }
-                    },
-                    urls: ['https://www.bilibili.com'],
-                    mode: 'headless',
-                    repeatCount: 5,
-                    description: '专门检测首页的内存泄漏问题（静置页面）',
-                    tags: ['bilibili', '首页', '内存'],
-                    status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {}
                 },
                 {
                     id: Date.now() + 4,
-                    name: 'B站核心页面-有头模式观察',
+                    name: '📱 示例5: 移动端模拟 - 性能测试',
                     runners: {
-                        Initialization: { enabled: true, repeatCount: 2 },
-                        Runtime: { enabled: true, repeatCount: 2, durationMs: 30000, delayMs: 5000 },
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
                         MemoryLeak: { enabled: false }
                     },
-                    urls: [
-                        'https://www.bilibili.com',
-                        'https://www.bilibili.com/video/BV1xx411c7mD'
-                    ],
-                    mode: 'headed',
-                    repeatCount: 2,
-                    description: '使用有头模式观察核心页面的初始化和运行时表现',
-                    tags: ['bilibili', '核心页面', '有头模式'],
+                    urls: ['https://m.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '模拟移动设备测试B站移动端性能',
+                    tags: ['示例', 'bilibili', '移动端'],
                     status: 'idle',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        deviceOptions: ['Mobile', { preset: 'android' }]
+                    }
+                },
+                {
+                    id: Date.now() + 5,
+                    name: '🚫 示例6: 阻止资源加载 - 优化测试',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Runtime: { enabled: false },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '阻止图片和字体加载，测试核心页面性能',
+                    tags: ['示例', 'bilibili', '资源优化'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        blockList: ['*.jpg', '*.png', '*.webp', '*.woff', '*.woff2'],
+                        hooks: {
+                            beforePageLoad: 'console.log("已阻止图片和字体加载");'
+                        }
+                    }
+                },
+                {
+                    id: Date.now() + 6,
+                    name: '🎨 示例7: 自定义CSS - 隐藏广告',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 3, iterations: 5 },
+                        Runtime: { enabled: true, repeatCount: 3, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: false }
+                    },
+                    urls: ['https://www.bilibili.com'],
+                    mode: 'headless',
+                    repeatCount: 3,
+                    description: '注入自定义CSS隐藏广告元素，测试性能影响',
+                    tags: ['示例', 'bilibili', 'css'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        customCss: '.ad-report, .bili-banner, [class*="ad-"] { display: none !important; }'
+                    }
+                },
+                {
+                    id: Date.now() + 7,
+                    name: '🔄 示例8: 全面测试 - 所有Runner',
+                    runners: {
+                        Initialization: { enabled: true, repeatCount: 2, iterations: 5, includeWarmNavigation: false },
+                        Runtime: { enabled: true, repeatCount: 2, durationMs: 30000, delayMs: 5000 },
+                        MemoryLeak: { enabled: true, repeatCount: 2, intervalMs: 30000, iterations: 2, onPageTesting: 'await page.evaluate(() => window.scrollTo(0, 500));' }
+                    },
+                    urls: ['https://www.bilibili.com/video/BV1xx411c7mD'],
+                    mode: 'headless',
+                    repeatCount: 2,
+                    description: '对视频页执行全面性能测试：初始化、运行时、内存泄漏',
+                    tags: ['示例', 'bilibili', '全面测试'],
+                    status: 'idle',
+                    createdAt: new Date().toISOString(),
+                    advancedConfig: {
+                        delayMs: 5000,
+                        hooks: {
+                            onPageLoaded: 'console.log("页面加载完成");',
+                            onPageTesting: 'console.log("开始性能测试");',
+                            onPageUnload: 'console.log("测试完成，清理页面");'
+                        }
+                    }
                 }
             ];
 
             testCases = [...testCases, ...presets];
             saveToStorage();
             renderCases();
-            showToast('已加载 5 个预设用例（含多runner示例）', 'success');
+            showToast(`✅ 已加载 ${presets.length} 个实战示例！包含基础测试、高级配置、生命周期钩子等功能演示`, 'success');
         }
 
         // 工具函数
