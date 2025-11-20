@@ -444,12 +444,16 @@ async function startTask(taskId: string) {
             appendTaskOutput(taskId, `\n[系统] 任务${code === 0 ? '完成' : '失败'} (退出码: ${code})\n`);
 
             // 清理配置文件（优先执行，确保清理）
+            // 临时禁用删除，用于调试
+            console.log(`[TaskManager] 🔍 [DEBUG] 配置文件保留在: ${tempConfigPath}`);
+            /*
             try {
                 await fs.unlink(tempConfigPath);
                 console.log(`[TaskManager] 🗑️  已删除配置文件: ${tempConfigPath}`);
             } catch (e) {
                 console.error(`[TaskManager] ⚠️  删除配置文件失败: ${tempConfigPath}`, e);
             }
+            */
 
             // 如果任务成功完成，尝试上传报告到Perfcat
             if (code === 0) {
@@ -882,10 +886,12 @@ function generateTestCase(tc: any, runnerType: string): string {
     }
 
     // Cookie - 转换为Playwright格式
-    if (tc.cookie) {
-        if (typeof tc.cookie === 'string') {
+    // 优先使用 tc.cookie，其次检查 tc.advancedConfig.cookie（autoCookie转换后存储位置）
+    const cookieData = tc.cookie || tc.advancedConfig?.cookie;
+    if (cookieData) {
+        if (typeof cookieData === 'string') {
             // 将字符串格式的Cookie转换为Playwright Cookie对象数组
-            const cookieString = tc.cookie;
+            const cookieString = cookieData;
             const cookieArray: any[] = [];
 
             cookieString.split(';').forEach((item: string) => {
@@ -906,7 +912,7 @@ function generateTestCase(tc: any, runnerType: string): string {
             lines.push(`cookie: ${JSON.stringify(cookieArray)}`);
         } else {
             // 已经是对象格式，直接使用
-            lines.push(`cookie: ${JSON.stringify(tc.cookie)}`);
+            lines.push(`cookie: ${JSON.stringify(cookieData)}`);
         }
     }
 
@@ -970,7 +976,11 @@ function generateTestCase(tc: any, runnerType: string): string {
 // 生成配置文件内容（改进版本）
 function generateConfig(config: any): string {
     const mode = config.mode || { anonymous: true, headless: false };
-    const { runners } = config;
+    const runners = config.runners || {
+        Initialization: { enabled: false, testCases: [], iterations: 7, includeWarmNavigation: false },
+        Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000, metrics: ['runtime', 'longtask'] },
+        MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
+    };
 
     // Root级别配置
     const rootOptions: string[] = [];

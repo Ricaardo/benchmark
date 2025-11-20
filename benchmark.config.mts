@@ -2,17 +2,33 @@ import { type UserOptions } from "@bilibili-player/benchmark";
 
 const config: UserOptions = {
     mode: {
-        anonymous: true,
-        headless: true
+        "anonymous": true,
+        "headless": true,
+        "usrDataDir": "",
+        "preparePage": false
     },
+    reportPath: 'benchmark_report',
     runners: {
-        Initialization: {
+        Runtime: {
             testCases: [
                 {
                     target: "https://www.bilibili.com",
-                    description: "https://www.bilibili.com"
+                    description: "B站首页"
+                },
+                {
+                    target: "https://live.bilibili.com",
+                    description: "B站直播"
                 }
-            ]
+            ],
+            durationMs: 300000,
+            metrics: ["runtime","longtask","longAnimationFrame","fps"]
+        },
+        MemoryLeak: {
+            testCases: [
+
+            ],
+            intervalMs: 60000,
+            iterations: 3
         }
     }
 };

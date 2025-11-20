@@ -263,6 +263,90 @@
             line-height: 1.6;
         }
 
+        /* 配置卡片 */
+        .config-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .config-card:hover {
+            border-color: #cbd5e0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .config-card-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* 可折叠区域 */
+        .collapsible-section {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header {
+            background: #f7fafc;
+            padding: 15px 20px;
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .collapsible-header:hover {
+            background: #edf2f7;
+        }
+
+        .collapsible-header-title {
+            font-size: 1.05em;
+            font-weight: 600;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapsible-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s;
+            color: #718096;
+        }
+
+        .collapsible-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .collapsible-content.expanded {
+            max-height: 3000px;
+            transition: max-height 0.5s ease-in;
+        }
+
+        .collapsible-body {
+            padding: 20px;
+            background: white;
+        }
+
         .output-panel::-webkit-scrollbar {
             width: 8px;
         }
@@ -297,10 +381,10 @@
         .modal-content {
             background: white;
             border-radius: 12px;
-            padding: 30px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 80vh;
+            padding: 35px;
+            max-width: 1000px;
+            width: 95%;
+            max-height: 90vh;
             overflow-y: auto;
         }
 
@@ -465,7 +549,9 @@
             </div>
             <div style="display: flex; gap: 10px;">
                 <a href="/records.html" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='#5568d3'" onmouseout="this.style.background='#667eea'">📝 测试记录</a>
-                <a href="/config.html" style="padding: 10px 20px; background: #48bb78; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='#38a169'" onmouseout="this.style.background='#48bb78'">⚙️ 配置管理</a>
+                <button class="btn-secondary" onclick="showGlobalConfigModal()" style="padding: 10px 20px; font-weight: 500;">
+                    ⚙️ 全局设置
+                </button>
             </div>
         </div>
 
@@ -556,166 +642,246 @@
         <div class="modal-content">
             <div class="modal-header">➕ 添加测试用例</div>
 
-            <div class="form-group">
-                <label>用例名称 *</label>
-                <input type="text" id="case-name" placeholder="例如：B站首页初始化测试">
-            </div>
+            <!-- ========== 第一部分：基本信息 ========== -->
+            <div class="config-card">
+                <div class="config-card-title">📝 基本信息</div>
 
-            <div class="form-group">
-                <label>测试类型 *（可多选）</label>
-                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
-                        <input type="checkbox" id="runner-initialization" style="margin-right: 8px;">
-                        <strong>Initialization</strong> - 初始化性能测试
-                    </label>
-                    <label style="display: block; margin-bottom: 10px; cursor: pointer;">
-                        <input type="checkbox" id="runner-runtime" style="margin-right: 8px;">
-                        <strong>Runtime</strong> - 运行时性能测试
-                    </label>
-                    <label style="display: block; margin-bottom: 0; cursor: pointer;">
-                        <input type="checkbox" id="runner-memoryleak" style="margin-right: 8px;">
-                        <strong>MemoryLeak</strong> - 内存泄漏检测
-                    </label>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">用例名称 *</label>
+                    <input type="text" id="case-name" placeholder="例如：B站首页性能测试" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
                 </div>
-                <small style="color: #718096; font-size: 0.85em; margin-top: 8px; display: block;">可以选择1个或多个测试类型，它们将在同一用例中顺序执行</small>
-            </div>
 
-            <div class="form-group">
-                <label>测试URL * <button type="button" class="btn-secondary btn-small" onclick="addUrlItem()" style="padding: 4px 8px; font-size: 0.85em; margin-left: 10px;">➕ 添加URL</button></label>
-                <div id="url-list" style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                    <!-- URL 项会动态添加到这里 -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">测试URL * <button type="button" class="btn-secondary btn-small" onclick="addUrlItem()" style="padding: 4px 10px; font-size: 0.85em; margin-left: 8px;">➕ 添加URL</button></label>
+                    <div id="url-list" style="background: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                        <!-- URL 项会动态添加到这里 -->
+                    </div>
                 </div>
-                <small style="color: #718096; font-size: 0.85em;">可以添加多个测试URL，每个URL可以有独立的描述</small>
-            </div>
 
-            <div class="form-group">
-                <label>运行模式</label>
-                <select id="case-mode">
-                    <option value="headless">Headless - 无头模式（后台运行，性能更好）</option>
-                    <option value="headed">Headed - 有头模式（显示浏览器界面）</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>重复次数</label>
-                <input type="number" id="case-repeat" value="1" min="1" max="100">
-                <small style="color: #718096; font-size: 0.85em; margin-top: 4px; display: block;">所有测试类型共用此参数，默认1次不重复</small>
-            </div>
-
-            <div class="form-group">
-                <label>Runner 配置</label>
-                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
-
-                    <!-- Runtime 配置 -->
-                    <div id="runtime-config" style="display: none;">
-                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">⏱️ Runtime 运行时配置</p>
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">持续时间 (毫秒)</label>
-                            <input type="number" id="runtime-duration" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
-                            <small style="color: #718096; font-size: 0.85em;">默认60000ms (60秒)</small>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (毫秒)</label>
-                            <input type="number" id="runtime-delay" value="10000" min="0" step="1000" style="width: 100%; padding: 8px;">
-                            <small style="color: #718096; font-size: 0.85em;">页面加载后等待时间，默认10000ms (10秒)</small>
-                        </div>
-                    </div>
-
-                    <!-- MemoryLeak 配置 -->
-                    <div id="memoryleak-config" style="display: none;">
-                        <p style="margin-bottom: 10px; font-weight: 600; color: #4a5568;">🧠 MemoryLeak 内存泄漏配置</p>
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">检测间隔 (毫秒)</label>
-                            <input type="number" id="memoryleak-interval" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px;">
-                            <small style="color: #718096; font-size: 0.85em;">每次检测之间的时间间隔，默认60000ms (60秒)</small>
-                        </div>
-                        <div style="margin-bottom: 10px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">迭代次数</label>
-                            <input type="number" id="memoryleak-iterations" value="3" min="1" max="20" style="width: 100%; padding: 8px;">
-                            <small style="color: #718096; font-size: 0.85em;">检测次数，默认3次</small>
-                        </div>
-                        <div>
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">页面操作代码 (onPageTesting)</label>
-                            <textarea id="memoryleak-onpagetesting" placeholder="// 在这里写你怀疑会触发内存泄露的页面操作&#10;// 例如：await page.click('.play-button');&#10;// 留空则静置页面" rows="4" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                            <small style="color: #718096; font-size: 0.85em;">在每次迭代中执行的页面操作代码，留空表示静置页面</small>
-                        </div>
-                    </div>
-
-                    <p id="no-runner-config" style="color: #9ca3af; margin: 0;">选择 Runtime 或 MemoryLeak 后显示配置</p>
+                <div style="margin-bottom: 0;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">描述和标签（可选）</label>
+                    <input type="text" id="case-description" placeholder="测试描述..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9em;">
+                    <input type="text" id="case-tags" placeholder="标签（用逗号分隔）..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9em;">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>TestCase 高级配置 (应用到所有 URLs)</label>
-                <div style="background: #f7fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                    <div style="margin-bottom: 10px;">
-                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">延迟时间 (delayMs)</label>
-                        <input type="number" id="testcase-delay" placeholder="留空使用默认值" min="0" step="1000" style="width: 100%; padding: 8px;">
-                        <small style="color: #718096; font-size: 0.85em;">TestCase级别的延迟时间（毫秒）</small>
+            <!-- ========== 第二部分：测试配置 ========== -->
+            <div class="config-card">
+                <div class="config-card-title">⚙️ 测试配置</div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">测试类型 *（可多选）</label>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+                        <label style="padding: 10px; background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.borderColor='#cbd5e0'" onmouseout="this.style.borderColor='#e2e8f0'">
+                            <input type="checkbox" id="runner-initialization">
+                            <span style="font-size: 0.9em; font-weight: 500;">🚀 Initialization</span>
+                        </label>
+                        <label style="padding: 10px; background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.borderColor='#cbd5e0'" onmouseout="this.style.borderColor='#e2e8f0'">
+                            <input type="checkbox" id="runner-runtime">
+                            <span style="font-size: 0.9em; font-weight: 500;">⏱️ Runtime</span>
+                        </label>
+                        <label style="padding: 10px; background: #f7fafc; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px;" onmouseover="this.style.borderColor='#cbd5e0'" onmouseout="this.style.borderColor='#e2e8f0'">
+                            <input type="checkbox" id="runner-memoryleak">
+                            <span style="font-size: 0.9em; font-weight: 500;">🧠 MemoryLeak</span>
+                        </label>
                     </div>
+                </div>
 
-                    <div style="margin-bottom: 10px;">
-                        <label style="display: block; margin-bottom: 8px; font-size: 0.9em; font-weight: bold;">🍪 登录态配置（自动获取Cookie）</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">运行模式</label>
+                        <select id="case-mode" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                            <option value="headless">🚀 Headless（后台运行）</option>
+                            <option value="headed">👁️ Headed（显示界面）</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">重复次数</label>
+                        <input type="number" id="case-repeat" value="1" min="1" max="100" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                    </div>
+                </div>
 
-                        <!-- 登录态模式选择 -->
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">登录模式</label>
-                            <select id="cookie-mode" onchange="toggleCookieMode()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                                <option value="none">🚫 不登录（匿名访问）</option>
-                                <option value="auto">🔄 自动获取（推荐）- 每次执行时自动刷新Cookie</option>
-                                <option value="manual">✍️ 手动配置 - 使用固定Cookie</option>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: #f7fafc; border-radius: 6px;">
+                            <input type="checkbox" id="case-anonymous" checked onchange="toggleAnonymousMode()">
+                            <span style="font-weight: 500; color: #4a5568;">匿名模式</span>
+                        </label>
+                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px; margin-left: 4px;">
+                            开启后将禁用Cookie登录态配置
+                        </small>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">CPU 节流倍数</label>
+                        <input type="number" id="case-cpu-throttling" value="1" min="1" max="20" step="1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">
+                            1=无节流，2=2倍慢，4=4倍慢
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Cookie配置 -->
+                <div id="cookie-config-section" style="margin-bottom: 0;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🍪 登录态配置</label>
+                    <select id="cookie-mode" onchange="toggleCookieMode()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em; margin-bottom: 10px;">
+                        <option value="auto">🔄 自动获取（推荐）</option>
+                        <option value="manual">✍️ 手动配置</option>
+                    </select>
+
+                    <!-- 自动获取配置 -->
+                    <div id="auto-cookie-config" style="display: none; background: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0;">
+                        <select id="auto-cookie-preset" onchange="applyAutoCookiePreset()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em;">
+                            <option value="">自定义UID...</option>
+                            <option value="uat:110000233">UAT测试账号</option>
+                            <option value="prod:3546793358919882">生产测试账号</option>
+                        </select>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                            <input type="text" id="auto-cookie-uid" placeholder="用户UID" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                            <select id="auto-cookie-env" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                <option value="prod">生产</option>
+                                <option value="uat">UAT</option>
                             </select>
                         </div>
-
-                        <!-- 自动获取模式配置 -->
-                        <div id="auto-cookie-config" style="display: none; background: #edf2f7; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0; margin-bottom: 8px;">
-                            <div style="margin-bottom: 10px;">
-                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">账号预设</label>
-                                <select id="auto-cookie-preset" onchange="applyAutoCookiePreset()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                                    <option value="">自定义UID...</option>
-                                    <option value="uat:110000233">UAT测试账号 (110000233)</option>
-                                    <option value="prod:3546793358919882">生产测试账号 (3546793358919882)</option>
-                                </select>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-                                <div>
-                                    <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">UID *</label>
-                                    <input type="text" id="auto-cookie-uid" placeholder="输入用户UID" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                                </div>
-                                <div>
-                                    <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">环境 *</label>
-                                    <select id="auto-cookie-env" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                                        <option value="prod">生产环境</option>
-                                        <option value="uat">UAT环境</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <small style="color: #718096; font-size: 0.8em; display: block; margin-top: 8px;">
-                                💡 每次运行测试时，系统会自动获取最新Cookie，无需手动更新
-                            </small>
-                        </div>
-
-                        <!-- 手动配置模式 -->
-                        <div id="manual-cookie-config" style="display: none;">
-                            <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
-                                <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                    <option value="">✨ 选择Cookie预设...</option>
-                                    <option value="bilibili_login">B站登录态</option>
-                                    <option value="youtube_login">YouTube登录态</option>
-                                    <option value="custom_simple">简单Cookie</option>
-                                </select>
-                                <button type="button" onclick="showAutoFetchCookieModal()" class="btn-small" style="padding: 6px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">🔄 立即获取</button>
-                                <button type="button" onclick="clearConfig('testcase-cookie')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
-                            </div>
-                            <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                            <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">手动配置的Cookie，需要自己定期更新</small>
-                        </div>
                     </div>
 
-                    <div style="margin-bottom: 10px;">
-                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">额外 HTTP 头 (extraHTTPHeaders)</label>
+                    <!-- 手动配置 -->
+                    <div id="manual-cookie-config" style="display: none;">
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                <option value="">选择预设...</option>
+                                <option value="bilibili_login">B站登录态</option>
+                                <option value="youtube_login">YouTube登录态</option>
+                            </select>
+                            <button type="button" onclick="showAutoFetchCookieModal()" class="btn-small" style="padding: 8px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer;">获取</button>
+                        </div>
+                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- HTTP Headers预设选择器 -->
+            <!-- ========== 第三部分：Runner配置（针对选中的测试类型） ========== -->
+            <div class="config-card" id="runner-config-card" style="display: none;">
+                <div class="config-card-title">🎯 Runner 详细配置</div>
+
+                <!-- Initialization 配置 -->
+                <div id="initialization-config" style="display: none; padding: 15px; background: #f7fafc; border-radius: 8px; margin-bottom: 12px;">
+                    <div style="font-weight: 600; color: #4a5568; margin-bottom: 12px; font-size: 1.05em;">🚀 Initialization 配置</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">迭代次数</label>
+                            <input type="number" id="initialization-iterations" value="7" min="1" max="20" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 7 次</small>
+                        </div>
+                        <div>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: white; border-radius: 4px;">
+                                <input type="checkbox" id="initialization-include-warm">
+                                <span style="font-size: 0.9em;">包含热启动测试</span>
+                            </label>
+                            <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px; margin-left: 4px;">是否测试热启动，默认否</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Runtime 配置 -->
+                <div id="runtime-config" style="display: none; padding: 15px; background: #f7fafc; border-radius: 8px; margin-bottom: 12px;">
+                    <div style="font-weight: 600; color: #4a5568; margin-bottom: 12px; font-size: 1.05em;">⏱️ Runtime 配置</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">持续时间 (毫秒)</label>
+                            <input type="number" id="runtime-duration" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 60000ms (60秒)</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">延迟时间 (毫秒)</label>
+                            <input type="number" id="runtime-delay" value="10000" min="0" step="1000" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">页面加载后等待，默认 10000ms</small>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9em; color: #4a5568;">收集的指标类型</label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                            <label style="padding: 8px; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em;">
+                                <input type="checkbox" id="metric-runtime" checked>
+                                <span>runtime</span>
+                            </label>
+                            <label style="padding: 8px; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em;">
+                                <input type="checkbox" id="metric-longtask" checked>
+                                <span>longtask</span>
+                            </label>
+                            <label style="padding: 8px; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em;">
+                                <input type="checkbox" id="metric-longanimationframe">
+                                <span>longAnimationFrame</span>
+                            </label>
+                            <label style="padding: 8px; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em;">
+                                <input type="checkbox" id="metric-fps">
+                                <span>fps</span>
+                            </label>
+                            <label style="padding: 8px; background: white; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.85em;">
+                                <input type="checkbox" id="metric-system">
+                                <span>system</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MemoryLeak 配置 -->
+                <div id="memoryleak-config" style="display: none; padding: 15px; background: #f7fafc; border-radius: 8px;">
+                    <div style="font-weight: 600; color: #4a5568; margin-bottom: 12px; font-size: 1.05em;">🧠 MemoryLeak 配置</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">检测间隔</label>
+                            <input type="number" id="memoryleak-interval" value="60000" min="1000" step="1000" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 60000ms</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">迭代次数</label>
+                            <input type="number" id="memoryleak-iterations" value="3" min="1" max="20" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 3次</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">延迟时间</label>
+                            <input type="number" id="memoryleak-delay" value="10000" min="0" step="1000" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 10000ms</small>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">冷静时间</label>
+                            <input type="number" id="memoryleak-cooldown" value="3000" min="0" step="1000" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <small style="color: #718096; font-size: 0.85em;">默认 3000ms</small>
+                        </div>
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">页面操作代码</label>
+                        <textarea id="memoryleak-onpagetesting" placeholder="// 触发内存泄露的操作&#10;// 例如: await page.click('.play-button');" rows="3" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
+                        <small style="color: #718096; font-size: 0.85em;">留空则静置页面</small>
+                    </div>
+                </div>
+
+                <p id="no-runner-config" style="color: #9ca3af; margin: 0; text-align: center; padding: 20px;">选择测试类型后显示对应配置</p>
+            </div>
+
+            <!-- ========== 第四部分：高级配置（可折叠） ========== -->
+            <div class="collapsible-section">
+                <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                    <div class="collapsible-header-title">
+                        <span>🔧</span>
+                        <span>高级配置</span>
+                        <small style="font-weight: normal; color: #718096; margin-left: 8px;">（可选，通常保持默认即可）</small>
+                    </div>
+                    <span class="collapsible-icon">▼</span>
+                </div>
+                <div class="collapsible-content">
+                    <div class="collapsible-body">
+
+                        <!-- 延迟时间 -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">⏱️ 延迟时间 (delayMs)</label>
+                            <input type="number" id="testcase-delay" placeholder="留空使用默认值" min="0" step="1000" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px;">
+                            <small style="color: #718096; font-size: 0.85em;">TestCase级别的延迟时间（毫秒）</small>
+                        </div>
+
+                        <!-- HTTP Headers -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">📡 HTTP 头 (extraHTTPHeaders)</label>
                         <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
                             <select id="headers-preset" onchange="applyHeadersPreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
                                 <option value="">✨ 选择User-Agent预设...</option>
@@ -949,19 +1115,10 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>描述</label>
-                <textarea id="case-description" placeholder="描述该测试用例的目的和预期结果"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>标签（逗号分隔）</label>
-                <input type="text" id="case-tags" placeholder="例如：bilibili, 首页, 冒烟测试">
-            </div>
-
+            <!-- 底部操作按钮 -->
             <div class="form-actions">
                 <button class="btn-secondary" onclick="closeModal()">取消</button>
-                <button class="btn-primary" onclick="saveCase()">保存</button>
+                <button class="btn-primary" onclick="saveCase()">💾 保存用例</button>
             </div>
         </div>
     </div>
@@ -1015,6 +1172,46 @@
                 <button class="btn-secondary" onclick="closeCookieFetchModal()">取消</button>
                 <button class="btn-secondary" onclick="validateCurrentCookie()" style="background: #3182ce; color: white;">🔍 验证Cookie</button>
                 <button class="btn-primary" onclick="fetchAndApplyCookie()">获取并应用</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全局设置模态框 -->
+    <div class="modal" id="global-config-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">⚙️ 全局设置</div>
+
+            <div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-bottom: 15px; color: #4a5568; font-size: 1.1em;">🔧 系统配置</h3>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">Chrome 可执行文件路径</label>
+                    <input type="text" id="global-executable-path" placeholder="留空使用系统默认Chrome" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                    <small style="color: #718096; display: block; margin-top: 6px;">
+                        指定自定义Chrome浏览器路径<br>
+                        <strong>示例:</strong> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+                    </small>
+                </div>
+
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">本地服务端口</label>
+                    <input type="number" id="global-port" placeholder="默认: 3000 / 8000 / 8080" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                    <small style="color: #718096; display: block; margin-top: 6px;">
+                        仅在测试本地HTML文件时使用,留空使用默认端口
+                    </small>
+                </div>
+            </div>
+
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; border-radius: 4px; margin-bottom: 20px;">
+                <strong style="color: #856404; display: block; margin-bottom: 8px;">💡 提示</strong>
+                <p style="color: #856404; margin: 0; font-size: 0.9em; line-height: 1.5;">
+                    其他配置(如匿名模式、无头模式、CPU节流等)已整合到用例配置中,可在创建或编辑测试用例时设置。
+                </p>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeGlobalConfigModal()">取消</button>
+                <button class="btn-success" onclick="saveGlobalConfig()">💾 保存配置</button>
             </div>
         </div>
     </div>
@@ -1230,6 +1427,39 @@
 
             autoConfig.style.display = mode === 'auto' ? 'block' : 'none';
             manualConfig.style.display = mode === 'manual' ? 'block' : 'none';
+        }
+
+        // 切换匿名模式时联动Cookie配置
+        function toggleAnonymousMode() {
+            const isAnonymous = document.getElementById('case-anonymous').checked;
+            const cookieSection = document.getElementById('cookie-config-section');
+
+            if (isAnonymous) {
+                // 匿名模式：禁用并隐藏Cookie配置
+                cookieSection.style.opacity = '0.4';
+                cookieSection.style.pointerEvents = 'none';
+                cookieSection.title = '匿名模式下不可配置Cookie';
+            } else {
+                // 登录模式：启用Cookie配置
+                cookieSection.style.opacity = '1';
+                cookieSection.style.pointerEvents = 'auto';
+                cookieSection.title = '';
+            }
+        }
+
+        // 切换可折叠区域
+        function toggleCollapsible(headerElement) {
+            const section = headerElement.parentElement;
+            const content = section.querySelector('.collapsible-content');
+            const icon = section.querySelector('.collapsible-icon');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                icon.classList.remove('expanded');
+            } else {
+                content.classList.add('expanded');
+                icon.classList.add('expanded');
+            }
         }
 
         // 应用自动Cookie预设
@@ -1504,6 +1734,7 @@
             loadCompletedToday();
 
             // 添加高级配置事件监听
+            document.getElementById('runner-initialization').addEventListener('change', updateAdvancedConfigDisplay);
             document.getElementById('runner-runtime').addEventListener('change', updateAdvancedConfigDisplay);
             document.getElementById('runner-memoryleak').addEventListener('change', updateAdvancedConfigDisplay);
             document.getElementById('testcase-device-type').addEventListener('change', updateDeviceOptionsDisplay);
@@ -1642,16 +1873,23 @@
 
         // 更新高级配置显示
         function updateAdvancedConfigDisplay() {
+            const initializationChecked = document.getElementById('runner-initialization').checked;
             const runtimeChecked = document.getElementById('runner-runtime').checked;
             const memoryLeakChecked = document.getElementById('runner-memoryleak').checked;
 
+            const initializationConfig = document.getElementById('initialization-config');
             const runtimeConfig = document.getElementById('runtime-config');
             const memoryLeakConfig = document.getElementById('memoryleak-config');
             const noConfig = document.getElementById('no-runner-config');
+            const runnerCard = document.getElementById('runner-config-card');
 
+            initializationConfig.style.display = initializationChecked ? 'block' : 'none';
             runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
             memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
-            noConfig.style.display = (!runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+            noConfig.style.display = (!initializationChecked && !runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+
+            // 显示/隐藏Runner配置卡片
+            runnerCard.style.display = (initializationChecked || runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
 
             // 根据选择的runner显示/隐藏生命周期钩子
             const onPageTestingContainer = document.getElementById('hook-onpagetesting-container');
@@ -1779,6 +2017,8 @@
             addUrlItem(); // 添加一个空的URL项
             document.getElementById('case-mode').value = 'headless';
             document.getElementById('case-repeat').value = '1';
+            document.getElementById('case-anonymous').checked = true;
+            document.getElementById('case-cpu-throttling').value = '1';
             document.getElementById('case-description').value = '';
             document.getElementById('case-tags').value = '';
 
@@ -1809,6 +2049,7 @@
             // 更新显示
             updateAdvancedConfigDisplay();
             updateDeviceOptionsDisplay();
+            toggleAnonymousMode(); // 初始化匿名模式状态
 
             // 移除编辑模式标记
             delete document.getElementById('case-modal').dataset.editId;
@@ -1849,6 +2090,8 @@
 
             document.getElementById('case-mode').value = testCase.mode || 'headless';
             document.getElementById('case-repeat').value = testCase.repeatCount || 1;
+            document.getElementById('case-anonymous').checked = testCase.anonymous !== undefined ? testCase.anonymous : true;
+            document.getElementById('case-cpu-throttling').value = testCase.cpuThrottling || 1;
 
             // 填充 Runner 配置字段
             if (testCase.runners?.Runtime) {
@@ -1923,6 +2166,7 @@
             // 更新显示
             updateAdvancedConfigDisplay();
             updateDeviceOptionsDisplay();
+            toggleAnonymousMode(); // 初始化匿名模式状态
 
             // 标记为编辑模式
             document.getElementById('case-modal').dataset.editId = id;
@@ -1936,8 +2180,13 @@
             const memoryChecked = document.getElementById('runner-memoryleak').checked;
             const mode = document.getElementById('case-mode').value;
             const repeatCount = parseInt(document.getElementById('case-repeat').value);
+            const anonymous = document.getElementById('case-anonymous').checked;
+            const cpuThrottling = parseInt(document.getElementById('case-cpu-throttling').value) || 1;
             const description = document.getElementById('case-description').value.trim();
             const tags = document.getElementById('case-tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            // 调试日志
+            console.log('💾 保存用例 - 匿名模式:', anonymous, '节流:', cpuThrottling);
 
             if (!name) {
                 showToast('请输入用例名称', 'error');
@@ -2027,27 +2276,37 @@
 
             // cookie - 支持自动获取模式
             const cookieMode = document.getElementById('cookie-mode').value;
+            console.log('🍪 Cookie模式:', cookieMode);
+
             if (cookieMode === 'auto') {
                 // 自动获取模式：保存 UID 和环境
                 const autoUid = document.getElementById('auto-cookie-uid').value.trim();
                 const autoEnv = document.getElementById('auto-cookie-env').value;
+                console.log('🍪 自动Cookie - UID:', autoUid, '环境:', autoEnv);
+
                 if (autoUid) {
                     advancedConfig.autoCookie = {
                         uid: parseInt(autoUid, 10),
                         env: autoEnv
                     };
+                    console.log('✅ 已保存autoCookie:', advancedConfig.autoCookie);
                 }
             } else if (cookieMode === 'manual') {
                 // 手动配置模式：保存 Cookie 字符串
                 const cookieValue = document.getElementById('testcase-cookie').value.trim();
+                console.log('🍪 手动Cookie长度:', cookieValue.length);
+
                 if (cookieValue) {
                     try {
                         advancedConfig.cookie = JSON.parse(cookieValue);
                     } catch {
                         advancedConfig.cookie = cookieValue; // 作为字符串
                     }
+                    console.log('✅ 已保存cookie');
                 }
             }
+
+            console.log('📦 最终advancedConfig:', advancedConfig);
             // cookieMode === 'none' 时不设置任何 Cookie
 
             // extraHTTPHeaders
@@ -2121,6 +2380,8 @@
                     testCase.urlsWithDesc = urlsWithDesc;  // 新增：带描述的URL数组
                     testCase.mode = mode;
                     testCase.repeatCount = repeatCount;
+                    testCase.anonymous = anonymous;
+                    testCase.cpuThrottling = cpuThrottling;
                     testCase.description = description;
                     testCase.tags = tags;
                     testCase.advancedConfig = advancedConfig;
@@ -2139,6 +2400,8 @@
                     urlsWithDesc,  // 新增：带描述的URL数组
                     mode,
                     repeatCount,
+                    anonymous,
+                    cpuThrottling,
                     description,
                     tags,
                     advancedConfig,
@@ -2228,6 +2491,8 @@
 
                 // 构建 testCases 数组 - 将 URLs 转换为 testCases 并应用高级配置
                 const advConfig = testCase.advancedConfig || {};
+                console.log('🔧 运行时 - 用例的advancedConfig:', advConfig);
+
                 const testCasesArray = urlsData.map(item => {
                     const tc = {
                         target: item.url,
@@ -2237,11 +2502,17 @@
                     // 应用高级配置
                     if (advConfig.delayMs !== undefined) tc.delayMs = advConfig.delayMs;
                     if (advConfig.cookie) tc.cookie = advConfig.cookie;
+                    if (advConfig.autoCookie) tc.autoCookie = advConfig.autoCookie;  // 🆕 添加自动Cookie支持
                     if (advConfig.extraHTTPHeaders) tc.extraHTTPHeaders = advConfig.extraHTTPHeaders;
                     if (advConfig.blockList) tc.blockList = advConfig.blockList;
                     if (advConfig.customCss) tc.customCss = advConfig.customCss;
                     if (advConfig.deviceOptions) tc.deviceOptions = advConfig.deviceOptions;
                     if (advConfig.hooks) tc.hooks = advConfig.hooks;
+
+                    // 将整个advancedConfig传递，以便后端处理autoCookie
+                    tc.advancedConfig = advConfig;
+
+                    console.log('📝 构建的testCase:', tc);
 
                     return tc;
                 });
@@ -2310,9 +2581,10 @@
                         name: taskName, // 使用带标记的任务名称
                         config: {
                             mode: {
-                                anonymous: true,
+                                anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
                                 headless: mode === 'headless'
                             },
+                            cpuThrottlingRate: testCase.cpuThrottling || 1,
                             runners: runnersConfig
                         }
                     })
@@ -3167,6 +3439,64 @@
             if (ws) ws.close();
             if (reconnectTimer) clearTimeout(reconnectTimer);
         };
+
+        // ==================== 全局配置管理 ====================
+
+        // 显示全局设置模态框
+        function showGlobalConfigModal() {
+            document.getElementById('global-config-modal').classList.add('active');
+            loadGlobalConfig(); // 加载当前配置
+        }
+
+        // 关闭全局设置模态框
+        function closeGlobalConfigModal() {
+            document.getElementById('global-config-modal').classList.remove('active');
+        }
+
+        // 保存全局配置
+        async function saveGlobalConfig() {
+            try {
+                // 先获取当前完整配置
+                const currentResponse = await fetch('/api/dynamic-config');
+                const currentConfig = await currentResponse.json();
+
+                // 只更新真正的全局配置
+                currentConfig.port = document.getElementById('global-port').value.trim() ? parseInt(document.getElementById('global-port').value) : null;
+                currentConfig.executablePath = document.getElementById('global-executable-path').value.trim();
+
+                // 保存完整配置
+                const response = await fetch('/api/dynamic-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(currentConfig)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    showToast('全局配置保存成功！', 'success');
+                    closeGlobalConfigModal(); // 保存成功后关闭模态框
+                } else {
+                    showToast('保存失败: ' + (data.message || '未知错误'), 'error');
+                }
+            } catch (error) {
+                console.error('保存全局配置失败:', error);
+                showToast('保存失败: ' + error.message, 'error');
+            }
+        }
+
+        // 加载全局配置
+        async function loadGlobalConfig() {
+            try {
+                const response = await fetch('/api/dynamic-config');
+                const config = await response.json();
+
+                // 恢复全局配置
+                document.getElementById('global-port').value = config.port || '';
+                document.getElementById('global-executable-path').value = config.executablePath || '';
+            } catch (error) {
+                console.error('加载全局配置失败:', error);
+            }
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,9 @@
+2025/11/20-17:16:14.155 a42f94 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/MANIFEST-000001
+2025/11/20-17:16:14.158 a42f94 Recovering log #14
+2025/11/20-17:16:14.158 a42f94 Reusing old log /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/000014.log 
+2025/11/20-17:17:01.233 a42f94 Level-0 table #18: started
+2025/11/20-17:17:01.235 a42f98 Current memtable full; waiting...
+2025/11/20-17:17:01.239 a42f94 Level-0 table #18: 24668 bytes OK
+2025/11/20-17:17:01.253 a42f94 Delete type=0 #14
+2025/11/20-17:17:01.259 a42f94 Level-0 table #20: started
+2025/11/20-17:17:01.261 a42f94 Level-0 table #20: 33243 bytes OK
