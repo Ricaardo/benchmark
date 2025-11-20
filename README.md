@@ -7,6 +7,9 @@
 | 文档 | 说明 |
 |------|------|
 | [README.md](README.md) | 📘 主文档 - 功能说明和使用指南（当前文档） |
+| [TEST_RECORDS_GUIDE.md](TEST_RECORDS_GUIDE.md) | 📝 **测试记录** - 测试历史记录管理和查询 |
+| [PERFCAT_INTEGRATION.md](PERFCAT_INTEGRATION.md) | 📊 **Perfcat集成** - 自动上传测试报告到Perfcat |
+| [PERFCAT_DATA_ENCODING.md](PERFCAT_DATA_ENCODING.md) | 🔐 **数据编码** - Perfcat数据压缩编码说明 |
 | [ONE_CLICK_DEPLOY.md](ONE_CLICK_DEPLOY.md) | 🚀 **一键部署** - 三端（Win/Mac/Linux）一键部署指南 |
 | [QUICKSTART.md](QUICKSTART.md) | ⚡ 快速开始 - 3分钟快速上手 |
 | [CONFIG_PRESETS_GUIDE.md](CONFIG_PRESETS_GUIDE.md) | 🎨 配置预设系统 - 零代码快速配置指南 |
@@ -23,8 +26,11 @@
 - 🎯 **Web 界面控制** - 通过浏览器启动/停止性能测试
 - ⚙️ **在线配置编辑** - 直接在 Web 界面修改测试配置
 - 📊 **实时输出监控** - 查看测试过程的实时输出日志
-- 📈 **报告查看** - 浏览和访问历史测试报告
+- 📈 **Perfcat 集成** - 自动上传测试报告到 Perfcat，获取分享链接
+- 🔗 **短链分享** - 测试完成后自动生成 Perfcat 短链，支持标准和图表两种查看模式
+- 📝 **测试记录** - 自动保存测试历史，支持查询、过滤、统计分析
 - 🔄 **状态管理** - 实时显示测试运行状态
+- 🔔 **Webhook 通知** - 测试完成后自动发送通知（包含 Perfcat 链接）
 
 ## 前置要求
 
@@ -138,23 +144,91 @@ npm start
 
 ### 测试报告
 
-"测试报告"区域列出所有生成的测试报告，点击报告名称可在新窗口查看详细内容。
+测试完成后，系统会自动：
+1. 生成 JSON 格式的测试报告
+2. 上传报告到 Perfcat 服务
+3. 返回 Perfcat 短链，显示在任务列表中
+4. 在任务输出中显示两个查看链接：
+   - 📊 查看报告：标准报告视图
+   - 📈 图表模式：可视化图表视图
+5. **保存测试记录**到历史数据库
+
+> 💡 **配置 Perfcat**: 请参考 [PERFCAT_INTEGRATION.md](PERFCAT_INTEGRATION.md) 了解如何配置 Perfcat Cookie 以启用自动上传功能。
+
+### 测试记录
+
+访问 `http://localhost:3000/records.html` 查看测试历史：
+
+**功能特性**：
+- 📝 自动保存每次测试的完整信息
+- 🔍 支持按 Runner 类型和状态过滤
+- 📊 显示统计信息（总数、成功率、平均耗时）
+- 🔗 直接访问 Perfcat 报告链接
+- 📄 支持分页浏览（20/50/100 条/页）
+- 🗑️ 可删除单条记录或批量清空
+
+**记录内容**：
+- 测试名称和 ID
+- Runner 类型（Initialization/Runtime/MemoryLeak）
+- 执行状态（成功/失败）
+- 开始时间和运行时长
+- Perfcat 报告链接（标准 + 图表）
+- 退出代码
+
+> 📖 详细说明请参考 [TEST_RECORDS_GUIDE.md](TEST_RECORDS_GUIDE.md)
 
 ## API 接口
 
 服务器提供以下 REST API:
 
+### 测试控制
+
 | 接口 | 方法 | 说明 |
 |------|------|------|
 | `/api/status` | GET | 获取当前测试状态 |
+| `/api/start` | POST | 启动测试（需传递 runner 参数） |
+| `/api/stop` | POST | 停止测试 |
+| `/api/tasks` | GET | 获取所有任务列表（包含 perfcat 链接） |
+| `/api/tasks/:taskId` | GET | 获取单个任务详情 |
+| `/api/tasks/:taskId/stop` | POST | 停止指定任务 |
+| `/api/tasks/:taskId` | DELETE | 删除任务 |
+
+### 配置管理
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
 | `/api/dynamic-config` | GET | 获取动态配置（JSON） |
 | `/api/dynamic-config` | POST | 保存动态配置并生成 .mts |
 | `/api/config` | GET | 获取原始配置文件内容 |
 | `/api/config` | POST | 直接更新配置文件 |
-| `/api/start` | POST | 启动测试（需传递 runner 参数） |
-| `/api/stop` | POST | 停止测试 |
+
+### Perfcat 集成
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/perfcat` | GET | 获取 Perfcat 配置状态 |
+| `/api/perfcat` | POST | 设置 Perfcat 配置（URL 和 Cookie） |
+| `/api/perfcat/test` | POST | 测试 Perfcat 上传功能 |
+
+### 测试记录
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
+| `/api/test-records` | GET | 获取测试记录列表（支持过滤和分页） |
+| `/api/test-records/:id` | GET | 获取单条测试记录详情 |
+| `/api/test-records/:id` | DELETE | 删除指定测试记录 |
+| `/api/test-records/clear` | POST | 清空测试记录（可按条件） |
+| `/api/test-records/stats` | GET | 获取测试统计信息 |
+
+### 报告管理
+
+| 接口 | 方法 | 说明 |
+|------|------|------|
 | `/api/reports` | GET | 获取报告列表 |
+| `/api/reports/:filename` | DELETE | 删除指定报告文件 |
 | `/reports/*` | GET | 访问报告文件 |
+
+> 📖 详细 API 文档请参考 [PERFCAT_INTEGRATION.md](PERFCAT_INTEGRATION.md)
 
 ## 项目结构
 

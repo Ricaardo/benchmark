@@ -24,9 +24,15 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             color: white;
             margin-bottom: 30px;
+        }
+
+        .header > div:first-child {
+            text-align: left;
         }
 
         .header h1 {
@@ -453,8 +459,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🚀 Benchmark Web Runner</h1>
-            <p class="subtitle">用例驱动的性能测试平台</p>
+            <div>
+                <h1>🚀 Benchmark Web Runner</h1>
+                <p class="subtitle">用例驱动的性能测试平台</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <a href="/records.html" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='#5568d3'" onmouseout="this.style.background='#667eea'">📝 测试记录</a>
+                <a href="/config.html" style="padding: 10px 20px; background: #48bb78; color: white; text-decoration: none; border-radius: 6px; font-weight: 500; transition: all 0.2s;" onmouseover="this.style.background='#38a169'" onmouseout="this.style.background='#48bb78'">⚙️ 配置管理</a>
+            </div>
         </div>
 
         <!-- 统计信息 -->
@@ -480,7 +492,7 @@
             <div class="toolbar">
                 <div class="toolbar-left">
                     <button class="btn-primary" onclick="showAddCaseModal()">➕ 添加用例</button>
-                    <button class="btn-success" onclick="runSelectedCases()" id="run-selected-btn" disabled>▶ 运行选中 (<span id="selected-count">0</span>)</button>
+                    <button class="btn-success" onclick="runSelectedCases()" id="run-selected-btn" disabled>⚡ 并行运行 (<span id="selected-count">0</span>)</button>
                     <button class="btn-danger btn-small" onclick="deleteSelectedCases()" id="delete-selected-btn" disabled>🗑️ 删除选中</button>
                     <button class="btn-secondary btn-small" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
@@ -643,21 +655,61 @@
                     </div>
 
                     <div style="margin-bottom: 10px;">
-                        <label style="display: block; margin-bottom: 4px; font-size: 0.9em;">Cookie (JSON 或字符串)</label>
+                        <label style="display: block; margin-bottom: 8px; font-size: 0.9em; font-weight: bold;">🍪 登录态配置（自动获取Cookie）</label>
 
-                        <!-- Cookie预设选择器 -->
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
-                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择Cookie预设...</option>
-                                <option value="bilibili_login">B站登录态</option>
-                                <option value="youtube_login">YouTube登录态</option>
-                                <option value="custom_simple">简单Cookie</option>
+                        <!-- 登录态模式选择 -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">登录模式</label>
+                            <select id="cookie-mode" onchange="toggleCookieMode()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                <option value="none">🚫 不登录（匿名访问）</option>
+                                <option value="auto">🔄 自动获取（推荐）- 每次执行时自动刷新Cookie</option>
+                                <option value="manual">✍️ 手动配置 - 使用固定Cookie</option>
                             </select>
-                            <button type="button" onclick="clearConfig('testcase-cookie')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
                         </div>
 
-                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
-                        <small id="cookie-instruction" style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">设置页面的 Cookie</small>
+                        <!-- 自动获取模式配置 -->
+                        <div id="auto-cookie-config" style="display: none; background: #edf2f7; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0; margin-bottom: 8px;">
+                            <div style="margin-bottom: 10px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">账号预设</label>
+                                <select id="auto-cookie-preset" onchange="applyAutoCookiePreset()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <option value="">自定义UID...</option>
+                                    <option value="uat:110000233">UAT测试账号 (110000233)</option>
+                                    <option value="prod:3546793358919882">生产测试账号 (3546793358919882)</option>
+                                </select>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">UID *</label>
+                                    <input type="text" id="auto-cookie-uid" placeholder="输入用户UID" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">环境 *</label>
+                                    <select id="auto-cookie-env" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                        <option value="prod">生产环境</option>
+                                        <option value="uat">UAT环境</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <small style="color: #718096; font-size: 0.8em; display: block; margin-top: 8px;">
+                                💡 每次运行测试时，系统会自动获取最新Cookie，无需手动更新
+                            </small>
+                        </div>
+
+                        <!-- 手动配置模式 -->
+                        <div id="manual-cookie-config" style="display: none;">
+                            <div style="margin-bottom: 8px; display: flex; gap: 8px; align-items: center;">
+                                <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                    <option value="">✨ 选择Cookie预设...</option>
+                                    <option value="bilibili_login">B站登录态</option>
+                                    <option value="youtube_login">YouTube登录态</option>
+                                    <option value="custom_simple">简单Cookie</option>
+                                </select>
+                                <button type="button" onclick="showAutoFetchCookieModal()" class="btn-small" style="padding: 6px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">🔄 立即获取</button>
+                                <button type="button" onclick="clearConfig('testcase-cookie')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                            </div>
+                            <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.9em;"></textarea>
+                            <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">手动配置的Cookie，需要自己定期更新</small>
+                        </div>
                     </div>
 
                     <div style="margin-bottom: 10px;">
@@ -914,6 +966,59 @@
         </div>
     </div>
 
+    <!-- Cookie自动获取弹窗 -->
+    <div class="modal" id="cookie-fetch-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">🔄 自动获取Cookie</div>
+
+            <div class="form-group">
+                <label>选择预设账号</label>
+                <select id="cookie-account-preset" onchange="selectCookiePreset()" style="width: 100%; padding: 8px;">
+                    <option value="">自定义UID...</option>
+                    <option value="uat:110000233">UAT测试账号 (110000233)</option>
+                    <option value="prod:3546793358919882">生产测试账号 (3546793358919882)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>UID *</label>
+                <input type="text" id="cookie-uid" placeholder="输入用户UID" style="width: 100%; padding: 8px;">
+            </div>
+
+            <div class="form-group">
+                <label>环境 *</label>
+                <select id="cookie-env" style="width: 100%; padding: 8px;">
+                    <option value="prod">生产环境 (Prod)</option>
+                    <option value="uat">UAT环境 (UAT)</option>
+                </select>
+                <small style="color: #718096; font-size: 0.85em;">
+                    • 生产环境: http://melloi.bilibili.co<br>
+                    • UAT环境: http://hassan.bilibili.co
+                </small>
+            </div>
+
+            <div class="form-group">
+                <label>Cookie格式</label>
+                <select id="cookie-format" style="width: 100%; padding: 8px;">
+                    <option value="string">字符串格式 (推荐)</option>
+                    <option value="json">JSON对象格式</option>
+                </select>
+            </div>
+
+            <!-- Cookie验证结果区域 -->
+            <div id="cookie-validation-result" style="display: none; margin-top: 15px; padding: 12px; border-radius: 6px; font-size: 0.9em;">
+                <div id="cookie-validation-message"></div>
+                <div id="cookie-validation-details" style="margin-top: 8px; font-size: 0.85em; color: #718096;"></div>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeCookieFetchModal()">取消</button>
+                <button class="btn-secondary" onclick="validateCurrentCookie()" style="background: #3182ce; color: white;">🔍 验证Cookie</button>
+                <button class="btn-primary" onclick="fetchAndApplyCookie()">获取并应用</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 引入预设库 -->
     <script src="operation-presets.js"></script>
     <script src="config-presets.js"></script>
@@ -930,6 +1035,7 @@
         // 新增：后端任务管理
         let backendTasks = new Map(); // taskId -> task对象
         const MAX_CONCURRENT = 3;
+        let serverMaxConcurrent = 10; // 服务器的并发限制，从API获取
 
         // ==================== 预设系统 ====================
         let currentPresetParams = {}; // 当前预设的参数值
@@ -1116,7 +1222,29 @@
 
         // ==================== 配置预设系统 ====================
 
-        // 应用Cookie预设
+        // Toggle Cookie 模式显示
+        function toggleCookieMode() {
+            const mode = document.getElementById('cookie-mode').value;
+            const autoConfig = document.getElementById('auto-cookie-config');
+            const manualConfig = document.getElementById('manual-cookie-config');
+
+            autoConfig.style.display = mode === 'auto' ? 'block' : 'none';
+            manualConfig.style.display = mode === 'manual' ? 'block' : 'none';
+        }
+
+        // 应用自动Cookie预设
+        function applyAutoCookiePreset() {
+            const preset = document.getElementById('auto-cookie-preset').value;
+            if (!preset) return;
+
+            const [env, uid] = preset.split(':');
+            document.getElementById('auto-cookie-uid').value = uid;
+            document.getElementById('auto-cookie-env').value = env;
+
+            showToast(`已选择预设账号: ${uid} (${env === 'uat' ? 'UAT' : '生产'}环境)`, 'success');
+        }
+
+        // 应用Cookie预设（手动模式）
         function applyCookiePreset() {
             const presetKey = document.getElementById('cookie-preset').value;
             if (!presetKey) return;
@@ -1128,8 +1256,11 @@
             textarea.value = JSON.stringify(preset.value, null, 2);
 
             if (preset.instruction) {
-                document.getElementById('cookie-instruction').textContent = '💡 ' + preset.instruction;
-                document.getElementById('cookie-instruction').style.color = '#e67e22';
+                const instructionEl = document.getElementById('cookie-instruction');
+                if (instructionEl) {
+                    instructionEl.textContent = '💡 ' + preset.instruction;
+                    instructionEl.style.color = '#e67e22';
+                }
             }
 
             showToast(`已应用Cookie预设: ${preset.name}`, 'success');
@@ -1741,7 +1872,25 @@
             // 填充 TestCase 高级配置字段
             const advConfig = testCase.advancedConfig || {};
             document.getElementById('testcase-delay').value = advConfig.delayMs || '';
-            document.getElementById('testcase-cookie').value = advConfig.cookie ? (typeof advConfig.cookie === 'string' ? advConfig.cookie : JSON.stringify(advConfig.cookie, null, 2)) : '';
+
+            // Cookie 模式恢复
+            if (advConfig.autoCookie) {
+                // 自动获取模式
+                document.getElementById('cookie-mode').value = 'auto';
+                document.getElementById('auto-cookie-uid').value = advConfig.autoCookie.uid || '';
+                document.getElementById('auto-cookie-env').value = advConfig.autoCookie.env || 'prod';
+                toggleCookieMode(); // 显示自动模式配置
+            } else if (advConfig.cookie) {
+                // 手动配置模式
+                document.getElementById('cookie-mode').value = 'manual';
+                document.getElementById('testcase-cookie').value = typeof advConfig.cookie === 'string' ? advConfig.cookie : JSON.stringify(advConfig.cookie, null, 2);
+                toggleCookieMode(); // 显示手动模式配置
+            } else {
+                // 不登录模式
+                document.getElementById('cookie-mode').value = 'none';
+                toggleCookieMode();
+            }
+
             document.getElementById('testcase-headers').value = advConfig.extraHTTPHeaders ? JSON.stringify(advConfig.extraHTTPHeaders, null, 2) : '';
             document.getElementById('testcase-blocklist').value = advConfig.blockList ? JSON.stringify(advConfig.blockList, null, 2) : '';
             document.getElementById('testcase-css').value = advConfig.customCss || '';
@@ -1876,15 +2025,30 @@
                 advancedConfig.delayMs = parseInt(tcDelayMs);
             }
 
-            // cookie
-            const cookieValue = document.getElementById('testcase-cookie').value.trim();
-            if (cookieValue) {
-                try {
-                    advancedConfig.cookie = JSON.parse(cookieValue);
-                } catch {
-                    advancedConfig.cookie = cookieValue; // 作为字符串
+            // cookie - 支持自动获取模式
+            const cookieMode = document.getElementById('cookie-mode').value;
+            if (cookieMode === 'auto') {
+                // 自动获取模式：保存 UID 和环境
+                const autoUid = document.getElementById('auto-cookie-uid').value.trim();
+                const autoEnv = document.getElementById('auto-cookie-env').value;
+                if (autoUid) {
+                    advancedConfig.autoCookie = {
+                        uid: parseInt(autoUid, 10),
+                        env: autoEnv
+                    };
+                }
+            } else if (cookieMode === 'manual') {
+                // 手动配置模式：保存 Cookie 字符串
+                const cookieValue = document.getElementById('testcase-cookie').value.trim();
+                if (cookieValue) {
+                    try {
+                        advancedConfig.cookie = JSON.parse(cookieValue);
+                    } catch {
+                        advancedConfig.cookie = cookieValue; // 作为字符串
+                    }
                 }
             }
+            // cookieMode === 'none' 时不设置任何 Cookie
 
             // extraHTTPHeaders
             const headersValue = document.getElementById('testcase-headers').value.trim();
@@ -2002,9 +2166,27 @@
         }
 
         // 运行单个用例
-        async function runCase(id) {
+        async function runCase(id, testLabel = '') {
             const testCase = testCases.find(tc => tc.id === id);
             if (!testCase) return;
+
+            // 如果是单个运行（没有传入testLabel），询问测试标记
+            if (!testLabel && arguments.length === 1) {
+                const userLabel = prompt(
+                    `请输入本次测试的标记（可选）：\n\n` +
+                    `建议标记格式：\n` +
+                    `• 优化前 / 优化后\n` +
+                    `• Baseline / V2.0\n` +
+                    `• 主分支 / 功能分支\n\n` +
+                    `标记将显示在任务名称中，留空则不添加标记`,
+                    ''
+                );
+
+                // 如果用户点击取消，停止执行
+                if (userLabel === null) return;
+
+                testLabel = userLabel.trim();
+            }
 
             // 移除单任务限制，允许并发执行
             const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
@@ -2015,8 +2197,11 @@
             testCase.status = 'pending';
             renderCases();
 
+            // 构建任务名称
+            const taskName = testLabel ? `[${testLabel}] ${testCase.name}` : testCase.name;
+
             document.getElementById('status-card').style.display = 'block';
-            document.getElementById('current-case-name').textContent = testCase.name;
+            document.getElementById('current-case-name').textContent = taskName;
             document.getElementById('current-status').textContent = '运行中';
             document.getElementById('current-status').className = 'status-badge status-running';
 
@@ -2122,7 +2307,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        name: testCase.name, // 添加任务名称
+                        name: taskName, // 使用带标记的任务名称
                         config: {
                             mode: {
                                 anonymous: true,
@@ -2139,8 +2324,11 @@
                     throw new Error(result.message || result.error || '启动测试失败');
                 }
 
-                showToast(`任务已创建: ${testCase.name}`, 'success');
-                appendOutput(`[系统] 测试用例 "${testCase.name}" 已提交到任务队列`);
+                showToast(`任务已创建: ${taskName}`, 'success');
+                appendOutput(`[系统] 测试用例 "${taskName}" 已提交到任务队列`);
+                if (testLabel) {
+                    appendOutput(`[系统] 测试标记: ${testLabel}`);
+                }
                 appendOutput(`[系统] 任务ID: ${result.taskId}`);
                 appendOutput(`[系统] 运行模式: ${mode === 'headless' ? '无头模式' : '有头模式'}`);
                 appendOutput(`[系统] 测试类型: ${enabledRunners.join(' + ')}`);
@@ -2197,12 +2385,27 @@
                 const statusText = statusTexts[task.status] || '未知';
                 const bgColor = bgColors[task.status] || '#f3f4f6';
 
+                // Perfcat链接
+                const perfcatLinks = task.perfcatUrl ? `
+                    <div style="margin-top: 6px;">
+                        <a href="${task.perfcatUrl}" target="_blank" style="color: #3b82f6; text-decoration: none; font-size: 0.9em; margin-right: 10px;">
+                            📊 查看报告
+                        </a>
+                        <a href="${task.perfcatUrl}&viewType=chart" target="_blank" style="color: #3b82f6; text-decoration: none; font-size: 0.9em;">
+                            📈 图表模式
+                        </a>
+                    </div>
+                ` : '';
+
                 return `
                     <div style="padding: 10px; margin-bottom: 8px; background: ${bgColor}; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong>${escapeHtml(task.name)}</strong>
-                            <span style="margin-left: 10px; color: #6b7280; font-size: 0.9em;">${icon} ${statusText}</span>
-                            <span style="margin-left: 10px; color: #9ca3af; font-size: 0.85em;">${task.runner}</span>
+                        <div style="flex: 1;">
+                            <div>
+                                <strong>${escapeHtml(task.name)}</strong>
+                                <span style="margin-left: 10px; color: #6b7280; font-size: 0.9em;">${icon} ${statusText}</span>
+                                <span style="margin-left: 10px; color: #9ca3af; font-size: 0.85em;">${task.runner}</span>
+                            </div>
+                            ${perfcatLinks}
                         </div>
                         <div>
                             ${task.status === 'running' ? `
@@ -2308,34 +2511,103 @@
         async function runSelectedCases() {
             if (selectedCases.size === 0) return;
 
-            // 如果已有队列在运行，询问是否追加
-            if (runningQueue.length > 0) {
-                if (!confirm(`当前已有 ${runningQueue.length} 个任务在队列中，是否追加新任务？`)) return;
+            const selectedArray = Array.from(selectedCases);
+
+            // 获取服务器并发限制（如果之前没有获取）
+            if (!serverMaxConcurrent) {
+                try {
+                    const tasksResponse = await fetch('/api/tasks');
+                    const tasksData = await tasksResponse.json();
+                    serverMaxConcurrent = tasksData.maxConcurrent || 10;
+                } catch (e) {
+                    serverMaxConcurrent = 10; // 默认值
+                }
             }
 
-            // 追加到队列
-            const newTasks = Array.from(selectedCases);
-            runningQueue.push(...newTasks);
+            // 🆕 询问测试标记
+            const testLabel = prompt(
+                `请输入本次测试的标记（可选）：\n\n` +
+                `建议标记格式：\n` +
+                `• 优化前 / 优化后\n` +
+                `• Baseline / V2.0\n` +
+                `• 主分支 / 功能分支\n` +
+                `• 生产环境 / 测试环境\n\n` +
+                `标记将显示在任务名称中，留空则不添加标记`,
+                '' // 默认值为空
+            );
 
-            showToast(`已添加 ${newTasks.length} 个用例到队列`, 'success');
-            updateQueueDisplay();
+            // 如果用户点击取消，停止执行
+            if (testLabel === null) return;
 
-            // 如果当前没有运行中的任务，开始执行
-            if (!currentRunning) {
-                await runNextInQueue();
+            // 清理标记（去除首尾空格）
+            const cleanedLabel = testLabel.trim();
+
+            // 提示用户将并行执行
+            const confirmMsg = `即将并行执行 ${selectedArray.length} 个测试用例\n` +
+                             (cleanedLabel ? `测试标记: ${cleanedLabel}\n` : '') +
+                             `服务器并发限制: 最多同时运行 ${serverMaxConcurrent} 个任务\n` +
+                             (selectedArray.length > serverMaxConcurrent ?
+                              `前 ${serverMaxConcurrent} 个将立即执行，其余将排队等待\n` : '') +
+                             `确认执行？`;
+
+            if (!confirm(confirmMsg)) return;
+
+            // 并行提交所有选中的任务
+            let successCount = 0;
+            let failCount = 0;
+
+            showToast(`🚀 正在并行提交 ${selectedArray.length} 个任务...`, 'info');
+            appendOutput(`\n========== 批量并行执行开始 ==========`);
+            appendOutput(`[系统] 提交 ${selectedArray.length} 个测试用例`);
+            if (cleanedLabel) {
+                appendOutput(`[系统] 测试标记: ${cleanedLabel}`);
             }
+            appendOutput(`[系统] 服务器并发限制: ${serverMaxConcurrent} 个`);
+
+            const startTime = Date.now();
+
+            // 使用 Promise.allSettled 并行发起所有请求（即使有失败也不影响其他任务）
+            const results = await Promise.allSettled(
+                selectedArray.map(async (id, index) => {
+                    const testCase = testCases.find(tc => tc.id === id);
+                    const taskName = cleanedLabel ? `[${cleanedLabel}] ${testCase?.name}` : testCase?.name;
+                    appendOutput(`[${index + 1}/${selectedArray.length}] 提交任务: ${taskName}`);
+                    return runCase(id, cleanedLabel);
+                })
+            );
+
+            // 统计结果
+            results.forEach((result, index) => {
+                if (result.status === 'fulfilled') {
+                    successCount++;
+                } else {
+                    failCount++;
+                    const testCase = testCases.find(tc => tc.id === selectedArray[index]);
+                    console.error(`任务 ${testCase?.name} 提交失败:`, result.reason);
+                    appendOutput(`[错误] ${testCase?.name} 提交失败: ${result.reason}`);
+                }
+            });
+
+            const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+            appendOutput(`[系统] 批量提交完成，耗时 ${duration}秒`);
+            appendOutput(`========== 批量并行执行结束 ==========\n`);
+
+            // 显示结果
+            if (failCount === 0) {
+                showToast(`✅ 已成功提交 ${successCount} 个任务，正在并行执行`, 'success');
+            } else {
+                showToast(`⚠️ 成功 ${successCount} 个，失败 ${failCount} 个`, 'warning');
+            }
+
+            // 清空选择
+            selectedCases.clear();
+            updateSelectionUI();
+            renderCases();
         }
 
+        // 保留 runNextInQueue 用于向后兼容（虽然不再使用）
         async function runNextInQueue() {
-            if (runningQueue.length === 0) {
-                showToast('所有用例运行完成', 'success');
-                updateQueueDisplay();
-                return;
-            }
-
-            const id = runningQueue[0]; // 不要shift，等运行完成后再移除
-            updateQueueDisplay();
-            await runCase(id);
+            console.warn('runNextInQueue 已废弃，现在使用并行执行模式');
         }
 
         // 停止测试
@@ -2412,6 +2684,188 @@
         function closeModal() {
             document.getElementById('case-modal').classList.remove('active');
         }
+
+        // ==================== Cookie自动获取功能 ====================
+
+        // 显示Cookie自动获取弹窗
+        function showAutoFetchCookieModal() {
+            document.getElementById('cookie-fetch-modal').classList.add('active');
+            // 重置表单
+            document.getElementById('cookie-uid').value = '';
+            document.getElementById('cookie-env').value = 'prod';
+            document.getElementById('cookie-format').value = 'string';
+            document.getElementById('cookie-account-preset').value = '';
+        }
+
+        // 关闭Cookie获取弹窗
+        function closeCookieFetchModal() {
+            document.getElementById('cookie-fetch-modal').classList.remove('active');
+        }
+
+        // 选择预设账号
+        function selectCookiePreset() {
+            const preset = document.getElementById('cookie-account-preset').value;
+            if (!preset) return;
+
+            const [env, uid] = preset.split(':');
+            document.getElementById('cookie-uid').value = uid;
+            document.getElementById('cookie-env').value = env;
+        }
+
+        // 获取并应用Cookie
+        async function fetchAndApplyCookie() {
+            const uidInput = document.getElementById('cookie-uid').value.trim();
+            const env = document.getElementById('cookie-env').value;
+            const format = document.getElementById('cookie-format').value;
+
+            if (!uidInput) {
+                showToast('请输入UID', 'error');
+                return;
+            }
+
+            // 转换为数字类型（后端API要求mid必须是数字）
+            const uid = parseInt(uidInput, 10);
+            if (isNaN(uid)) {
+                showToast('UID必须是数字', 'error');
+                return;
+            }
+
+            try {
+                showToast('正在获取Cookie...', 'info');
+
+                const response = await fetch('/api/cookie/fetch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ uid, env })  // uid现在是数字类型
+                });
+
+                const result = await response.json();
+
+                if (!result.success) {
+                    throw new Error(result.error || result.details || '获取失败');
+                }
+
+                // 根据选择的格式填充Cookie
+                const cookieTextarea = document.getElementById('testcase-cookie');
+                if (format === 'json') {
+                    cookieTextarea.value = JSON.stringify(result.cookieJson, null, 2);
+                } else {
+                    cookieTextarea.value = result.cookieString;
+                }
+
+                showToast(`✅ Cookie获取成功 (UID: ${uid}, 环境: ${env === 'uat' ? 'UAT' : '生产'})`, 'success');
+
+                // 自动验证获取的Cookie
+                await validateCookie(result.cookieString);
+
+                // 显示获取的详细信息
+                console.log('[Cookie] 获取成功:', result);
+                appendOutput(`[Cookie] 自动获取成功 - UID: ${uid}, 环境: ${env === 'uat' ? 'UAT' : '生产环境'}`);
+            } catch (error) {
+                console.error('[Cookie] 获取失败:', error);
+                showToast('获取Cookie失败: ' + error.message, 'error');
+                appendOutput(`[Cookie] 获取失败: ${error.message}`);
+            }
+        }
+
+        // 验证当前Cookie（从文本框读取）
+        async function validateCurrentCookie() {
+            const cookieTextarea = document.getElementById('testcase-cookie');
+            const cookieValue = cookieTextarea.value.trim();
+
+            if (!cookieValue) {
+                showToast('请先配置Cookie', 'error');
+                return;
+            }
+
+            // 如果是JSON格式，转换为字符串
+            let cookieString = cookieValue;
+            if (cookieValue.startsWith('{')) {
+                try {
+                    const cookieObj = JSON.parse(cookieValue);
+                    cookieString = Object.entries(cookieObj)
+                        .map(([key, value]) => `${key}=${value}`)
+                        .join('; ');
+                } catch (e) {
+                    showToast('Cookie格式错误', 'error');
+                    return;
+                }
+            }
+
+            await validateCookie(cookieString);
+        }
+
+        // 验证Cookie（核心逻辑）
+        async function validateCookie(cookieString) {
+            const resultDiv = document.getElementById('cookie-validation-result');
+            const messageDiv = document.getElementById('cookie-validation-message');
+            const detailsDiv = document.getElementById('cookie-validation-details');
+
+            try {
+                // 显示加载状态
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = '#EDF2F7';
+                resultDiv.style.border = '1px solid #CBD5E0';
+                messageDiv.innerHTML = '🔄 正在验证Cookie...';
+                detailsDiv.innerHTML = '';
+
+                const response = await fetch('/api/cookie/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cookieString })
+                });
+
+                const result = await response.json();
+
+                // 显示验证结果
+                if (result.valid) {
+                    resultDiv.style.background = '#C6F6D5';
+                    resultDiv.style.border = '1px solid #48BB78';
+                    messageDiv.innerHTML = `✅ ${result.message}`;
+
+                    if (result.userInfo) {
+                        detailsDiv.innerHTML = `
+                            <strong>用户信息：</strong><br>
+                            • UID: ${result.userInfo.mid}<br>
+                            • 用户名: ${result.userInfo.uname || '未知'}<br>
+                            • VIP状态: ${result.userInfo.vipStatus === 1 ? '大会员' : '普通用户'}
+                        `;
+                    }
+
+                    showToast('✅ Cookie验证成功', 'success');
+                    appendOutput(`[Cookie] 验证成功 - UID: ${result.userInfo?.mid}, 用户: ${result.userInfo?.uname}`);
+                } else {
+                    resultDiv.style.background = '#FED7D7';
+                    resultDiv.style.border = '1px solid #FC8181';
+                    messageDiv.innerHTML = `❌ ${result.message}`;
+
+                    detailsDiv.innerHTML = `
+                        <strong>可能的原因：</strong><br>
+                        • Cookie已过期<br>
+                        • Cookie格式不正确<br>
+                        • 缺少必需字段 (SESSDATA, bili_jct)<br>
+                        • 网络问题或权限不足
+                    `;
+
+                    showToast('❌ Cookie验证失败', 'error');
+                    appendOutput(`[Cookie] 验证失败: ${result.message}`);
+                }
+
+                console.log('[Cookie] 验证结果:', result);
+            } catch (error) {
+                console.error('[Cookie] 验证异常:', error);
+
+                resultDiv.style.display = 'block';
+                resultDiv.style.background = '#FED7D7';
+                resultDiv.style.border = '1px solid #FC8181';
+                messageDiv.innerHTML = '❌ 验证失败';
+                detailsDiv.innerHTML = `错误: ${error.message}`;
+
+                showToast('Cookie验证失败: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== 原有功能 ====================
 
         // 导出用例
         function exportCases() {

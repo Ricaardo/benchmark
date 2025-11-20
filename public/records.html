@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试记录 - Benchmark Web Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-top: 4px;
+        }
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        select:focus, input:focus {
+            border-color: #667eea;
+        }
+
+        .records-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .records-table th,
+        .records-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .records-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .records-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .runner-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e6fffa;
+            color: #234e52;
+        }
+
+        .runner-initialization {
+            background: #fef5e7;
+            color: #7c2d12;
+        }
+
+        .runner-runtime {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .runner-memoryleak {
+            background: #fce7f3;
+            color: #831843;
+        }
+
+        .perfcat-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .perfcat-link:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .perfcat-link.chart {
+            background: #48bb78;
+        }
+
+        .perfcat-link.chart:hover {
+            background: #38a169;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .duration {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .date-time {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #48bb78;
+        }
+
+        .toast.error {
+            border-left: 4px solid #f56565;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📝 测试记录</h1>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary">← 返回首页</a>
+                <button onclick="refreshRecords()" class="btn btn-primary">🔄 刷新</button>
+                <button onclick="clearAllRecords()" class="btn btn-danger">🗑️ 清空记录</button>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-cards" id="stats-cards">
+            <div class="stat-card">
+                <div class="stat-label">总测试数</div>
+                <div class="stat-value" id="stat-total">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">成功</div>
+                <div class="stat-value" style="color: #48bb78;" id="stat-completed">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">失败</div>
+                <div class="stat-value" style="color: #f56565;" id="stat-error">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">平均耗时</div>
+                <div class="stat-value" style="font-size: 24px;" id="stat-duration">-</div>
+                <div class="stat-sub">毫秒</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Perfcat报告</div>
+                <div class="stat-value" style="color: #667eea;" id="stat-perfcat">-</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">Runner类型</label>
+                <select id="filter-runner" onchange="applyFilters()">
+                    <option value="">全部</option>
+                    <option value="Initialization">Initialization</option>
+                    <option value="Runtime">Runtime</option>
+                    <option value="MemoryLeak">MemoryLeak</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">状态</label>
+                <select id="filter-status" onchange="applyFilters()">
+                    <option value="">全部</option>
+                    <option value="completed">已完成</option>
+                    <option value="error">失败</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">每页显示</label>
+                <select id="filter-limit" onchange="applyFilters()">
+                    <option value="20">20条</option>
+                    <option value="50" selected>50条</option>
+                    <option value="100">100条</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Records Table -->
+        <div class="records-table-container">
+            <div id="loading" class="loading">加载中...</div>
+            <div id="records-content" style="display: none;">
+                <table class="records-table" id="records-table">
+                    <thead>
+                        <tr>
+                            <th>测试名称</th>
+                            <th>Runner</th>
+                            <th>状态</th>
+                            <th>开始时间</th>
+                            <th>耗时</th>
+                            <th>Perfcat链接</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-tbody">
+                    </tbody>
+                </table>
+
+                <!-- Pagination -->
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be inserted here -->
+                </div>
+            </div>
+
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h3>暂无测试记录</h3>
+                <p>完成测试后，记录将显示在这里</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 0;
+        let currentLimit = 50;
+        let currentFilters = {};
+        let totalRecords = 0;
+
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/test-records/stats');
+                const stats = await response.json();
+
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-completed').textContent = stats.completed;
+                document.getElementById('stat-error').textContent = stats.error;
+                document.getElementById('stat-duration').textContent = formatDuration(stats.averageDuration);
+                document.getElementById('stat-perfcat').textContent = stats.withPerfcat;
+            } catch (error) {
+                console.error('Failed to load stats:', error);
+            }
+        }
+
+        // 加载测试记录
+        async function loadRecords() {
+            try {
+                const params = new URLSearchParams({
+                    limit: currentLimit,
+                    offset: currentPage * currentLimit,
+                    ...currentFilters
+                });
+
+                const response = await fetch(`/api/test-records?${params}`);
+                const data = await response.json();
+
+                totalRecords = data.total;
+
+                if (data.records.length === 0) {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('records-content').style.display = 'none';
+                    document.getElementById('empty-state').style.display = 'block';
+                    return;
+                }
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('empty-state').style.display = 'none';
+                document.getElementById('records-content').style.display = 'block';
+
+                renderRecords(data.records);
+                renderPagination(data.total, data.limit, data.offset);
+            } catch (error) {
+                console.error('Failed to load records:', error);
+                showToast('加载记录失败', 'error');
+            }
+        }
+
+        // 渲染记录列表
+        function renderRecords(records) {
+            const tbody = document.getElementById('records-tbody');
+            tbody.innerHTML = '';
+
+            records.forEach(record => {
+                const tr = document.createElement('tr');
+
+                // 测试名称
+                const nameTd = document.createElement('td');
+                nameTd.innerHTML = `<strong>${escapeHtml(record.name)}</strong>`;
+                tr.appendChild(nameTd);
+
+                // Runner
+                const runnerTd = document.createElement('td');
+                const runnerClass = record.runner.toLowerCase();
+                runnerTd.innerHTML = `<span class="runner-badge runner-${runnerClass}">${record.runner}</span>`;
+                tr.appendChild(runnerTd);
+
+                // 状态
+                const statusTd = document.createElement('td');
+                statusTd.innerHTML = `<span class="status-badge status-${record.status}">${record.status === 'completed' ? '✅ 成功' : '❌ 失败'}</span>`;
+                tr.appendChild(statusTd);
+
+                // 开始时间
+                const timeTd = document.createElement('td');
+                timeTd.innerHTML = `<div class="date-time">${formatDateTime(record.startTime)}</div>`;
+                tr.appendChild(timeTd);
+
+                // 耗时
+                const durationTd = document.createElement('td');
+                durationTd.innerHTML = `<div class="duration">${formatDuration(record.duration)}</div>`;
+                tr.appendChild(durationTd);
+
+                // Perfcat链接
+                const perfcatTd = document.createElement('td');
+                if (record.perfcatUrl) {
+                    perfcatTd.innerHTML = `
+                        <div style="display: flex; gap: 6px;">
+                            <a href="${record.perfcatUrl}" target="_blank" class="perfcat-link">📊 报告</a>
+                            <a href="${record.perfcatChartUrl}" target="_blank" class="perfcat-link chart">📈 图表</a>
+                        </div>
+                    `;
+                } else {
+                    perfcatTd.innerHTML = '<span style="color: #a0aec0; font-size: 12px;">无</span>';
+                }
+                tr.appendChild(perfcatTd);
+
+                // 操作
+                const actionTd = document.createElement('td');
+                actionTd.innerHTML = `
+                    <div class="action-btns">
+                        <button onclick="deleteRecord('${record.id}')" class="btn btn-danger btn-small">删除</button>
+                    </div>
+                `;
+                tr.appendChild(actionTd);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        // 渲染分页
+        function renderPagination(total, limit, offset) {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(total / limit);
+            const currentPageNum = Math.floor(offset / limit);
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            let html = `<div style="color: #718096; font-size: 14px;">共 ${total} 条记录</div>`;
+
+            if (currentPageNum > 0) {
+                html += `<button class="btn btn-secondary btn-small" onclick="goToPage(${currentPageNum - 1})">← 上一页</button>`;
+            }
+
+            html += `<div style="color: #4a5568; font-weight: 500;">第 ${currentPageNum + 1} / ${totalPages} 页</div>`;
+
+            if (currentPageNum < totalPages - 1) {
+                html += `<button class="btn btn-secondary btn-small" onclick="goToPage(${currentPageNum + 1})">下一页 →</button>`;
+            }
+
+            pagination.innerHTML = html;
+        }
+
+        // 应用过滤器
+        function applyFilters() {
+            currentPage = 0;
+            currentFilters = {};
+
+            const runner = document.getElementById('filter-runner').value;
+            const status = document.getElementById('filter-status').value;
+            currentLimit = parseInt(document.getElementById('filter-limit').value);
+
+            if (runner) currentFilters.runner = runner;
+            if (status) currentFilters.status = status;
+
+            loadRecords();
+        }
+
+        // 翻页
+        function goToPage(page) {
+            currentPage = page;
+            loadRecords();
+        }
+
+        // 刷新记录
+        async function refreshRecords() {
+            currentPage = 0;
+            await loadStats();
+            await loadRecords();
+            showToast('已刷新', 'success');
+        }
+
+        // 删除记录
+        async function deleteRecord(id) {
+            if (!confirm('确定要删除这条测试记录吗？')) return;
+
+            try {
+                const response = await fetch(`/api/test-records/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('记录已删除', 'success');
+                    await loadStats();
+                    await loadRecords();
+                } else {
+                    showToast('删除失败', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to delete record:', error);
+                showToast('删除失败', 'error');
+            }
+        }
+
+        // 清空所有记录
+        async function clearAllRecords() {
+            if (!confirm('确定要清空所有测试记录吗？此操作不可恢复！')) return;
+
+            try {
+                const response = await fetch('/api/test-records/clear', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                if (response.ok) {
+                    showToast('所有记录已清空', 'success');
+                    await loadStats();
+                    await loadRecords();
+                } else {
+                    showToast('清空失败', 'error');
+                }
+            } catch (error) {
+                console.error('Failed to clear records:', error);
+                showToast('清空失败', 'error');
+            }
+        }
+
+        // 格式化时间
+        function formatDateTime(dateStr) {
+            const date = new Date(dateStr);
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        // 格式化时长
+        function formatDuration(ms) {
+            if (ms < 1000) return `${ms}ms`;
+            if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+            const minutes = Math.floor(ms / 60000);
+            const seconds = Math.floor((ms % 60000) / 1000);
+            return `${minutes}m ${seconds}s`;
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 显示提示
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // 初始化
+        window.onload = () => {
+            loadStats();
+            loadRecords();
+
+            // 定时刷新（可选）
+            // setInterval(() => {
+            //     loadStats();
+            //     loadRecords();
+            // }, 30000); // 每30秒刷新一次
+        };
+    </script>
+</body>
+</html>

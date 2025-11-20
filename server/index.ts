@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import fs from 'fs/promises';
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'crypto';
+import LZ from 'lz-string';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -96,6 +97,143 @@ async function sendWebhook(event: string, data: any) {
     }
 }
 
+// Perfcat配置
+interface PerfcatConfig {
+    url: string;
+    cookie: string;
+}
+
+let perfcatConfig: PerfcatConfig = {
+    url: 'https://fe-perfcat.bilibili.co/api/v1/perfcat/shorten',
+    cookie: ''
+};
+const perfcatConfigFile = path.join(__dirname, '../perfcat-config.json');
+
+// 测试记录
+interface TestRecord {
+    id: string;
+    name: string;
+    runner: string;
+    status: 'completed' | 'error';
+    startTime: Date;
+    endTime: Date;
+    duration: number; // 毫秒
+    perfcatId?: string;
+    perfcatUrl?: string;
+    perfcatChartUrl?: string;
+    exitCode?: number;
+}
+
+let testRecords: TestRecord[] = [];
+const testRecordsFile = path.join(__dirname, '../test-records.json');
+
+// 加载测试记录
+async function loadTestRecords() {
+    try {
+        const data = await fs.readFile(testRecordsFile, 'utf-8');
+        const records = JSON.parse(data);
+        // 转换日期字符串为Date对象
+        testRecords = records.map((r: any) => ({
+            ...r,
+            startTime: new Date(r.startTime),
+            endTime: new Date(r.endTime)
+        }));
+    } catch {
+        testRecords = [];
+    }
+}
+
+// 保存测试记录
+async function saveTestRecords() {
+    try {
+        await fs.writeFile(testRecordsFile, JSON.stringify(testRecords, null, 2));
+    } catch (error) {
+        console.error('Failed to save test records:', error);
+    }
+}
+
+// 添加测试记录
+async function addTestRecord(record: TestRecord) {
+    testRecords.unshift(record); // 最新的记录在最前面
+    // 只保留最近1000条记录
+    if (testRecords.length > 1000) {
+        testRecords = testRecords.slice(0, 1000);
+    }
+    await saveTestRecords();
+}
+
+// 加载Perfcat配置
+async function loadPerfcatConfig() {
+    try {
+        const data = await fs.readFile(perfcatConfigFile, 'utf-8');
+        const config = JSON.parse(data);
+        perfcatConfig = { ...perfcatConfig, ...config };
+    } catch {
+        // 使用默认配置
+    }
+}
+
+// 保存Perfcat配置
+async function savePerfcatConfig() {
+    await fs.writeFile(perfcatConfigFile, JSON.stringify(perfcatConfig, null, 2));
+}
+
+// 上传测试报告到Perfcat并获取短链
+async function uploadToPerfcat(reportData: any): Promise<{ success: boolean; id?: string; url?: string; error?: string }> {
+    if (!perfcatConfig.cookie) {
+        console.warn('[Perfcat] Cookie未配置，跳过上传');
+        return { success: false, error: 'Cookie not configured' };
+    }
+
+    try {
+        console.log('[Perfcat] 开始上传测试报告...');
+
+        const response = await fetch(perfcatConfig.url, {
+            method: 'POST',
+            headers: {
+                'Accept-Language': 'zh-CN,zh;q=0.9',
+                'Cache-Control': 'no-cache',
+                'Connection': 'keep-alive',
+                'Cookie': perfcatConfig.cookie,
+                'Origin': 'https://fe-perfcat.bilibili.co',
+                'Pragma': 'no-cache',
+                'Referer': 'https://fe-perfcat.bilibili.co/utils/upload',
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'same-origin',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+                'accept': 'application/json',
+                'content-type': 'application/json',
+                'sec-ch-ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"macOS"'
+            },
+            body: JSON.stringify({ data: LZ.compressToBase64(JSON.stringify(reportData)) })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const result = await response.json() as { id: string };
+        const shortId = result.id;
+
+        console.log(`[Perfcat] ✅ 上传成功，短链ID: ${shortId}`);
+
+        return {
+            success: true,
+            id: shortId,
+            url: `https://fe-perfcat.bilibili.co/utils/shorten/${shortId}`
+        };
+    } catch (error) {
+        console.error('[Perfcat] ❌ 上传失败:', error);
+        return {
+            success: false,
+            error: (error as Error).message
+        };
+    }
+}
+
 // ==================== 多任务管理系统 ====================
 
 interface Task {
@@ -109,13 +247,15 @@ interface Task {
     endTime?: Date;
     config: any;
     killTimeout?: NodeJS.Timeout;
+    perfcatId?: string;
+    perfcatUrl?: string;
 }
 
 // 任务存储
 const tasks = new Map<string, Task>();
 
 // 最大并发任务数
-const MAX_CONCURRENT_TASKS = 3;
+const MAX_CONCURRENT_TASKS = 10;
 
 // 获取当前运行中的任务数
 function getRunningTasksCount(): number {
@@ -255,6 +395,9 @@ async function startTask(taskId: string) {
     appendTaskOutput(taskId, `[系统] Runner: ${task.runner}\n`);
 
     try {
+        // 处理自动Cookie：在生成配置前自动获取Cookie
+        await processAutoCookies(task.config, taskId);
+
         // 生成配置文件
         const tempConfigCode = generateConfig(task.config);
         const tempConfigPath = path.join(__dirname, `../benchmark.config.${taskId}.mts`);
@@ -263,6 +406,23 @@ async function startTask(taskId: string) {
         // 执行 benchmark
         const command = `npx @bilibili-player/benchmark --config benchmark.config.${taskId}.mts`;
         task.process = exec(command, { cwd: path.join(__dirname, '..') });
+
+        // 设置任务超时保护（30分钟）
+        const taskTimeout = setTimeout(() => {
+            if (task.process && !task.process.killed) {
+                console.warn(`[TaskManager] ⏰ 任务超时，强制终止: ${task.name} (TaskID: ${taskId})`);
+                appendTaskOutput(taskId, `\n[系统] ⚠️ 任务执行超时(30分钟)，已强制终止\n`);
+                task.process.kill('SIGTERM');
+                setTimeout(() => {
+                    if (task.process && !task.process.killed) {
+                        task.process.kill('SIGKILL');
+                    }
+                }, 5000);
+            }
+        }, 30 * 60 * 1000); // 30分钟
+
+        // 保存timeout引用以便清理
+        task.killTimeout = taskTimeout;
 
         task.process.stdout?.on('data', (data) => {
             appendTaskOutput(taskId, data.toString());
@@ -273,6 +433,8 @@ async function startTask(taskId: string) {
         });
 
         task.process.on('close', async (code) => {
+            console.log(`[TaskManager] 🔔 进程关闭事件触发: ${task.name}, 退出码: ${code}, TaskID: ${taskId}`);
+
             task.status = code === 0 ? 'completed' : 'error';
             task.endTime = new Date();
             task.process = null;
@@ -281,11 +443,87 @@ async function startTask(taskId: string) {
             console.log(`[TaskManager] ${statusEmoji} 任务${code === 0 ? '完成' : '失败'}: ${task.name} (退出码: ${code})`);
             appendTaskOutput(taskId, `\n[系统] 任务${code === 0 ? '完成' : '失败'} (退出码: ${code})\n`);
 
-            // 清理配置文件
+            // 清理配置文件（优先执行，确保清理）
             try {
                 await fs.unlink(tempConfigPath);
+                console.log(`[TaskManager] 🗑️  已删除配置文件: ${tempConfigPath}`);
             } catch (e) {
-                console.error('Failed to delete temp config:', e);
+                console.error(`[TaskManager] ⚠️  删除配置文件失败: ${tempConfigPath}`, e);
+            }
+
+            // 如果任务成功完成，尝试上传报告到Perfcat
+            if (code === 0) {
+                try {
+                    // 等待一小段时间，确保报告文件已完全写入
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // 查找最新的测试报告文件
+                    const reportsDir = path.join(__dirname, '../benchmark_report');
+                    const files = await fs.readdir(reportsDir);
+
+                    // 改进的文件匹配逻辑：
+                    // 1. 必须是.json文件
+                    // 2. 文件修改时间在任务启动之后
+                    // 3. 文件名包含runner类型
+                    const taskStartTime = task.startTime.getTime();
+                    const jsonFiles = await Promise.all(
+                        files
+                            .filter(f => f.endsWith('.json') && f.includes(task.runner))
+                            .map(async (f) => {
+                                const filePath = path.join(reportsDir, f);
+                                const stat = await fs.stat(filePath);
+                                return {
+                                    name: f,
+                                    path: filePath,
+                                    mtime: stat.mtime.getTime()
+                                };
+                            })
+                    );
+
+                    // 只选择任务启动后生成的文件
+                    const validFiles = jsonFiles
+                        .filter(f => f.mtime >= taskStartTime)
+                        .sort((a, b) => b.mtime - a.mtime);
+
+                    console.log(`[TaskManager] 📂 找到 ${validFiles.length} 个有效报告文件 (任务: ${task.name})`);
+
+                    if (validFiles.length > 0) {
+                        const latestReport = validFiles[0];
+                        console.log(`[TaskManager] 📄 选择报告文件: ${latestReport.name}`);
+
+                        // 读取并解析JSON
+                        const reportContent = await fs.readFile(latestReport.path, 'utf-8');
+                        const reportData = JSON.parse(reportContent);
+
+                        // 验证报告数据
+                        if (!reportData || typeof reportData !== 'object') {
+                            appendTaskOutput(taskId, `[系统] ⚠️ 测试报告格式无效\n`);
+                            console.error('[TaskManager] Invalid report data:', reportData);
+                        } else {
+                            // 上传到Perfcat
+                            appendTaskOutput(taskId, `[系统] 正在上传测试报告到Perfcat...\n`);
+                            const uploadResult = await uploadToPerfcat(reportData);
+
+                            if (uploadResult.success && uploadResult.id) {
+                                task.perfcatId = uploadResult.id;
+                                // 根据runner类型构建完整的Perfcat URL
+                                task.perfcatUrl = `https://fe-perfcat.bilibili.co/utils/shorten/${uploadResult.id}?runner=${task.runner}`;
+
+                                appendTaskOutput(taskId, `[系统] ✅ Perfcat上传成功！\n`);
+                                appendTaskOutput(taskId, `[系统] 📊 查看报告: ${task.perfcatUrl}\n`);
+                                appendTaskOutput(taskId, `[系统] 📈 图表模式: ${task.perfcatUrl}&viewType=chart\n`);
+                            } else {
+                                appendTaskOutput(taskId, `[系统] ⚠️ Perfcat上传失败: ${uploadResult.error || '未知错误'}\n`);
+                            }
+                        }
+                    } else {
+                        appendTaskOutput(taskId, `[系统] ⚠️ 未找到测试报告文件 (可能生成失败或文件名不匹配)\n`);
+                        console.warn(`[TaskManager] ⚠️  未找到有效报告文件，任务: ${task.name}, runner: ${task.runner}`);
+                    }
+                } catch (error) {
+                    console.error('[TaskManager] 上传Perfcat失败:', error);
+                    appendTaskOutput(taskId, `[系统] ⚠️ 处理测试报告时出错: ${(error as Error).message}\n`);
+                }
             }
 
             // 清理超时定时器
@@ -297,13 +535,35 @@ async function startTask(taskId: string) {
             broadcastTaskUpdate(taskId);
             broadcastTaskList();
 
-            // 发送 Webhook 通知
+            // 保存测试记录
+            if (task.endTime && task.startTime) {
+                const duration = task.endTime.getTime() - task.startTime.getTime();
+                const record: TestRecord = {
+                    id: task.id,
+                    name: task.name,
+                    runner: task.runner,
+                    status: task.status as 'completed' | 'error',
+                    startTime: task.startTime,
+                    endTime: task.endTime,
+                    duration,
+                    perfcatId: task.perfcatId,
+                    perfcatUrl: task.perfcatUrl,
+                    perfcatChartUrl: task.perfcatUrl ? `${task.perfcatUrl}&viewType=chart` : undefined,
+                    exitCode: code ?? undefined
+                };
+                await addTestRecord(record);
+                console.log(`[TestRecords] 📝 已保存测试记录: ${task.name}`);
+            }
+
+            // 发送 Webhook 通知（包含Perfcat链接）
             sendWebhook('task_completed', {
                 taskId: task.id,
                 name: task.name,
                 runner: task.runner,
                 status: task.status,
-                exitCode: code
+                exitCode: code,
+                perfcatUrl: task.perfcatUrl,
+                perfcatId: task.perfcatId
             });
 
             // 尝试启动下一个待执行的任务
@@ -313,15 +573,35 @@ async function startTask(taskId: string) {
         });
 
         task.process.on('error', (error) => {
+            console.error(`[TaskManager] ❌ 进程错误: ${task.name}, 错误: ${error.message}`);
             appendTaskOutput(taskId, `\n❌ 进程错误: ${error.message}\n`);
             task.status = 'error';
             task.endTime = new Date();
             task.process = null;
+
+            // 清理超时定时器
+            if (task.killTimeout) {
+                clearTimeout(task.killTimeout);
+                task.killTimeout = undefined;
+            }
+
             broadcastTaskUpdate(taskId);
             broadcastTaskList();
 
             // 尝试启动下一个待执行的任务
             startNextPendingTask();
+        });
+
+        // 添加exit事件作为备份（有些情况下close不会触发，但exit会）
+        task.process.on('exit', (code, signal) => {
+            console.log(`[TaskManager] 🚪 进程退出事件触发: ${task.name}, 退出码: ${code}, 信号: ${signal}, TaskID: ${taskId}`);
+
+            // 如果任务还在running状态，说明close事件没触发，需要在这里处理
+            if (task.status === 'running') {
+                console.warn(`[TaskManager] ⚠️  检测到close事件未触发，在exit事件中处理: ${task.name}`);
+                // 触发一次close的逻辑会更好，但为了避免重复，这里做简单标记
+                // close事件应该会在exit后触发，所以这里只是记录
+            }
         });
 
         broadcastTaskUpdate(taskId);
@@ -601,11 +881,31 @@ function generateTestCase(tc: any, runnerType: string): string {
         lines.push(`delayMs: ${tc.delayMs}`);
     }
 
-    // Cookie
+    // Cookie - 转换为Playwright格式
     if (tc.cookie) {
         if (typeof tc.cookie === 'string') {
-            lines.push(`cookie: ${JSON.stringify(tc.cookie)}`);
+            // 将字符串格式的Cookie转换为Playwright Cookie对象数组
+            const cookieString = tc.cookie;
+            const cookieArray: any[] = [];
+
+            cookieString.split(';').forEach((item: string) => {
+                const trimmed = item.trim();
+                const eqIndex = trimmed.indexOf('=');
+                if (eqIndex > 0) {
+                    const name = trimmed.substring(0, eqIndex);
+                    const value = trimmed.substring(eqIndex + 1);
+                    cookieArray.push({
+                        name,
+                        value,
+                        domain: '.bilibili.com',
+                        path: '/'
+                    });
+                }
+            });
+
+            lines.push(`cookie: ${JSON.stringify(cookieArray)}`);
         } else {
+            // 已经是对象格式，直接使用
             lines.push(`cookie: ${JSON.stringify(tc.cookie)}`);
         }
     }
@@ -842,7 +1142,9 @@ app.get('/api/tasks', (req, res) => {
         status: t.status,
         startTime: t.startTime,
         endTime: t.endTime,
-        outputLength: t.output.length
+        outputLength: t.output.length,
+        perfcatId: t.perfcatId,
+        perfcatUrl: t.perfcatUrl
     }));
 
     res.json({
@@ -868,7 +1170,9 @@ app.get('/api/tasks/:taskId', (req, res) => {
         status: task.status,
         output: task.output,
         startTime: task.startTime,
-        endTime: task.endTime
+        endTime: task.endTime,
+        perfcatId: task.perfcatId,
+        perfcatUrl: task.perfcatUrl
     });
 });
 
@@ -1460,6 +1764,499 @@ app.post('/api/webhook/test', async (req, res) => {
     }
 });
 
+// ========== Cookie自动获取 ==========
+
+// 处理测试配置中的自动Cookie
+async function processAutoCookies(config: any, taskId: string) {
+    const runners = config.runners || {};
+
+    for (const runnerName of Object.keys(runners)) {
+        const runner = runners[runnerName];
+        if (!runner.enabled || !runner.testCases) continue;
+
+        for (const testCase of runner.testCases) {
+            const advConfig = testCase.advancedConfig;
+            if (!advConfig || !advConfig.autoCookie) continue;
+
+            const { uid, env } = advConfig.autoCookie;
+
+            appendTaskOutput(taskId, `[Cookie] 🔄 自动获取Cookie: UID=${uid}, 环境=${env}\n`);
+            console.log(`[Cookie] 为任务 ${taskId} 自动获取Cookie: UID=${uid}, 环境=${env}`);
+
+            try {
+                // 调用内部Cookie获取逻辑
+                const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
+
+                if (isNaN(numericUid)) {
+                    throw new Error(`Invalid UID: ${uid}`);
+                }
+
+                let tokenData: any;
+
+                if (env === 'uat') {
+                    const response = await fetch(cookieEnvConfig.uatUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mid: numericUid })
+                    });
+
+                    const result = await response.json() as any;
+
+                    if (!result.data || !result.data.session || !result.data.csrf) {
+                        throw new Error(`UAT Cookie获取失败: ${result.message || 'Unknown error'}`);
+                    }
+
+                    tokenData = {
+                        session: result.data.session,
+                        csrf: result.data.csrf,
+                        mid: numericUid
+                    };
+                } else {
+                    // 生产环境
+                    const url = `${cookieEnvConfig.prodUrl}?mid=${numericUid}`;
+                    const response = await fetch(url);
+                    const result = await response.json() as any;
+
+                    if (!result.data || !result.data.session || !result.data.csrf) {
+                        throw new Error(`生产环境Cookie获取失败: ${result.message || 'Unknown error'}`);
+                    }
+
+                    tokenData = {
+                        session: result.data.session,
+                        csrf: result.data.csrf,
+                        mid: result.data.mid || numericUid
+                    };
+                }
+
+                // 构建Cookie字符串
+                const cookieString = `SESSDATA=${tokenData.session}; bili_jct=${tokenData.csrf}; DedeUserID=${tokenData.mid}; buvid3=FFFFFFFF-00FE-TEST-MAIN-FRONTWHITEBUVID00infoc`;
+
+                // 替换 autoCookie 为实际的 cookie
+                delete advConfig.autoCookie;
+                advConfig.cookie = cookieString;
+
+                appendTaskOutput(taskId, `[Cookie] ✅ Cookie获取成功: UID=${numericUid}\n`);
+                console.log(`[Cookie] 成功获取Cookie: UID=${numericUid}, 环境=${env}`);
+            } catch (error) {
+                const errorMsg = (error as Error).message;
+                appendTaskOutput(taskId, `[Cookie] ❌ Cookie获取失败: ${errorMsg}\n`);
+                console.error(`[Cookie] Cookie获取失败:`, error);
+                throw error; // 中断任务执行
+            }
+        }
+    }
+}
+
+// Cookie环境配置
+interface CookieEnvConfig {
+    uatUrl: string;
+    prodUrl: string;
+}
+
+const cookieEnvConfig: CookieEnvConfig = {
+    uatUrl: 'http://hassan.bilibili.co/ep/admin/hassan/v2/uat/account/cookie/query',
+    prodUrl: 'http://melloi.bilibili.co/ep/admin/melloi/v3/out/prod/account/token'
+};
+
+// 获取Cookie（基于UID和环境）
+app.post('/api/cookie/fetch', async (req, res) => {
+    const { uid, env = 'prod' } = req.body;
+
+    if (!uid) {
+        return res.status(400).json({ error: 'UID is required' });
+    }
+
+    try {
+        let tokenData: any;
+        // 确保UID是数字类型
+        const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
+
+        if (isNaN(numericUid)) {
+            return res.status(400).json({ error: 'Invalid UID: must be a number' });
+        }
+
+        if (env === 'uat') {
+            // UAT环境 - 注意：mid必须是数字类型
+            const response = await fetch(cookieEnvConfig.uatUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mid: numericUid })  // 发送数字而不是字符串
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json() as any;
+            console.log('[Cookie] UAT API 原始响应:', JSON.stringify(result, null, 2));
+
+            // 检查响应结构
+            if (!result.data) {
+                console.error('[Cookie] UAT API 响应缺少 data 字段:', result);
+                throw new Error('UAT API响应格式错误: 缺少data字段');
+            }
+
+            tokenData = {
+                session: result.data.session,
+                csrf: result.data.csrf,
+                mid: numericUid,
+                expires: result.data.expires || null
+            };
+
+            // 验证必需字段
+            if (!tokenData.session || !tokenData.csrf) {
+                console.error('[Cookie] UAT Token数据不完整:', tokenData);
+                throw new Error(`UAT Cookie数据不完整 - session: ${!!tokenData.session}, csrf: ${!!tokenData.csrf}`);
+            }
+        } else {
+            // 生产环境
+            const url = `${cookieEnvConfig.prodUrl}?mid=${uid}`;
+            const response = await fetch(url, {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const result = await response.json() as any;
+            console.log('[Cookie] Prod API 原始响应:', JSON.stringify(result, null, 2));
+
+            if (!result || result.code !== 0) {
+                throw new Error(result?.message || 'Failed to fetch token data');
+            }
+
+            if (!result.data) {
+                console.error('[Cookie] Prod API 响应缺少 data 字段:', result);
+                throw new Error('生产环境API响应格式错误: 缺少data字段');
+            }
+
+            tokenData = result.data;
+
+            // 验证必需字段
+            if (!tokenData.session || !tokenData.csrf) {
+                console.error('[Cookie] Prod Token数据不完整:', tokenData);
+                throw new Error(`生产环境Cookie数据不完整 - session: ${!!tokenData.session}, csrf: ${!!tokenData.csrf}`);
+            }
+        }
+
+        // 构建Cookie字符串
+        const cookieString = `SESSDATA=${tokenData.session}; bili_jct=${tokenData.csrf}; DedeUserID=${tokenData.mid}; buvid3=FFFFFFFF-00FE-TEST-MAIN-FRONTWHITEBUVID00infoc`;
+
+        // 也返回JSON格式
+        const cookieJson = {
+            SESSDATA: tokenData.session,
+            bili_jct: tokenData.csrf,
+            DedeUserID: String(tokenData.mid),
+            buvid3: 'FFFFFFFF-00FE-TEST-MAIN-FRONTWHITEBUVID00infoc'
+        };
+
+        console.log('[Cookie] 成功构建Cookie:', {
+            env,
+            uid: numericUid,
+            hasSession: !!tokenData.session,
+            hasCsrf: !!tokenData.csrf,
+            cookiePreview: cookieString.substring(0, 100) + '...'
+        });
+
+        res.json({
+            success: true,
+            uid: numericUid,
+            env: env,
+            cookieString,
+            cookieJson,
+            tokenData
+        });
+    } catch (error) {
+        console.error('[Cookie] 获取失败:', error);
+        res.status(500).json({
+            error: 'Failed to fetch cookie',
+            details: (error as Error).message
+        });
+    }
+});
+
+// 预设的测试账号配置
+app.get('/api/cookie/presets', async (_req, res) => {
+    res.json({
+        presets: [
+            {
+                name: 'UAT测试账号',
+                uid: 110000233,
+                env: 'uat',
+                description: 'UAT环境测试账号'
+            },
+            {
+                name: '生产测试账号',
+                uid: 3546793358919882,
+                env: 'prod',
+                description: '生产环境测试账号'
+            }
+        ]
+    });
+});
+
+// 验证Cookie是否有效
+app.post('/api/cookie/validate', async (req, res) => {
+    const { cookieString } = req.body;
+
+    if (!cookieString) {
+        return res.status(400).json({ error: 'Cookie string is required' });
+    }
+
+    try {
+        // 解析Cookie
+        const cookies: Record<string, string> = {};
+        cookieString.split(';').forEach((item: string) => {
+            const parts = item.trim().split('=');
+            if (parts.length === 2) {
+                cookies[parts[0]] = parts[1];
+            }
+        });
+
+        // 检查必需字段
+        const hasRequiredFields = !!(cookies.SESSDATA && cookies.bili_jct);
+
+        if (!hasRequiredFields) {
+            return res.json({
+                valid: false,
+                message: '缺少必需字段',
+                details: {
+                    hasSESSDATA: !!cookies.SESSDATA,
+                    hasBiliJct: !!cookies.bili_jct,
+                    hasDedeUserID: !!cookies.DedeUserID
+                }
+            });
+        }
+
+        // 尝试访问B站API验证Cookie
+        const testUrl = 'https://api.bilibili.com/x/web-interface/nav';
+        const response = await fetch(testUrl, {
+            headers: {
+                'Cookie': cookieString,
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+            }
+        });
+
+        const result = await response.json() as any;
+
+        // 检查是否登录
+        const isLoggedIn = result.code === 0 && result.data?.isLogin;
+
+        res.json({
+            valid: isLoggedIn,
+            isLoggedIn,
+            message: isLoggedIn ? 'Cookie有效，已登录' : 'Cookie无效或已过期',
+            userInfo: isLoggedIn ? {
+                mid: result.data?.mid,
+                uname: result.data?.uname,
+                vipStatus: result.data?.vipStatus
+            } : null,
+            apiResponse: result
+        });
+    } catch (error) {
+        console.error('[Cookie] 验证失败:', error);
+        res.status(500).json({
+            error: 'Cookie验证失败',
+            details: (error as Error).message
+        });
+    }
+});
+
+// ========== Perfcat配置 ==========
+
+// 获取Perfcat配置状态（不返回cookie）
+app.get('/api/perfcat', async (req, res) => {
+    res.json({
+        url: perfcatConfig.url,
+        enabled: !!perfcatConfig.cookie,
+        hasCookie: !!perfcatConfig.cookie
+    });
+});
+
+// 设置Perfcat配置
+app.post('/api/perfcat', async (req, res) => {
+    const { url, cookie } = req.body;
+
+    if (url) {
+        perfcatConfig.url = url;
+    }
+
+    if (cookie !== undefined) {
+        perfcatConfig.cookie = cookie;
+    }
+
+    await savePerfcatConfig();
+
+    res.json({
+        success: true,
+        message: perfcatConfig.cookie ? 'Perfcat配置已保存' : 'Perfcat已禁用',
+        enabled: !!perfcatConfig.cookie
+    });
+});
+
+// 测试Perfcat上传
+app.post('/api/perfcat/test', async (req, res) => {
+    if (!perfcatConfig.cookie) {
+        return res.status(400).json({ error: 'Perfcat Cookie未配置' });
+    }
+
+    try {
+        const testData = {
+            test: true,
+            message: 'Test upload from Benchmark Web Runner',
+            timestamp: new Date().toISOString()
+        };
+
+        const result = await uploadToPerfcat(testData);
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: 'Perfcat测试上传成功',
+                perfcatId: result.id,
+                perfcatUrl: result.url
+            });
+        } else {
+            res.status(500).json({
+                error: 'Perfcat测试上传失败',
+                details: result.error
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            error: 'Perfcat测试失败',
+            details: (error as Error).message
+        });
+    }
+});
+
+// ========== 测试记录API ==========
+
+// 获取测试记录列表
+app.get('/api/test-records', async (req, res) => {
+    try {
+        const { runner, status, limit = 50, offset = 0 } = req.query;
+
+        let filteredRecords = [...testRecords];
+
+        // 按runner过滤
+        if (runner && typeof runner === 'string') {
+            filteredRecords = filteredRecords.filter(r => r.runner === runner);
+        }
+
+        // 按状态过滤
+        if (status && typeof status === 'string') {
+            filteredRecords = filteredRecords.filter(r => r.status === status);
+        }
+
+        // 分页
+        const total = filteredRecords.length;
+        const limitNum = parseInt(limit as string) || 50;
+        const offsetNum = parseInt(offset as string) || 0;
+        const paginatedRecords = filteredRecords.slice(offsetNum, offsetNum + limitNum);
+
+        res.json({
+            records: paginatedRecords,
+            total,
+            limit: limitNum,
+            offset: offsetNum
+        });
+    } catch (error) {
+        console.error('Failed to get test records:', error);
+        res.status(500).json({ error: 'Failed to get test records' });
+    }
+});
+
+// 获取单个测试记录
+app.get('/api/test-records/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = testRecords.find(r => r.id === id);
+
+        if (!record) {
+            return res.status(404).json({ error: 'Test record not found' });
+        }
+
+        res.json(record);
+    } catch (error) {
+        console.error('Failed to get test record:', error);
+        res.status(500).json({ error: 'Failed to get test record' });
+    }
+});
+
+// 删除测试记录
+app.delete('/api/test-records/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const index = testRecords.findIndex(r => r.id === id);
+
+        if (index === -1) {
+            return res.status(404).json({ error: 'Test record not found' });
+        }
+
+        testRecords.splice(index, 1);
+        await saveTestRecords();
+
+        res.json({ success: true, message: 'Test record deleted' });
+    } catch (error) {
+        console.error('Failed to delete test record:', error);
+        res.status(500).json({ error: 'Failed to delete test record' });
+    }
+});
+
+// 清空测试记录
+app.post('/api/test-records/clear', async (req, res) => {
+    try {
+        const { runner, status } = req.body;
+
+        if (!runner && !status) {
+            // 清空所有记录
+            testRecords = [];
+        } else {
+            // 按条件清空
+            testRecords = testRecords.filter(r => {
+                if (runner && r.runner !== runner) return true;
+                if (status && r.status !== status) return true;
+                return false;
+            });
+        }
+
+        await saveTestRecords();
+
+        res.json({ success: true, message: 'Test records cleared', remaining: testRecords.length });
+    } catch (error) {
+        console.error('Failed to clear test records:', error);
+        res.status(500).json({ error: 'Failed to clear test records' });
+    }
+});
+
+// 获取测试统计信息
+app.get('/api/test-records/stats', async (req, res) => {
+    try {
+        const stats = {
+            total: testRecords.length,
+            completed: testRecords.filter(r => r.status === 'completed').length,
+            error: testRecords.filter(r => r.status === 'error').length,
+            byRunner: {
+                Initialization: testRecords.filter(r => r.runner === 'Initialization').length,
+                Runtime: testRecords.filter(r => r.runner === 'Runtime').length,
+                MemoryLeak: testRecords.filter(r => r.runner === 'MemoryLeak').length
+            },
+            withPerfcat: testRecords.filter(r => r.perfcatUrl).length,
+            averageDuration: testRecords.length > 0
+                ? Math.round(testRecords.reduce((sum, r) => sum + r.duration, 0) / testRecords.length)
+                : 0
+        };
+
+        res.json(stats);
+    } catch (error) {
+        console.error('Failed to get test statistics:', error);
+        res.status(500).json({ error: 'Failed to get test statistics' });
+    }
+});
+
 // ========== 外部API接口（需要API密钥） ==========
 
 // API: 启动测试
@@ -1663,9 +2460,13 @@ const server = app.listen(PORT, async () => {
     await ensureReportsDir();
     await loadApiKeys();
     await loadWebhookConfig();
+    await loadPerfcatConfig();
+    await loadTestRecords();
 
     console.log(`📡 API Keys: ${apiKeys.length} active`);
-    console.log(`🔔 Webhook: ${webhookUrl ? 'Enabled' : 'Disabled'}\n`);
+    console.log(`🔔 Webhook: ${webhookUrl ? 'Enabled' : 'Disabled'}`);
+    console.log(`📊 Perfcat: ${perfcatConfig.cookie ? 'Enabled' : 'Disabled'}`);
+    console.log(`📝 Test Records: ${testRecords.length} records loaded\n`);
 }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`\n❌ Error: Port ${PORT} is already in use.`);
