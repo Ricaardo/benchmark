@@ -1,5 +1,18 @@
 [
   {
+    "id": "task_1763630498996_k1s2b43b5",
+    "name": "🎬 示例2: B站视频页 - Runtime性能监控",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-20T09:21:38.996Z",
+    "endTime": "2025-11-20T09:22:36.490Z",
+    "duration": 57494,
+    "perfcatId": "ygfx4P",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/ygfx4P?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/ygfx4P?runner=Runtime&viewType=chart",
+    "exitCode": 0
+  },
+  {
     "id": "task_1763630171052_3awpz7oac",
     "name": "🎬 示例2: B站视频页 - Runtime性能监控",
     "runner": "Runtime",
