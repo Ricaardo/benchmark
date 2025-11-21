@@ -999,14 +999,14 @@
 
     <script>
         // 版本检查 - 用于调试
-        const PAGE_VERSION = '2025-11-21-v5-execution-records-decoupled';
+        const PAGE_VERSION = '2025-11-21-v4-fixed-hook-presets';
         console.log('='.repeat(60));
         console.log('页面版本:', PAGE_VERSION);
         console.log('加载时间:', new Date().toLocaleString());
-        console.log('✨ 重大更新: 执行与配置解耦');
-        console.log('✓ 移除测试用例 status 字段');
-        console.log('✓ 创建独立的测试记录页面 (records.html)');
-        console.log('✓ 测试用例页面专注于配置管理');
+        console.log('✓ 修复: 移除重复的 ConfigPresets 声明');
+        console.log('✓ 修复: 添加 onPageTesting 预设到 HookPresets');
+        console.log('✓ 修复: applyUrlHookPreset 使用 HookPresets 和 code 字段');
+        console.log('HookPresets 可用:', typeof HookPresets !== 'undefined');
         console.log('='.repeat(60));
 
         // 数据存储
@@ -1590,6 +1590,7 @@
                             <th>URL数量</th>
                             <th>模式</th>
                             <th>重复次数</th>
+                            <th>执行记录</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -1616,6 +1617,9 @@
                                 '<span class="runner-tag runner-' + r.toLowerCase() + '" style="margin-right: 4px;">' + r + '</span>'
                             ).join('');
 
+                            // 获取执行次数
+                            const executionCount = testCase.executionHistory?.length || 0;
+
                             return `
                             <tr>
                                 <td><input type="checkbox" onchange="toggleCaseSelection('${testCase.id}', this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
@@ -1624,6 +1628,11 @@
                                 <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
                                 <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
                                 <td>${testCase.repeatCount || 1}</td>
+                                <td>
+                                    <button class="btn-secondary btn-small" onclick="viewTestRecords('${testCase.id}')" title="查看执行记录">
+                                        📊 记录 ${executionCount > 0 ? `(${executionCount})` : ''}
+                                    </button>
+                                </td>
                                 <td>
                                     <div class="actions">
                                         <button class="btn-success btn-small" onclick="runCase('${testCase.id}')">▶ 运行</button>
@@ -3583,7 +3592,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '测试B站首页的初始化性能（冷启动）',
                     tags: ['示例', 'bilibili', '基础'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3600,7 +3609,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '监控视频页30秒运行时性能，测试FPS和长任务',
                     tags: ['示例', 'bilibili', 'runtime'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         hooks: {
@@ -3622,7 +3631,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '检测视频页面的内存泄漏问题，重复执行页面操作',
                     tags: ['示例', 'bilibili', '内存泄漏'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3644,7 +3653,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '对比测试B站不同页面的性能表现',
                     tags: ['示例', 'bilibili', '多页面'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3661,7 +3670,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '模拟移动设备测试B站移动端性能',
                     tags: ['示例', 'bilibili', '移动端'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         deviceOptions: ['Mobile', { preset: 'android' }]
@@ -3680,7 +3689,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '阻止图片和字体加载，测试核心页面性能',
                     tags: ['示例', 'bilibili', '资源优化'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         blockList: ['*.jpg', '*.png', '*.webp', '*.woff', '*.woff2'],
@@ -3702,7 +3711,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 3,
                     description: '注入自定义CSS隐藏广告元素，测试性能影响',
                     tags: ['示例', 'bilibili', 'css'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         customCss: '.ad-report, .bili-banner, [class*="ad-"] { display: none !important; }'
@@ -3721,7 +3730,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 2,
                     description: '对视频页执行全面性能测试：初始化、运行时、内存泄漏',
                     tags: ['示例', 'bilibili', '全面测试'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         delayMs: 5000,
@@ -3872,6 +3881,154 @@ console.log('B站弹幕开关完成');`
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        // 查看测试记录
+        async function viewTestRecords(testCaseId) {
+            try {
+                const response = await fetch(`http://localhost:${PORT}/api/testcases/${testCaseId}/executions`);
+                if (!response.ok) throw new Error('Failed to fetch test records');
+
+                const records = await response.json();
+                showTestRecordsModal(testCaseId, records);
+            } catch (error) {
+                console.error('Failed to load test records:', error);
+                showToast('加载测试记录失败', 'error');
+            }
+        }
+
+        // 显示测试记录模态框
+        function showTestRecordsModal(testCaseId, records) {
+            const testCase = testCases.find(tc => tc.id == testCaseId);
+            const testCaseName = testCase ? testCase.name : '未知测试用例';
+
+            const modalHTML = `
+                <div class="modal" id="test-records-modal" style="display: flex;">
+                    <div class="modal-content" style="max-width: 1000px; width: 90%;">
+                        <div class="modal-header">
+                            <h2>📊 执行记录 - ${escapeHtml(testCaseName)}</h2>
+                            <button class="close-btn" onclick="closeTestRecordsModal()">×</button>
+                        </div>
+                        <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                            ${records.length === 0 ? `
+                                <div style="text-align: center; padding: 40px; color: #999;">
+                                    <p style="font-size: 48px; margin: 0;">📋</p>
+                                    <p style="font-size: 16px; margin-top: 16px;">暂无执行记录</p>
+                                    <p style="font-size: 14px; color: #666; margin-top: 8px;">运行测试后将显示执行记录</p>
+                                </div>
+                            ` : `
+                                <table class="test-cases-table">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 180px;">执行时间</th>
+                                            <th style="width: 120px;">Runner</th>
+                                            <th style="width: 100px;">状态</th>
+                                            <th style="width: 100px;">耗时</th>
+                                            <th>性能数据</th>
+                                            <th style="width: 150px;">操作</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${records.map(record => {
+                                            const startTime = new Date(record.startTime);
+                                            const duration = Math.round(record.duration / 1000); // 转换为秒
+                                            const statusIcon = record.status === 'completed' ? '✅' : '❌';
+                                            const statusText = record.status === 'completed' ? '成功' : '失败';
+                                            const statusColor = record.status === 'completed' ? '#22543d' : '#c53030';
+
+                                            return `
+                                                <tr>
+                                                    <td>${startTime.toLocaleString('zh-CN')}</td>
+                                                    <td><span class="runner-tag" style="font-size: 0.85em;">${record.runner}</span></td>
+                                                    <td>
+                                                        <span style="color: ${statusColor};">${statusIcon} ${statusText}</span>
+                                                    </td>
+                                                    <td>${duration}秒</td>
+                                                    <td>
+                                                        ${record.perfcatUrl ? `
+                                                            <a href="${record.perfcatUrl}" target="_blank" class="btn-link" style="font-size: 0.85em;">
+                                                                📊 查看报告
+                                                            </a>
+                                                        ` : '<span style="color: #999;">-</span>'}
+                                                    </td>
+                                                    <td>
+                                                        ${record.perfcatChartUrl ? `
+                                                            <a href="${record.perfcatChartUrl}" target="_blank" class="btn-secondary btn-small" style="margin-right: 4px;">
+                                                                📈 图表
+                                                            </a>
+                                                        ` : ''}
+                                                        <button class="btn-danger btn-small" onclick="deleteTestRecord('${record.id}')" title="删除记录">
+                                                            🗑️
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            `}
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn-secondary" onclick="closeTestRecordsModal()">关闭</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 移除已存在的模态框
+            const existingModal = document.getElementById('test-records-modal');
+            if (existingModal) existingModal.remove();
+
+            // 添加新模态框
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        // 关闭测试记录模态框
+        function closeTestRecordsModal() {
+            const modal = document.getElementById('test-records-modal');
+            if (modal) modal.remove();
+        }
+
+        // 删除测试记录
+        async function deleteTestRecord(recordId) {
+            if (!confirm('确定要删除这条执行记录吗？')) return;
+
+            try {
+                const response = await fetch(`http://localhost:${PORT}/api/test-records/${recordId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) throw new Error('Failed to delete test record');
+
+                showToast('删除成功', 'success');
+
+                // 重新加载记录
+                const modalContent = document.querySelector('#test-records-modal .modal-content');
+                if (modalContent) {
+                    // 从模态框标题中提取测试用例ID
+                    const currentRecords = Array.from(document.querySelectorAll('#test-records-modal tbody tr'));
+                    if (currentRecords.length === 1) {
+                        // 如果是最后一条记录，关闭模态框
+                        closeTestRecordsModal();
+                    } else {
+                        // 否则刷新模态框
+                        const testCaseId = testCases.find(tc => {
+                            const modal = document.getElementById('test-records-modal');
+                            return modal && modal.textContent.includes(tc.name);
+                        })?.id;
+                        if (testCaseId) {
+                            viewTestRecords(testCaseId);
+                        }
+                    }
+                }
+
+                // 更新测试用例列表
+                await loadTestCasesFromBackend();
+                renderTestCaseList();
+            } catch (error) {
+                console.error('Failed to delete test record:', error);
+                showToast('删除失败', 'error');
+            }
         }
 
         function showToast(message, type = 'success') {

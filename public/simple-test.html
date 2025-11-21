@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>简单测试</title></head>
+<body style="padding: 20px; font-family: sans-serif;">
+    <h1>按钮点击测试</h1>
+    
+    <h2>测试1: 基础onclick</h2>
+    <button onclick="alert('测试1成功!')">点击我 - 测试1</button>
+    
+    <h2>测试2: 字符串ID</h2>
+    <button onclick="testFunc('testcase_1763708204580_7zeqimw7')">点击我 - 测试2</button>
+    
+    <h2>测试3: 动态生成按钮</h2>
+    <div id="dynamic-buttons"></div>
+    
+    <h2>测试4: 从主页面加载的函数</h2>
+    <button onclick="if(typeof showAddCaseModal === 'function') { alert('主页面函数可用!'); } else { alert('主页面函数不可用: ' + typeof showAddCaseModal); }">
+        检查主页面函数
+    </button>
+    
+    <script>
+        function testFunc(id) {
+            alert('测试2成功! ID=' + id + ', 类型=' + typeof id);
+        }
+        
+        // 动态生成按钮（模拟主页面逻辑）
+        const testCases = [
+            { id: 'testcase_1763708204580_7zeqimw7', name: '测试用例1' },
+            { id: 'testcase_abc123', name: '测试用例2' }
+        ];
+        
+        const html = testCases.map(tc => {
+            return `<button onclick="handleClick('${tc.id}', '${tc.name}')" style="margin: 5px;">${tc.name}</button>`;
+        }).join('<br>');
+        
+        document.getElementById('dynamic-buttons').innerHTML = html;
+        
+        function handleClick(id, name) {
+            alert('点击成功!\nID: ' + id + '\n名称: ' + name);
+        }
+        
+        console.log('测试页面加载完成');
+        console.log('testCases:', testCases);
+    </script>
+</body>
+</html>

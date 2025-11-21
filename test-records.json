@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "task_1763722322656_82jza6otp",
+    "name": "🎬 示例2: B站视频页 - Runtime性能监控",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-21T10:52:02.656Z",
+    "endTime": "2025-11-21T10:52:52.088Z",
+    "duration": 49432,
+    "perfcatId": "YzytSi",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/YzytSi?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/YzytSi?runner=Runtime&viewType=chart",
+    "exitCode": 0
+  }
+]

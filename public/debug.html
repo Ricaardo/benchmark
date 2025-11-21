@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Debug Page</title>
+</head>
+<body>
+    <h1>测试用例管理调试页面</h1>
+    
+    <h2>1. 测试API连接</h2>
+    <button onclick="testAPI()">测试API</button>
+    <div id="api-result"></div>
+    
+    <h2>2. 测试按钮渲染</h2>
+    <div id="test-buttons"></div>
+    
+    <h2>3. 控制台日志</h2>
+    <div id="console-log" style="background: #f0f0f0; padding: 10px; font-family: monospace; max-height: 300px; overflow: auto;"></div>
+    
+    <script>
+        const logDiv = document.getElementById('console-log');
+        function log(msg) {
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${msg}<br>`;
+            console.log(msg);
+        }
+        
+        async function testAPI() {
+            log('开始测试API...');
+            try {
+                const response = await fetch('/api/testcases');
+                const data = await response.json();
+                log(`✓ API响应成功，获取到 ${data.testCases.length} 个测试用例`);
+                document.getElementById('api-result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                // 渲染测试按钮
+                renderTestButtons(data.testCases);
+            } catch (error) {
+                log(`✗ API调用失败: ${error.message}`);
+            }
+        }
+        
+        function renderTestButtons(testCases) {
+            log('开始渲染按钮...');
+            const container = document.getElementById('test-buttons');
+            
+            const html = testCases.map(tc => {
+                log(`渲染测试用例: ${tc.name} (ID: ${tc.id})`);
+                return `
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc;">
+                        <strong>${tc.name}</strong> (ID: ${tc.id})
+                        <br>
+                        <button onclick="testClick('${tc.id}', '${tc.name}')">点击测试</button>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = html;
+            log(`✓ 已渲染 ${testCases.length} 个测试按钮`);
+        }
+        
+        function testClick(id, name) {
+            log(`✓ 按钮点击成功! ID: ${id}, 名称: ${name}`);
+            alert(`点击成功!\nID: ${id}\n名称: ${name}`);
+        }
+        
+        // 页面加载时自动测试
+        window.onload = () => {
+            log('页面加载完成，自动测试API...');
+            testAPI();
+        };
+    </script>
+</body>
+</html>

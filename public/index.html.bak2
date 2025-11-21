@@ -132,21 +132,6 @@
             font-size: 0.85em;
         }
 
-        .btn-link {
-            background: none;
-            border: none;
-            color: #3182ce;
-            text-decoration: none;
-            padding: 0;
-            cursor: pointer;
-            display: inline;
-        }
-
-        .btn-link:hover {
-            color: #2c5282;
-            text-decoration: underline;
-        }
-
         button:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -858,20 +843,7 @@
                         </div>
                     </div>
                     <div>
-                        <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">页面操作代码 (onPageTesting)</label>
-                        <div style="margin-bottom: 8px;">
-                            <select id="memoryleak-onpagetesting-preset" onchange="applyMemoryLeakTestingPreset()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em; background: #edf2f7;">
-                                <option value="">✨ 选择预设操作...</option>
-                                <option value="click_play">▶️ 点击播放按钮</option>
-                                <option value="video_switch">🔄 切换视频</option>
-                                <option value="scroll_page">📜 页面滚动</option>
-                                <option value="tab_switch">🔁 标签页切换</option>
-                                <option value="popup_open_close">🪟 弹窗开关</option>
-                                <option value="list_scroll">📋 列表无限滚动</option>
-                                <option value="image_load">🖼️ 动态加载图片</option>
-                                <option value="bilibili_danmaku">🅱️ B站弹幕开关</option>
-                            </select>
-                        </div>
+                        <label style="display: block; margin-bottom: 6px; font-size: 0.9em; color: #4a5568;">页面操作代码</label>
                         <textarea id="memoryleak-onpagetesting" placeholder="// 触发内存泄露的操作&#10;// 例如: await page.click('.play-button');" rows="3" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
                         <small style="color: #718096; font-size: 0.85em;">留空则静置页面</small>
                     </div>
@@ -998,17 +970,6 @@
     <script src="hook-presets.js"></script>
 
     <script>
-        // 版本检查 - 用于调试
-        const PAGE_VERSION = '2025-11-21-v5-execution-records-decoupled';
-        console.log('='.repeat(60));
-        console.log('页面版本:', PAGE_VERSION);
-        console.log('加载时间:', new Date().toLocaleString());
-        console.log('✨ 重大更新: 执行与配置解耦');
-        console.log('✓ 移除测试用例 status 字段');
-        console.log('✓ 创建独立的测试记录页面 (records.html)');
-        console.log('✓ 测试用例页面专注于配置管理');
-        console.log('='.repeat(60));
-
         // 数据存储
         let testCases = JSON.parse(localStorage.getItem('testCases') || '[]');
         let selectedCases = new Set();
@@ -1023,8 +984,6 @@
 
         // ==================== 预设系统 ====================
         let currentPresetParams = {}; // 当前预设的参数值
-
-        // ConfigPresets 已在 config-presets.js 中定义，无需重复声明
 
         // 更新预设操作列表
         function updatePresetOperations() {
@@ -1342,7 +1301,7 @@
 
             const deviceType = preset.type;
             const deviceTypeSelect = document.getElementById('testcase-device-type');
-            if (deviceTypeSelect) deviceTypeSelect.value = deviceType;
+            deviceTypeSelect.value = deviceType;
 
             // 触发设备类型变化事件
             updateDeviceOptionsDisplay();
@@ -1366,13 +1325,9 @@
         // 清空设备配置
         function clearDeviceConfig() {
             document.getElementById('device-preset').value = '';
-            const deviceTypeElem = document.getElementById('testcase-device-type');
-            const fullscreenElem = document.getElementById('device-fullscreen');
-            const mobilePresetElem = document.getElementById('device-mobile-preset');
-
-            if (deviceTypeElem) deviceTypeElem.value = '';
-            if (fullscreenElem) fullscreenElem.checked = false;
-            if (mobilePresetElem) mobilePresetElem.value = 'android';
+            document.getElementById('testcase-device-type').value = '';
+            document.getElementById('device-fullscreen').checked = false;
+            document.getElementById('device-mobile-preset').value = 'android';
             updateDeviceOptionsDisplay();
 
             const instruction = document.getElementById('device-instruction');
@@ -1548,22 +1503,10 @@
             loadCompletedToday();
 
             // 添加高级配置事件监听
-            const runnerInit = document.getElementById('runner-initialization');
-            const runnerRuntime = document.getElementById('runner-runtime');
-            const runnerMemoryLeak = document.getElementById('runner-memoryleak');
-            const deviceTypeSelect = document.getElementById('testcase-device-type');
-
-            if (runnerInit) runnerInit.addEventListener('change', updateAdvancedConfigDisplay);
-            if (runnerRuntime) runnerRuntime.addEventListener('change', updateAdvancedConfigDisplay);
-            if (runnerMemoryLeak) runnerMemoryLeak.addEventListener('change', updateAdvancedConfigDisplay);
-            if (deviceTypeSelect) deviceTypeSelect.addEventListener('change', updateDeviceOptionsDisplay);
-
-            // 调试信息
-            console.log('✓ window.onload 完成');
-            console.log('✓ 已加载测试用例数量:', testCases.length);
-            console.log('✓ showAddCaseModal 函数类型:', typeof showAddCaseModal);
-            console.log('✓ runCase 函数类型:', typeof runCase);
-            console.log('✓ editCase 函数类型:', typeof editCase);
+            document.getElementById('runner-initialization').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('runner-runtime').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('runner-memoryleak').addEventListener('change', updateAdvancedConfigDisplay);
+            document.getElementById('testcase-device-type').addEventListener('change', updateDeviceOptionsDisplay);
         };
 
         // 渲染用例列表
@@ -1590,6 +1533,7 @@
                             <th>URL数量</th>
                             <th>模式</th>
                             <th>重复次数</th>
+                            <th>状态</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -1618,17 +1562,18 @@
 
                             return `
                             <tr>
-                                <td><input type="checkbox" onchange="toggleCaseSelection('${testCase.id}', this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
+                                <td><input type="checkbox" onchange="toggleCaseSelection(${testCase.id}, this.checked)" ${selectedCases.has(testCase.id) ? 'checked' : ''}></td>
                                 <td><strong>${escapeHtml(testCase.name)}</strong></td>
                                 <td>${runnerTags || '<span style="color: #999;">未配置</span>'}</td>
                                 <td><span title="${escapeHtml(urlsTitle)}" style="cursor: help;">${urls.length} 个URL</span></td>
                                 <td><span style="font-size: 0.85em; color: #4a5568;">${mode === 'headless' ? '🚀 无头' : '👁️ 有头'}</span></td>
                                 <td>${testCase.repeatCount || 1}</td>
+                                <td><span class="status-badge status-${testCase.status || 'idle'}">${getStatusText(testCase.status || 'idle')}</span></td>
                                 <td>
                                     <div class="actions">
-                                        <button class="btn-success btn-small" onclick="runCase('${testCase.id}')">▶ 运行</button>
-                                        <button class="btn-secondary btn-small" onclick="editCase('${testCase.id}')">✏️ 编辑</button>
-                                        <button class="btn-danger btn-small" onclick="deleteCase('${testCase.id}')">🗑️ 删除</button>
+                                        <button class="btn-success btn-small" onclick="runCase(${testCase.id})">▶ 运行</button>
+                                        <button class="btn-secondary btn-small" onclick="editCase(${testCase.id})">✏️ 编辑</button>
+                                        <button class="btn-danger btn-small" onclick="deleteCase(${testCase.id})">🗑️ 删除</button>
                                     </div>
                                 </td>
                             </tr>
@@ -1728,114 +1673,12 @@
 
         // 更新设备选项显示
         function updateDeviceOptionsDisplay() {
-            const deviceTypeElem = document.getElementById('testcase-device-type');
-            if (!deviceTypeElem) return;
-            const deviceType = deviceTypeElem.value;
+            const deviceType = document.getElementById('testcase-device-type').value;
             const desktopOptions = document.getElementById('device-desktop-options');
             const mobileOptions = document.getElementById('device-mobile-options');
 
             desktopOptions.style.display = deviceType === 'Desktop' ? 'block' : 'none';
             mobileOptions.style.display = deviceType === 'Mobile' ? 'block' : 'none';
-        }
-
-        // 应用 MemoryLeak onPageTesting 预设
-        function applyMemoryLeakTestingPreset() {
-            const presetKey = document.getElementById('memoryleak-onpagetesting-preset').value;
-            if (!presetKey) return;
-
-            const presets = {
-                'click_play': {
-                    name: '点击播放按钮',
-                    code: `// 点击播放按钮
-await page.click('.bpx-player-ctrl-btn, .bilibili-player-video-btn-start, .video-play-btn, [aria-label="play"]');
-console.log('已点击播放按钮');`
-                },
-                'video_switch': {
-                    name: '切换视频',
-                    code: `// 切换到下一个视频
-await page.evaluate(() => {
-    const nextBtn = document.querySelector('.next-button, .recommend-list .video-item');
-    if (nextBtn) nextBtn.click();
-});
-await page.waitForTimeout(2000);
-console.log('已切换视频');`
-                },
-                'scroll_page': {
-                    name: '页面滚动',
-                    code: `// 滚动页面到底部再回到顶部
-await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-await page.waitForTimeout(1000);
-await page.evaluate(() => window.scrollTo(0, 0));
-console.log('页面滚动完成');`
-                },
-                'tab_switch': {
-                    name: '标签页切换',
-                    code: `// 切换标签页
-await page.evaluate(() => {
-    const tabs = document.querySelectorAll('.tab-item, .nav-tab');
-    if (tabs.length > 1) {
-        tabs[1].click();
-        setTimeout(() => tabs[0].click(), 1000);
-    }
-});
-console.log('标签页切换完成');`
-                },
-                'popup_open_close': {
-                    name: '弹窗开关',
-                    code: `// 打开并关闭弹窗
-await page.evaluate(() => {
-    const openBtn = document.querySelector('[data-modal], .open-modal, .popup-trigger');
-    if (openBtn) {
-        openBtn.click();
-        setTimeout(() => {
-            const closeBtn = document.querySelector('.close, .modal-close, [data-dismiss]');
-            if (closeBtn) closeBtn.click();
-        }, 1000);
-    }
-});
-console.log('弹窗操作完成');`
-                },
-                'list_scroll': {
-                    name: '列表无限滚动',
-                    code: `// 触发无限滚动加载
-for (let i = 0; i < 3; i++) {
-    await page.evaluate(() => {
-        const container = document.querySelector('.infinite-list, .scroll-container');
-        if (container) container.scrollTop = container.scrollHeight;
-    });
-    await page.waitForTimeout(1500);
-}
-console.log('无限滚动完成');`
-                },
-                'image_load': {
-                    name: '动态加载图片',
-                    code: `// 滚动加载懒加载图片
-await page.evaluate(() => {
-    const images = document.querySelectorAll('img[data-src], img[loading="lazy"]');
-    images.forEach(img => {
-        img.scrollIntoView();
-    });
-});
-await page.waitForTimeout(2000);
-console.log('图片加载完成');`
-                },
-                'bilibili_danmaku': {
-                    name: 'B站弹幕开关',
-                    code: `// B站弹幕开关操作
-await page.click('.bpx-player-dm-switch, .bilibili-player-video-danmaku-switch');
-await page.waitForTimeout(1000);
-await page.click('.bpx-player-dm-switch, .bilibili-player-video-danmaku-switch');
-console.log('B站弹幕开关完成');`
-                }
-            };
-
-            const preset = presets[presetKey];
-            if (!preset) return;
-
-            document.getElementById('memoryleak-onpagetesting').value = preset.code;
-            document.getElementById('memoryleak-onpagetesting-preset').value = '';
-
-            showToast(`已应用预设: ${preset.name}`, 'success');
         }
 
         // ==================== URL 列表管理 ====================
@@ -1893,7 +1736,7 @@ console.log('B站弹幕开关完成');`
 
         // 更新URL的设备类型
         function updateUrlDeviceType(itemId, deviceType) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item) return;
 
             if (!item.config) {
@@ -1921,7 +1764,7 @@ console.log('B站弹幕开关完成');`
 
         // 更新URL的设备选项
         function updateUrlDeviceOptions(itemId, deviceType, options) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item || !item.config) return;
 
             if (deviceType && options) {
@@ -1931,7 +1774,7 @@ console.log('B站弹幕开关完成');`
 
         // 更新URL的钩子函数
         function updateUrlHook(itemId, hookName, value) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item) return;
 
             if (!item.config) {
@@ -2025,7 +1868,7 @@ console.log('B站弹幕开关完成');`
             const preset = ConfigPresets.device.presets[presetKey];
             if (!preset) return;
 
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item) return;
 
             if (!item.config) item.config = {};
@@ -2043,33 +1886,22 @@ console.log('B站弹幕开关完成');`
 
         // 应用URL Hook预设
         function applyUrlHookPreset(itemId, hookName) {
-            const presetSelect = document.getElementById(`url-${itemId}-hook-${hookName.toLowerCase()}-preset`);
-            const presetKey = presetSelect.value;
+            const presetKey = document.getElementById(`url-${itemId}-hook-${hookName.toLowerCase()}-preset`).value;
             if (!presetKey) return;
 
-            // 使用 HookPresets 而不是 ConfigPresets
-            const preset = HookPresets[hookName]?.presets?.[presetKey];
-            if (!preset) {
-                console.error(`预设未找到: HookPresets.${hookName}.presets.${presetKey}`);
-                showToast(`预设未找到: ${hookName}.${presetKey}`, 'error');
-                return;
-            }
+            const preset = ConfigPresets.hooks.presets[hookName]?.[presetKey];
+            if (!preset) return;
 
             const textarea = document.getElementById(`url-config-hook-${hookName}-${itemId}`);
-            // 使用 code 字段而不是 value
-            const code = preset.code || preset.value || '';
-            textarea.value = code;
-            updateUrlHook(itemId, hookName, code);
-
-            // 重置下拉框
-            presetSelect.value = '';
+            textarea.value = preset.value;
+            updateUrlHook(itemId, hookName, preset.value);
 
             showToast(`已应用${hookName}预设: ${preset.name}`, 'success');
         }
 
         // 清空URL配置项
         function clearUrlConfig(itemId, field) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item || !item.config) return;
 
             delete item.config[field];
@@ -2087,7 +1919,7 @@ console.log('B站弹幕开关完成');`
 
         // 清空URL Device配置
         function clearUrlDeviceConfig(itemId) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item || !item.config) return;
 
             delete item.config.deviceOptions;
@@ -2339,17 +2171,6 @@ console.log('B站弹幕开关完成');`
                         <div style="margin-bottom: 12px;">
                             <label style="display: block; margin-bottom: 4px; font-size: 0.9em; color: #4a5568;">🔄 onPageTesting</label>
                             <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                                <select id="url-${item.id}-hook-onpagetesting-preset" onchange="applyUrlHookPreset('${item.id}', 'onPageTesting')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                    <option value="">✨ 选择预设...</option>
-                                    <option value="click_play">▶️ 点击播放按钮</option>
-                                    <option value="video_switch">🔄 切换视频</option>
-                                    <option value="scroll_page">📜 页面滚动</option>
-                                    <option value="tab_switch">🔁 标签页切换</option>
-                                    <option value="popup_open_close">🪟 弹窗开关</option>
-                                    <option value="list_scroll">📋 列表无限滚动</option>
-                                    <option value="image_load">🖼️ 动态加载图片</option>
-                                    <option value="bilibili_danmaku">🅱️ B站弹幕开关</option>
-                                </select>
                                 <button type="button" onclick="clearUrlHook('${item.id}', 'onPageTesting')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
                             </div>
                             <textarea
@@ -2358,7 +2179,7 @@ console.log('B站弹幕开关完成');`
                                 rows="3"
                                 style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"
                                 oninput="updateUrlHook('${item.id}', 'onPageTesting', this.value)">${escapeHtml(config.hooks?.onPageTesting || '')}</textarea>
-                            <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行 | 用于触发用户交互</small>
+                            <small style="color: #718096; font-size: 0.85em;">仅在 Runtime 或 MemoryLeak 测试期间执行</small>
                         </div>
 
                         <!-- onPageCollecting -->
@@ -2418,7 +2239,7 @@ console.log('B站弹幕开关完成');`
 
         // 清空URL的所有配置
         function clearAllUrlConfig(itemId) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (!item) return;
 
             if (!confirm('确定要清空此URL的所有配置吗？')) return;
@@ -2484,7 +2305,7 @@ console.log('B站弹幕开关完成');`
 
         // 更新URL项
         function updateUrlItem(itemId, field, value) {
-            const item = urlItems.find(i => i.id == itemId);
+            const item = urlItems.find(i => i.id === itemId);
             if (item) {
                 item[field] = value;
             }
@@ -2768,8 +2589,8 @@ console.log('B站弹幕开关完成');`
                     cpuThrottling,
                     description,
                     tags,
-                    createdAt: new Date().toISOString(),
-                    executionHistory: [] // 初始化执行历史为空数组
+                    status: 'idle',
+                    createdAt: new Date().toISOString()
                 };
 
                 // 先保存到后端获取ID
@@ -2802,7 +2623,7 @@ console.log('B站弹幕开关完成');`
             await deleteTestCaseFromBackend(id);
 
             // 从本地删除
-            testCases = testCases.filter(tc => tc.id != id);
+            testCases = testCases.filter(tc => tc.id !== id);
             selectedCases.delete(id);
             saveToStorage();
             renderCases();
@@ -2811,7 +2632,7 @@ console.log('B站弹幕开关完成');`
 
         // 运行单个用例
         async function runCase(id, testLabel = '') {
-            const testCase = testCases.find(tc => tc.id == id);
+            const testCase = testCases.find(tc => tc.id === id);
             if (!testCase) return;
 
             // 如果是单个运行（没有传入testLabel），询问测试标记
@@ -3142,7 +2963,7 @@ console.log('B站弹幕开关完成');`
         function removeFromQueue(index) {
             if (index < runningQueue.length) {
                 const removedId = runningQueue.splice(index, 1)[0];
-                const testCase = testCases.find(tc => tc.id == removedId);
+                const testCase = testCases.find(tc => tc.id === removedId);
                 if (testCase) {
                     showToast(`已从队列移除: ${testCase.name}`, 'success');
                 }
@@ -3229,7 +3050,7 @@ console.log('B站弹幕开关完成');`
             // 使用 Promise.allSettled 并行发起所有请求（即使有失败也不影响其他任务）
             const results = await Promise.allSettled(
                 selectedArray.map(async (id, index) => {
-                    const testCase = testCases.find(tc => tc.id == id);
+                    const testCase = testCases.find(tc => tc.id === id);
                     const taskName = cleanedLabel ? `[${cleanedLabel}] ${testCase?.name}` : testCase?.name;
                     appendOutput(`[${index + 1}/${selectedArray.length}] 提交任务: ${taskName}`);
                     return runCase(id, cleanedLabel);
@@ -3242,7 +3063,7 @@ console.log('B站弹幕开关完成');`
                     successCount++;
                 } else {
                     failCount++;
-                    const testCase = testCases.find(tc => tc.id == selectedArray[index]);
+                    const testCase = testCases.find(tc => tc.id === selectedArray[index]);
                     console.error(`任务 ${testCase?.name} 提交失败:`, result.reason);
                     appendOutput(`[错误] ${testCase?.name} 提交失败: ${result.reason}`);
                 }
@@ -3279,7 +3100,7 @@ console.log('B站弹幕开关完成');`
                 if (result.success) {
                     showToast('测试已停止', 'success');
                     if (currentRunning) {
-                        const testCase = testCases.find(tc => tc.id == currentRunning);
+                        const testCase = testCases.find(tc => tc.id === currentRunning);
                         if (testCase) testCase.status = 'idle';
                         currentRunning = null;
                         renderCases();
@@ -3297,7 +3118,7 @@ console.log('B站弹幕开关完成');`
 
             if (status === 'completed' || status === 'error') {
                 if (currentRunning) {
-                    const testCase = testCases.find(tc => tc.id == currentRunning);
+                    const testCase = testCases.find(tc => tc.id === currentRunning);
                     if (testCase) {
                         testCase.status = status;
                         if (status === 'completed') {
@@ -3583,7 +3404,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '测试B站首页的初始化性能（冷启动）',
                     tags: ['示例', 'bilibili', '基础'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3600,7 +3421,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '监控视频页30秒运行时性能，测试FPS和长任务',
                     tags: ['示例', 'bilibili', 'runtime'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         hooks: {
@@ -3622,7 +3443,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '检测视频页面的内存泄漏问题，重复执行页面操作',
                     tags: ['示例', 'bilibili', '内存泄漏'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3644,7 +3465,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '对比测试B站不同页面的性能表现',
                     tags: ['示例', 'bilibili', '多页面'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {}
                 },
@@ -3661,7 +3482,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '模拟移动设备测试B站移动端性能',
                     tags: ['示例', 'bilibili', '移动端'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         deviceOptions: ['Mobile', { preset: 'android' }]
@@ -3680,7 +3501,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 1,
                     description: '阻止图片和字体加载，测试核心页面性能',
                     tags: ['示例', 'bilibili', '资源优化'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         blockList: ['*.jpg', '*.png', '*.webp', '*.woff', '*.woff2'],
@@ -3702,7 +3523,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 3,
                     description: '注入自定义CSS隐藏广告元素，测试性能影响',
                     tags: ['示例', 'bilibili', 'css'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         customCss: '.ad-report, .bili-banner, [class*="ad-"] { display: none !important; }'
@@ -3721,7 +3542,7 @@ console.log('B站弹幕开关完成');`
                     repeatCount: 2,
                     description: '对视频页执行全面性能测试：初始化、运行时、内存泄漏',
                     tags: ['示例', 'bilibili', '全面测试'],
-                    executionHistory: [],
+                    status: 'idle',
                     createdAt: new Date().toISOString(),
                     advancedConfig: {
                         delayMs: 5000,
@@ -3872,6 +3693,16 @@ console.log('B站弹幕开关完成');`
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'idle': '空闲',
+                'running': '运行中',
+                'completed': '已完成',
+                'error': '失败'
+            };
+            return statusMap[status] || status;
         }
 
         function showToast(message, type = 'success') {

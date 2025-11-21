@@ -7,6 +7,7 @@ import fs from 'fs/promises';
 import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'crypto';
 import LZ from 'lz-string';
+import * as TestCaseStorage from './testcase-storage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,6 +113,7 @@ const perfcatConfigFile = path.join(__dirname, '../perfcat-config.json');
 // 测试记录
 interface TestRecord {
     id: string;
+    testCaseId?: string; // 关联的测试用例ID
     name: string;
     runner: string;
     status: 'completed' | 'error';
@@ -122,6 +124,7 @@ interface TestRecord {
     perfcatUrl?: string;
     perfcatChartUrl?: string;
     exitCode?: number;
+    remarks?: string; // 备注：测试目的、版本等信息
 }
 
 let testRecords: TestRecord[] = [];
@@ -160,6 +163,11 @@ async function addTestRecord(record: TestRecord) {
         testRecords = testRecords.slice(0, 1000);
     }
     await saveTestRecords();
+
+    // 如果有关联的测试用例，更新其执行历史
+    if (record.testCaseId) {
+        await TestCaseStorage.addExecutionToHistory(record.testCaseId, record.id);
+    }
 }
 
 // 加载Perfcat配置
@@ -238,6 +246,7 @@ async function uploadToPerfcat(reportData: any): Promise<{ success: boolean; id?
 
 interface Task {
     id: string;
+    testCaseId?: string; // 关联的测试用例ID
     name: string;
     runner: string;
     status: 'pending' | 'running' | 'completed' | 'error';
@@ -249,6 +258,7 @@ interface Task {
     killTimeout?: NodeJS.Timeout;
     perfcatId?: string;
     perfcatUrl?: string;
+    remarks?: string; // 备注：测试目的、版本等信息
 }
 
 // 任务存储
@@ -342,11 +352,12 @@ function appendTaskOutput(taskId: string, data: string) {
 }
 
 // 创建新任务
-function createTask(name: string, runner: string, config: any): string {
+function createTask(name: string, runner: string, config: any, testCaseId?: string): string {
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const task: Task = {
         id: taskId,
+        testCaseId, // 关联测试用例ID
         name,
         runner,
         status: 'pending',
@@ -360,7 +371,7 @@ function createTask(name: string, runner: string, config: any): string {
 
     const runningCount = getRunningTasksCount();
     const pendingCount = Array.from(tasks.values()).filter(t => t.status === 'pending').length;
-    console.log(`[TaskManager] 任务已创建: ${name} (ID: ${taskId})`);
+    console.log(`[TaskManager] 任务已创建: ${name} (ID: ${taskId})${testCaseId ? ` [TestCase: ${testCaseId}]` : ''}`);
     console.log(`[TaskManager] 当前状态 - 运行中: ${runningCount}/${MAX_CONCURRENT_TASKS}, 等待中: ${pendingCount}`);
 
     broadcastTaskList();
@@ -544,6 +555,7 @@ async function startTask(taskId: string) {
                 const duration = task.endTime.getTime() - task.startTime.getTime();
                 const record: TestRecord = {
                     id: task.id,
+                    testCaseId: task.testCaseId, // 关联测试用例ID
                     name: task.name,
                     runner: task.runner,
                     status: task.status as 'completed' | 'error',
@@ -553,7 +565,8 @@ async function startTask(taskId: string) {
                     perfcatId: task.perfcatId,
                     perfcatUrl: task.perfcatUrl,
                     perfcatChartUrl: task.perfcatUrl ? `${task.perfcatUrl}&viewType=chart` : undefined,
-                    exitCode: code ?? undefined
+                    exitCode: code ?? undefined,
+                    remarks: task.remarks // 从任务中获取备注
                 };
                 await addTestRecord(record);
                 console.log(`[TestRecords] 📝 已保存测试记录: ${task.name}`);
@@ -881,13 +894,15 @@ function generateTestCase(tc: any, runnerType: string): string {
     lines.push(`description: ${JSON.stringify(tc.description)}`);
 
     // TestCase级别的delayMs
-    if (tc.delayMs !== undefined) {
-        lines.push(`delayMs: ${tc.delayMs}`);
+    // 优先使用 tc.config.delayMs（per-URL config），其次使用 tc.delayMs（global config）
+    const delayMs = tc.config?.delayMs ?? tc.delayMs;
+    if (delayMs !== undefined) {
+        lines.push(`delayMs: ${delayMs}`);
     }
 
     // Cookie - 转换为Playwright格式
-    // 优先使用 tc.cookie，其次检查 tc.advancedConfig.cookie（autoCookie转换后存储位置）
-    const cookieData = tc.cookie || tc.advancedConfig?.cookie;
+    // 优先级: tc.config.cookie (per-URL) > tc.cookie (global) > tc.advancedConfig.cookie (fallback)
+    const cookieData = tc.config?.cookie ?? tc.cookie ?? tc.advancedConfig?.cookie;
     if (cookieData) {
         if (typeof cookieData === 'string') {
             // 将字符串格式的Cookie转换为Playwright Cookie对象数组
@@ -916,24 +931,28 @@ function generateTestCase(tc: any, runnerType: string): string {
         }
     }
 
-    // extraHTTPHeaders
-    if (tc.extraHTTPHeaders) {
-        lines.push(`extraHTTPHeaders: ${JSON.stringify(tc.extraHTTPHeaders)}`);
+    // extraHTTPHeaders - 优先使用 per-URL config
+    const extraHTTPHeaders = tc.config?.extraHTTPHeaders ?? tc.extraHTTPHeaders;
+    if (extraHTTPHeaders) {
+        lines.push(`extraHTTPHeaders: ${JSON.stringify(extraHTTPHeaders)}`);
     }
 
-    // blockList
-    if (tc.blockList) {
-        lines.push(`blockList: ${JSON.stringify(tc.blockList)}`);
+    // blockList - 优先使用 per-URL config
+    const blockList = tc.config?.blockList ?? tc.blockList;
+    if (blockList) {
+        lines.push(`blockList: ${JSON.stringify(blockList)}`);
     }
 
-    // customCss
-    if (tc.customCss) {
-        lines.push(`customCss: ${JSON.stringify(tc.customCss)}`);
+    // customCss - 优先使用 per-URL config
+    const customCss = tc.config?.customCss ?? tc.customCss;
+    if (customCss) {
+        lines.push(`customCss: ${JSON.stringify(customCss)}`);
     }
 
-    // deviceOptions
-    if (tc.deviceOptions && Array.isArray(tc.deviceOptions)) {
-        const [deviceType, options] = tc.deviceOptions;
+    // deviceOptions - 优先使用 per-URL config
+    const deviceOptions = tc.config?.deviceOptions ?? tc.deviceOptions;
+    if (deviceOptions && Array.isArray(deviceOptions)) {
+        const [deviceType, options] = deviceOptions;
         if (Object.keys(options || {}).length > 0) {
             lines.push(`deviceOptions: [${JSON.stringify(deviceType)}, ${JSON.stringify(options)}]`);
         } else {
@@ -941,26 +960,27 @@ function generateTestCase(tc: any, runnerType: string): string {
         }
     }
 
-    // 生命周期钩子
-    if (tc.hooks) {
-        if (tc.hooks.beforePageLoad) {
-            lines.push(`beforePageLoad: async ({ page, context, session }: any) => {\n                        ${tc.hooks.beforePageLoad}\n                    }`);
+    // 生命周期钩子 - 优先使用 per-URL config，然后使用 global config
+    const hooks = tc.config?.hooks ?? tc.hooks;
+    if (hooks) {
+        if (hooks.beforePageLoad) {
+            lines.push(`beforePageLoad: async ({ page, context, session }: any) => {\n                        ${hooks.beforePageLoad}\n                    }`);
         }
 
-        if (tc.hooks.onPageLoaded) {
-            lines.push(`onPageLoaded: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageLoaded}\n                    }`);
+        if (hooks.onPageLoaded) {
+            lines.push(`onPageLoaded: async ({ page, context, session }: any) => {\n                        ${hooks.onPageLoaded}\n                    }`);
         }
 
-        if (tc.hooks.onPageTesting && (runnerType === 'Runtime' || runnerType === 'MemoryLeak')) {
-            lines.push(`onPageTesting: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageTesting}\n                    }`);
+        if (hooks.onPageTesting && (runnerType === 'Runtime' || runnerType === 'MemoryLeak')) {
+            lines.push(`onPageTesting: async ({ page, context, session }: any) => {\n                        ${hooks.onPageTesting}\n                    }`);
         }
 
-        if (tc.hooks.onPageCollecting && runnerType === 'MemoryLeak') {
-            lines.push(`onPageCollecting: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageCollecting}\n                    }`);
+        if (hooks.onPageCollecting && runnerType === 'MemoryLeak') {
+            lines.push(`onPageCollecting: async ({ page, context, session }: any) => {\n                        ${hooks.onPageCollecting}\n                    }`);
         }
 
-        if (tc.hooks.onPageUnload) {
-            lines.push(`onPageUnload: async ({ page, context, session }: any) => {\n                        ${tc.hooks.onPageUnload}\n                    }`);
+        if (hooks.onPageUnload) {
+            lines.push(`onPageUnload: async ({ page, context, session }: any) => {\n                        ${hooks.onPageUnload}\n                    }`);
         }
     }
 
@@ -1276,7 +1296,7 @@ app.post('/api/dynamic-config', async (req, res) => {
 
 // 启动benchmark（新版本：使用任务系统，支持并发）
 app.post('/api/start', async (req, res) => {
-    const { runner, config, name } = req.body;
+    const { runner, config, name, testCaseId } = req.body;
 
     try {
         let finalConfig;
@@ -1344,11 +1364,12 @@ app.post('/api/start', async (req, res) => {
         // 转换前端配置为SDK期望的格式
         const transformedConfig = transformConfigForSDK(finalConfig);
 
-        // 创建任务
+        // 创建任务（传入testCaseId以便关联）
         const taskId = createTask(
             taskName,
             runnerNames.join(' + '),
-            transformedConfig
+            transformedConfig,
+            testCaseId
         );
 
         // 立即尝试启动任务
@@ -1358,7 +1379,8 @@ app.post('/api/start', async (req, res) => {
             success: true,
             message: `Task created: ${taskName}`,
             taskId: taskId,
-            runner: runnerNames.join(' + ')
+            runner: runnerNames.join(' + '),
+            testCaseId: testCaseId
         });
 
     } catch (error) {
@@ -2206,8 +2228,18 @@ app.delete('/api/test-records/:id', async (req, res) => {
             return res.status(404).json({ error: 'Test record not found' });
         }
 
+        const record = testRecords[index];
         testRecords.splice(index, 1);
         await saveTestRecords();
+
+        // 同时从测试用例的executionHistory中删除
+        if (record.testCaseId) {
+            const testCase = await TestCaseStorage.getTestCase(record.testCaseId);
+            if (testCase && testCase.executionHistory) {
+                testCase.executionHistory = testCase.executionHistory.filter((r: any) => r.id !== id);
+                await TestCaseStorage.updateTestCase(record.testCaseId, testCase);
+            }
+        }
 
         res.json({ success: true, message: 'Test record deleted' });
     } catch (error) {
@@ -2264,6 +2296,146 @@ app.get('/api/test-records/stats', async (req, res) => {
     } catch (error) {
         console.error('Failed to get test statistics:', error);
         res.status(500).json({ error: 'Failed to get test statistics' });
+    }
+});
+
+// ========== 测试用例API ==========
+
+// 获取所有测试用例
+app.get('/api/testcases', async (req, res) => {
+    try {
+        const { tags, search } = req.query;
+
+        let testCases = TestCaseStorage.getAllTestCases();
+
+        // 按标签筛选
+        if (tags && typeof tags === 'string') {
+            const tagArray = tags.split(',').map(t => t.trim());
+            testCases = TestCaseStorage.getTestCasesByTags(tagArray);
+        }
+
+        // 按关键词搜索
+        if (search && typeof search === 'string') {
+            testCases = TestCaseStorage.searchTestCases(search);
+        }
+
+        res.json({
+            testCases,
+            total: testCases.length
+        });
+    } catch (error) {
+        console.error('Failed to get test cases:', error);
+        res.status(500).json({ error: 'Failed to get test cases' });
+    }
+});
+
+// 获取单个测试用例
+app.get('/api/testcases/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const testCase = TestCaseStorage.getTestCaseById(id);
+
+        if (!testCase) {
+            return res.status(404).json({ error: 'Test case not found' });
+        }
+
+        res.json(testCase);
+    } catch (error) {
+        console.error('Failed to get test case:', error);
+        res.status(500).json({ error: 'Failed to get test case' });
+    }
+});
+
+// 创建测试用例
+app.post('/api/testcases', async (req, res) => {
+    try {
+        const testCaseData = req.body;
+
+        // 验证必需字段
+        if (!testCaseData.name || !testCaseData.runners || !testCaseData.urlsWithDesc) {
+            return res.status(400).json({ error: 'Missing required fields: name, runners, urlsWithDesc' });
+        }
+
+        const newTestCase = await TestCaseStorage.createTestCase(testCaseData);
+
+        res.status(201).json({
+            success: true,
+            testCase: newTestCase
+        });
+    } catch (error) {
+        console.error('Failed to create test case:', error);
+        res.status(500).json({ error: 'Failed to create test case' });
+    }
+});
+
+// 更新测试用例
+app.put('/api/testcases/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updates = req.body;
+
+        const updatedTestCase = await TestCaseStorage.updateTestCase(id, updates);
+
+        if (!updatedTestCase) {
+            return res.status(404).json({ error: 'Test case not found' });
+        }
+
+        res.json({
+            success: true,
+            testCase: updatedTestCase
+        });
+    } catch (error) {
+        console.error('Failed to update test case:', error);
+        res.status(500).json({ error: 'Failed to update test case' });
+    }
+});
+
+// 删除测试用例
+app.delete('/api/testcases/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const success = await TestCaseStorage.deleteTestCase(id);
+
+        if (!success) {
+            return res.status(404).json({ error: 'Test case not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Test case deleted'
+        });
+    } catch (error) {
+        console.error('Failed to delete test case:', error);
+        res.status(500).json({ error: 'Failed to delete test case' });
+    }
+});
+
+// 获取测试用例的执行历史
+app.get('/api/testcases/:id/executions', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const testCase = TestCaseStorage.getTestCaseById(id);
+
+        if (!testCase) {
+            return res.status(404).json({ error: 'Test case not found' });
+        }
+
+        // 获取执行记录详情
+        const executionRecords = testCase.executionHistory
+            ? testCase.executionHistory
+                .map(recordId => testRecords.find(r => r.id === recordId))
+                .filter(r => r !== undefined)
+            : [];
+
+        res.json({
+            testCaseId: id,
+            testCaseName: testCase.name,
+            executions: executionRecords,
+            total: executionRecords.length
+        });
+    } catch (error) {
+        console.error('Failed to get execution history:', error);
+        res.status(500).json({ error: 'Failed to get execution history' });
     }
 });
 
@@ -2472,11 +2644,13 @@ const server = app.listen(PORT, async () => {
     await loadWebhookConfig();
     await loadPerfcatConfig();
     await loadTestRecords();
+    await TestCaseStorage.loadTestCases();
 
     console.log(`📡 API Keys: ${apiKeys.length} active`);
     console.log(`🔔 Webhook: ${webhookUrl ? 'Enabled' : 'Disabled'}`);
     console.log(`📊 Perfcat: ${perfcatConfig.cookie ? 'Enabled' : 'Disabled'}`);
-    console.log(`📝 Test Records: ${testRecords.length} records loaded\n`);
+    console.log(`📝 Test Records: ${testRecords.length} records loaded`);
+    console.log(`📋 Test Cases: ${TestCaseStorage.getAllTestCases().length} test cases loaded\n`);
 }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`\n❌ Error: Port ${PORT} is already in use.`);

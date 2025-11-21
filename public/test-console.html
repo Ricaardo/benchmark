@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>控制台诊断工具</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .warning { color: #dcdcaa; }
+        .info { color: #569cd6; }
+        pre { background: #252526; padding: 10px; border-radius: 4px; overflow: auto; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        #output { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 JavaScript 诊断工具</h1>
+    <button onclick="testFunctions()">测试所有函数</button>
+    <button onclick="testElements()">测试DOM元素</button>
+    <button onclick="testData()">测试数据加载</button>
+    <button onclick="clearOutput()">清空输出</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, type = 'info') {
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = type;
+            div.innerHTML = `[${time}] ${msg}`;
+            output.appendChild(div);
+            console.log(msg);
+        }
+        
+        function clearOutput() {
+            output.innerHTML = '';
+        }
+        
+        function testFunctions() {
+            log('=== 测试函数定义 ===', 'info');
+            
+            const functions = [
+                'showAddCaseModal',
+                'runCase',
+                'editCase',
+                'deleteCase',
+                'toggleCaseSelection',
+                'renderCases',
+                'loadTestCasesFromBackend'
+            ];
+            
+            functions.forEach(name => {
+                if (typeof window[name] === 'function') {
+                    log(`✓ ${name} 已定义`, 'success');
+                } else {
+                    log(`✗ ${name} 未定义`, 'error');
+                }
+            });
+        }
+        
+        function testElements() {
+            log('=== 测试DOM元素 ===', 'info');
+            
+            const elements = [
+                'cases-container',
+                'case-modal',
+                'runner-initialization',
+                'runner-runtime',
+                'runner-memoryleak',
+                'testcase-device-type'
+            ];
+            
+            elements.forEach(id => {
+                const elem = document.getElementById(id);
+                if (elem) {
+                    log(`✓ ${id} 存在 (${elem.tagName})`, 'success');
+                } else {
+                    log(`✗ ${id} 不存在`, 'warning');
+                }
+            });
+        }
+        
+        async function testData() {
+            log('=== 测试数据加载 ===', 'info');
+            
+            try {
+                const response = await fetch('/api/testcases');
+                if (!response.ok) {
+                    log(`✗ API响应错误: ${response.status}`, 'error');
+                    return;
+                }
+                
+                const data = await response.json();
+                log(`✓ API响应成功`, 'success');
+                log(`  测试用例数量: ${data.testCases?.length || 0}`, 'info');
+                
+                if (data.testCases && data.testCases.length > 0) {
+                    const first = data.testCases[0];
+                    log(`  第一个用例ID: ${first.id}`, 'info');
+                    log(`  第一个用例名称: ${first.name}`, 'info');
+                    log(`  ID类型: ${typeof first.id}`, 'info');
+                }
+                
+                log('完整数据:', 'info');
+                const pre = document.createElement('pre');
+                pre.textContent = JSON.stringify(data, null, 2);
+                output.appendChild(pre);
+                
+            } catch (error) {
+                log(`✗ 数据加载失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 页面加载后自动运行测试
+        window.onload = () => {
+            log('页面加载完成，开始自动测试...', 'info');
+            testFunctions();
+            testElements();
+            testData();
+        };
+    </script>
+</body>
+</html>

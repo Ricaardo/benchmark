@@ -218,6 +218,121 @@ if (playerReady) {
         }
     },
 
+    // ==================== onPageTesting 预设 ====================
+    onPageTesting: {
+        name: 'onPageTesting 预设',
+        description: '仅用于Runtime测试，在性能监控期间执行用户操作',
+        presets: {
+            click_play: {
+                name: '点击播放按钮',
+                description: '点击视频播放按钮',
+                code: `
+// 点击播放按钮
+await page.click('.bpx-player-ctrl-btn, .bilibili-player-video-btn-start, .video-play-btn, [aria-label="play"]');
+console.log('[onPageTesting] 已点击播放按钮');
+`.trim()
+            },
+            video_switch: {
+                name: '切换视频',
+                description: '切换到下一个视频',
+                code: `
+// 切换到下一个视频
+await page.evaluate(() => {
+    const nextBtn = document.querySelector('.next-button, .recommend-list .video-item');
+    if (nextBtn) nextBtn.click();
+});
+await page.waitForTimeout(2000);
+console.log('[onPageTesting] 已切换视频');
+`.trim()
+            },
+            scroll_page: {
+                name: '页面滚动',
+                description: '滚动页面到底部再回到顶部',
+                code: `
+// 滚动页面到底部再回到顶部
+await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+await page.waitForTimeout(1000);
+await page.evaluate(() => window.scrollTo(0, 0));
+console.log('[onPageTesting] 页面滚动完成');
+`.trim()
+            },
+            tab_switch: {
+                name: '标签页切换',
+                description: '在页面内的标签之间切换',
+                code: `
+// 切换标签页
+await page.evaluate(() => {
+    const tabs = document.querySelectorAll('.tab-item, .nav-tab');
+    if (tabs.length > 1) {
+        tabs[1].click();
+        setTimeout(() => tabs[0].click(), 1000);
+    }
+});
+console.log('[onPageTesting] 标签页切换完成');
+`.trim()
+            },
+            popup_open_close: {
+                name: '弹窗开关',
+                description: '打开并关闭弹窗',
+                code: `
+// 打开并关闭弹窗
+await page.evaluate(() => {
+    const openBtn = document.querySelector('[data-modal], .open-modal, .popup-trigger');
+    if (openBtn) {
+        openBtn.click();
+        setTimeout(() => {
+            const closeBtn = document.querySelector('.close, .modal-close, [data-dismiss]');
+            if (closeBtn) closeBtn.click();
+        }, 1000);
+    }
+});
+console.log('[onPageTesting] 弹窗操作完成');
+`.trim()
+            },
+            list_scroll: {
+                name: '列表无限滚动',
+                description: '触发无限滚动加载更多内容',
+                code: `
+// 触发无限滚动加载
+for (let i = 0; i < 3; i++) {
+    await page.evaluate(() => {
+        const container = document.querySelector('.infinite-list, .scroll-container');
+        if (container) container.scrollTop = container.scrollHeight;
+    });
+    await page.waitForTimeout(1500);
+}
+console.log('[onPageTesting] 无限滚动完成');
+`.trim()
+            },
+            image_load: {
+                name: '动态加载图片',
+                description: '滚动加载懒加载图片',
+                code: `
+// 滚动加载懒加载图片
+await page.evaluate(() => {
+    const images = document.querySelectorAll('img[data-src], img[loading="lazy"]');
+    images.forEach(img => {
+        img.scrollIntoView();
+    });
+});
+await page.waitForTimeout(2000);
+console.log('[onPageTesting] 图片加载完成');
+`.trim()
+            },
+            bilibili_danmaku: {
+                name: 'B站弹幕开关',
+                description: 'B站专用：开关弹幕',
+                code: `
+// B站弹幕开关操作
+await page.click('.bpx-player-dm-switch, .bilibili-player-video-danmaku-switch');
+await page.waitForTimeout(1000);
+await page.click('.bpx-player-dm-switch, .bilibili-player-video-danmaku-switch');
+console.log('[onPageTesting] B站弹幕开关完成');
+`.trim()
+            }
+        }
+    },
+
     // ==================== onPageCollecting 预设 ====================
     onPageCollecting: {
         name: 'onPageCollecting 预设',
