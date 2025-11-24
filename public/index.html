@@ -276,6 +276,8 @@
             font-family: 'Monaco', 'Menlo', monospace;
             font-size: 0.9em;
             line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
         }
 
         /* 配置卡片 */
@@ -598,7 +600,6 @@
                     <button class="btn-secondary btn-small" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
                 <div class="toolbar-right">
-                    <button class="btn-secondary btn-small" onclick="window.location.href='/charts.html'">📊 数据可视化</button>
                     <button class="btn-secondary btn-small" onclick="exportCases()">📤 导出</button>
                     <button class="btn-secondary btn-small" onclick="importCases()">📥 导入</button>
                     <button class="btn-secondary btn-small" onclick="window.location.href='/api.html'">🔑 API管理</button>
@@ -999,7 +1000,7 @@
 
     <script>
         // 版本检查 - 用于调试
-        const PAGE_VERSION = '2025-11-21-v5-execution-records-decoupled';
+        const PAGE_VERSION = '2025-11-24-v6-fix-edit-bug';
         console.log('='.repeat(60));
         console.log('页面版本:', PAGE_VERSION);
         console.log('加载时间:', new Date().toLocaleString());
@@ -2519,7 +2520,10 @@ console.log('B站弹幕开关完成');`
 
         // 显示添加用例模态框
         function showAddCaseModal() {
-            document.getElementById('case-modal').classList.add('active');
+            const modal = document.getElementById('case-modal');
+            console.log('➕ showAddCaseModal - 清除前 editId:', modal.dataset.editId);
+
+            modal.classList.add('active');
             document.querySelector('.modal-header').textContent = '➕ 添加测试用例';
 
             // 清空表单 - 基础字段
@@ -2548,11 +2552,14 @@ console.log('B站弹幕开关完成');`
             toggleAnonymousMode(); // 初始化匿名模式状态
 
             // 移除编辑模式标记
-            delete document.getElementById('case-modal').dataset.editId;
+            const modal2 = document.getElementById('case-modal');
+            delete modal2.dataset.editId;
+            console.log('➕ showAddCaseModal - 清除后 editId:', modal2.dataset.editId, 'hasEditId:', 'editId' in modal2.dataset);
         }
 
         // 编辑用例
         function editCase(id) {
+            console.log('✏️ editCase - ID:', id);
             const testCase = testCases.find(tc => tc.id === id || tc.id == id);
             if (!testCase) {
                 console.error('无法找到测试用例:', id, '现有用例IDs:', testCases.map(tc => tc.id));
@@ -2620,7 +2627,9 @@ console.log('B站弹幕开关完成');`
             toggleAnonymousMode(); // 初始化匿名模式状态
 
             // 标记为编辑模式
-            document.getElementById('case-modal').dataset.editId = id;
+            const editModal = document.getElementById('case-modal');
+            editModal.dataset.editId = id;
+            console.log('✏️ editCase - 设置后 editId:', editModal.dataset.editId);
         }
 
         // 保存用例
@@ -2723,10 +2732,16 @@ console.log('B站弹幕开关完成');`
                 }
             };
 
-            const editId = document.getElementById('case-modal').dataset.editId;
+            const modal = document.getElementById('case-modal');
+            const editId = modal.dataset.editId;
 
-            if (editId) {
+            // 调试日志
+            console.log('💾 saveCase - editId:', editId, 'type:', typeof editId);
+            console.log('💾 saveCase - hasEditId:', 'editId' in modal.dataset);
+
+            if (editId && editId !== 'undefined') {
                 // 编辑模式
+                console.log('✏️ 编辑模式 - ID:', editId);
                 const testCase = testCases.find(tc => tc.id === parseInt(editId) || tc.id === editId);
                 if (testCase) {
                     testCase.name = name;
@@ -2754,9 +2769,12 @@ console.log('B站弹幕开关完成');`
                     });
 
                     showToast('用例更新成功', 'success');
+                    // 清除编辑模式标记
+                    delete modal.dataset.editId;
                 }
             } else {
                 // 新增模式
+                console.log('➕ 新增模式');
                 const newCase = {
                     name,
                     runners,
@@ -2967,6 +2985,7 @@ console.log('B站弹幕开关完成');`
                     body: JSON.stringify({
                         name: taskName, // 使用带标记的任务名称
                         testCaseId: testCase.id && testCase.id.toString().startsWith('testcase_') ? testCase.id : undefined, // 关联测试用例ID
+                        remarks: testLabel || undefined, // 备注：测试目的、版本等信息
                         config: {
                             mode: {
                                 anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
@@ -3342,7 +3361,12 @@ console.log('B站弹幕开关完成');`
 
         // 关闭模态框
         function closeModal() {
-            document.getElementById('case-modal').classList.remove('active');
+            const modal = document.getElementById('case-modal');
+            console.log('❌ closeModal - 清除前 editId:', modal.dataset.editId);
+            modal.classList.remove('active');
+            // 清除编辑模式标记，防止下次新增时误判为编辑
+            delete modal.dataset.editId;
+            console.log('❌ closeModal - 清除后 editId:', modal.dataset.editId, 'hasEditId:', 'editId' in modal.dataset);
         }
 
         // ==================== Cookie自动获取功能 ====================

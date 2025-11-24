@@ -125,6 +125,7 @@ interface TestRecord {
     perfcatChartUrl?: string;
     exitCode?: number;
     remarks?: string; // 备注：测试目的、版本等信息
+    reportFile?: string; // 本地报告文件名
 }
 
 let testRecords: TestRecord[] = [];
@@ -352,7 +353,7 @@ function appendTaskOutput(taskId: string, data: string) {
 }
 
 // 创建新任务
-function createTask(name: string, runner: string, config: any, testCaseId?: string): string {
+function createTask(name: string, runner: string, config: any, testCaseId?: string, remarks?: string): string {
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const task: Task = {
@@ -364,7 +365,8 @@ function createTask(name: string, runner: string, config: any, testCaseId?: stri
         output: '',
         process: null,
         startTime: new Date(),
-        config
+        config,
+        remarks // 备注：测试目的、版本等信息
     };
 
     tasks.set(taskId, task);
@@ -396,14 +398,22 @@ async function startTask(taskId: string) {
     const runningCount = getRunningTasksCount();
     if (runningCount >= MAX_CONCURRENT_TASKS) {
         console.log(`[TaskManager] ⏳ 并发已满，任务等待: ${task.name} (${runningCount}/${MAX_CONCURRENT_TASKS})`);
-        appendTaskOutput(taskId, `[系统] 等待其他任务完成...(当前并发: ${runningCount}/${MAX_CONCURRENT_TASKS})\n`);
+        appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+        appendTaskOutput(taskId, `⏳ 等待其他任务完成...\n`);
+        appendTaskOutput(taskId, `当前并发: ${runningCount}/${MAX_CONCURRENT_TASKS}\n`);
+        appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
         return;
     }
 
     task.status = 'running';
     console.log(`[TaskManager] ▶️ 启动任务: ${task.name} (${runningCount + 1}/${MAX_CONCURRENT_TASKS})`);
-    appendTaskOutput(taskId, `[系统] 任务开始执行: ${task.name}\n`);
-    appendTaskOutput(taskId, `[系统] Runner: ${task.runner}\n`);
+    appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+    appendTaskOutput(taskId, `  ▶️  任务开始执行\n`);
+    appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
+    appendTaskOutput(taskId, `任务名称: ${task.name}\n`);
+    appendTaskOutput(taskId, `Runner:   ${task.runner}\n`);
+    appendTaskOutput(taskId, `开始时间: ${new Date().toLocaleString('zh-CN')}\n`);
+    appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
 
     try {
         // 处理自动Cookie：在生成配置前自动获取Cookie
@@ -422,7 +432,12 @@ async function startTask(taskId: string) {
         const taskTimeout = setTimeout(() => {
             if (task.process && !task.process.killed) {
                 console.warn(`[TaskManager] ⏰ 任务超时，强制终止: ${task.name} (TaskID: ${taskId})`);
-                appendTaskOutput(taskId, `\n[系统] ⚠️ 任务执行超时(30分钟)，已强制终止\n`);
+                appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+                appendTaskOutput(taskId, `  ⚠️  任务执行超时\n`);
+                appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
+                appendTaskOutput(taskId, `超时时长: 30分钟\n`);
+                appendTaskOutput(taskId, `操作:     已强制终止\n`);
+                appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
                 task.process.kill('SIGTERM');
                 setTimeout(() => {
                     if (task.process && !task.process.killed) {
@@ -452,7 +467,11 @@ async function startTask(taskId: string) {
 
             const statusEmoji = code === 0 ? '✅' : '❌';
             console.log(`[TaskManager] ${statusEmoji} 任务${code === 0 ? '完成' : '失败'}: ${task.name} (退出码: ${code})`);
-            appendTaskOutput(taskId, `\n[系统] 任务${code === 0 ? '完成' : '失败'} (退出码: ${code})\n`);
+            appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+            appendTaskOutput(taskId, `  ${statusEmoji}  任务${code === 0 ? '完成' : '失败'}\n`);
+            appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
+            appendTaskOutput(taskId, `退出码:   ${code}\n`);
+            appendTaskOutput(taskId, `结束时间: ${new Date().toLocaleString('zh-CN')}\n`);
 
             // 清理配置文件（优先执行，确保清理）
             // 临时禁用删除，用于调试
@@ -506,17 +525,21 @@ async function startTask(taskId: string) {
                         const latestReport = validFiles[0];
                         console.log(`[TaskManager] 📄 选择报告文件: ${latestReport.name}`);
 
+                        // 保存报告文件名到任务
+                        (task as any).reportFile = latestReport.name;
+
                         // 读取并解析JSON
                         const reportContent = await fs.readFile(latestReport.path, 'utf-8');
                         const reportData = JSON.parse(reportContent);
 
                         // 验证报告数据
                         if (!reportData || typeof reportData !== 'object') {
-                            appendTaskOutput(taskId, `[系统] ⚠️ 测试报告格式无效\n`);
+                            appendTaskOutput(taskId, `\n⚠️ 测试报告格式无效\n`);
                             console.error('[TaskManager] Invalid report data:', reportData);
                         } else {
                             // 上传到Perfcat
-                            appendTaskOutput(taskId, `[系统] 正在上传测试报告到Perfcat...\n`);
+                            appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+                            appendTaskOutput(taskId, `📤 正在上传测试报告到Perfcat...\n`);
                             const uploadResult = await uploadToPerfcat(reportData);
 
                             if (uploadResult.success && uploadResult.id) {
@@ -524,20 +547,26 @@ async function startTask(taskId: string) {
                                 // 根据runner类型构建完整的Perfcat URL
                                 task.perfcatUrl = `https://fe-perfcat.bilibili.co/utils/shorten/${uploadResult.id}?runner=${task.runner}`;
 
-                                appendTaskOutput(taskId, `[系统] ✅ Perfcat上传成功！\n`);
-                                appendTaskOutput(taskId, `[系统] 📊 查看报告: ${task.perfcatUrl}\n`);
-                                appendTaskOutput(taskId, `[系统] 📈 图表模式: ${task.perfcatUrl}&viewType=chart\n`);
+                                appendTaskOutput(taskId, `✅ Perfcat上传成功！\n\n`);
+                                appendTaskOutput(taskId, `📊 报告链接:\n`);
+                                appendTaskOutput(taskId, `   ${task.perfcatUrl}\n\n`);
+                                appendTaskOutput(taskId, `📈 图表模式:\n`);
+                                appendTaskOutput(taskId, `   ${task.perfcatUrl}&viewType=chart\n`);
+                                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                             } else {
-                                appendTaskOutput(taskId, `[系统] ⚠️ Perfcat上传失败: ${uploadResult.error || '未知错误'}\n`);
+                                appendTaskOutput(taskId, `⚠️ Perfcat上传失败: ${uploadResult.error || '未知错误'}\n`);
+                                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                             }
                         }
                     } else {
-                        appendTaskOutput(taskId, `[系统] ⚠️ 未找到测试报告文件 (可能生成失败或文件名不匹配)\n`);
+                        appendTaskOutput(taskId, `\n⚠️ 未找到测试报告文件\n`);
+                        appendTaskOutput(taskId, `可能原因: 生成失败或文件名不匹配\n`);
                         console.warn(`[TaskManager] ⚠️  未找到有效报告文件，任务: ${task.name}, runner: ${task.runner}`);
                     }
                 } catch (error) {
                     console.error('[TaskManager] 上传Perfcat失败:', error);
-                    appendTaskOutput(taskId, `[系统] ⚠️ 处理测试报告时出错: ${(error as Error).message}\n`);
+                    appendTaskOutput(taskId, `\n⚠️ 处理测试报告时出错\n`);
+                    appendTaskOutput(taskId, `错误信息: ${(error as Error).message}\n`);
                 }
             }
 
@@ -566,7 +595,8 @@ async function startTask(taskId: string) {
                     perfcatUrl: task.perfcatUrl,
                     perfcatChartUrl: task.perfcatUrl ? `${task.perfcatUrl}&viewType=chart` : undefined,
                     exitCode: code ?? undefined,
-                    remarks: task.remarks // 从任务中获取备注
+                    remarks: task.remarks, // 从任务中获取备注
+                    reportFile: (task as any).reportFile // 报告文件名
                 };
                 await addTestRecord(record);
                 console.log(`[TestRecords] 📝 已保存测试记录: ${task.name}`);
@@ -683,13 +713,15 @@ function stopTask(taskId: string, force: boolean = false) {
                 if (task.process && !task.process.killed) {
                     console.warn(`Task ${taskId} did not terminate gracefully, forcing SIGKILL...`);
                     task.process.kill('SIGKILL');
-                    appendTaskOutput(taskId, '\n[系统] 进程未响应，已强制终止\n');
+                    appendTaskOutput(taskId, `\n⚠️ 进程未响应，已强制终止\n`);
                     broadcastTaskUpdate(taskId);
                     broadcastTaskList();
                 }
             }, 5000);
 
-            appendTaskOutput(taskId, '\n\n⚠️ 任务被用户停止\n');
+            appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+            appendTaskOutput(taskId, `  ⚠️  任务被用户停止\n`);
+            appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
         }
 
         // 立即广播状态更新，让前端及时看到变化
@@ -1296,7 +1328,7 @@ app.post('/api/dynamic-config', async (req, res) => {
 
 // 启动benchmark（新版本：使用任务系统，支持并发）
 app.post('/api/start', async (req, res) => {
-    const { runner, config, name, testCaseId } = req.body;
+    const { runner, config, name, testCaseId, remarks } = req.body;
 
     try {
         let finalConfig;
@@ -1364,12 +1396,13 @@ app.post('/api/start', async (req, res) => {
         // 转换前端配置为SDK期望的格式
         const transformedConfig = transformConfigForSDK(finalConfig);
 
-        // 创建任务（传入testCaseId以便关联）
+        // 创建任务（传入testCaseId以便关联，传入remarks作为备注）
         const taskId = createTask(
             taskName,
             runnerNames.join(' + '),
             transformedConfig,
-            testCaseId
+            testCaseId,
+            remarks
         );
 
         // 立即尝试启动任务
@@ -1812,7 +1845,10 @@ async function processAutoCookies(config: any, taskId: string) {
 
             const { uid, env } = advConfig.autoCookie;
 
-            appendTaskOutput(taskId, `[Cookie] 🔄 自动获取Cookie: UID=${uid}, 环境=${env}\n`);
+            appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+            appendTaskOutput(taskId, `🔄 自动获取Cookie\n`);
+            appendTaskOutput(taskId, `UID:  ${uid}\n`);
+            appendTaskOutput(taskId, `环境: ${env}\n`);
             console.log(`[Cookie] 为任务 ${taskId} 自动获取Cookie: UID=${uid}, 环境=${env}`);
 
             try {
@@ -1867,11 +1903,15 @@ async function processAutoCookies(config: any, taskId: string) {
                 delete advConfig.autoCookie;
                 advConfig.cookie = cookieString;
 
-                appendTaskOutput(taskId, `[Cookie] ✅ Cookie获取成功: UID=${numericUid}\n`);
+                appendTaskOutput(taskId, `✅ Cookie获取成功\n`);
+                appendTaskOutput(taskId, `UID: ${numericUid}\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                 console.log(`[Cookie] 成功获取Cookie: UID=${numericUid}, 环境=${env}`);
             } catch (error) {
                 const errorMsg = (error as Error).message;
-                appendTaskOutput(taskId, `[Cookie] ❌ Cookie获取失败: ${errorMsg}\n`);
+                appendTaskOutput(taskId, `❌ Cookie获取失败\n`);
+                appendTaskOutput(taskId, `错误: ${errorMsg}\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                 console.error(`[Cookie] Cookie获取失败:`, error);
                 throw error; // 中断任务执行
             }
@@ -2296,6 +2336,42 @@ app.get('/api/test-records/stats', async (req, res) => {
     } catch (error) {
         console.error('Failed to get test statistics:', error);
         res.status(500).json({ error: 'Failed to get test statistics' });
+    }
+});
+
+// 获取测试记录的报告文件内容
+app.get('/api/test-records/:id/report', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = testRecords.find(r => r.id === id);
+
+        if (!record) {
+            return res.status(404).json({ error: 'Test record not found' });
+        }
+
+        if (!record.reportFile) {
+            return res.status(404).json({ error: 'Report file not found for this record' });
+        }
+
+        // 读取报告文件
+        const reportPath = path.join(__dirname, '../benchmark_report', record.reportFile);
+
+        try {
+            const reportContent = await fs.readFile(reportPath, 'utf-8');
+            const reportData = JSON.parse(reportContent);
+
+            res.json({
+                success: true,
+                reportFile: record.reportFile,
+                data: reportData
+            });
+        } catch (fileError) {
+            console.error('Failed to read report file:', fileError);
+            res.status(404).json({ error: 'Report file not found on disk' });
+        }
+    } catch (error) {
+        console.error('Failed to get report:', error);
+        res.status(500).json({ error: 'Failed to get report' });
     }
 });
 

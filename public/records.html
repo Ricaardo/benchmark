@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测试记录 - Benchmark Web Runner</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -82,38 +83,6 @@
 
         .btn-danger:hover {
             background: #e53e3e;
-        }
-
-        .stats-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: #718096;
-            margin-bottom: 8px;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: #1a202c;
-        }
-
-        .stat-sub {
-            font-size: 12px;
-            color: #a0aec0;
-            margin-top: 4px;
         }
 
         .filters {
@@ -296,10 +265,147 @@
             color: #718096;
         }
 
+        /* 展开行样式 */
+        .expandable-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .expandable-row:hover {
+            background: #f7fafc;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .chart-row {
+            display: none;
+            background: #f7fafc;
+        }
+
+        .chart-row.visible {
+            display: table-row;
+        }
+
+        .chart-cell {
+            padding: 24px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            margin-top: 16px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .metric-unit {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-left: 2px;
+        }
+
+        .loading-chart {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
         .loading {
             text-align: center;
             padding: 40px;
             color: #718096;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stats-table th {
+            background: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-table td {
+            color: #2d3748;
+        }
+
+        .stats-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .stats-diff-positive {
+            color: #e53e3e;
+            font-weight: 500;
+        }
+
+        .stats-diff-negative {
+            color: #38a169;
+            font-weight: 500;
+        }
+
+        .stats-diff-neutral {
+            color: #718096;
+        }
+
+        .stats-url-name {
+            color: #667eea;
+            font-weight: 500;
         }
 
         .toast {
@@ -346,31 +452,6 @@
             </div>
         </div>
 
-        <!-- Statistics -->
-        <div class="stats-cards" id="stats-cards">
-            <div class="stat-card">
-                <div class="stat-label">总测试数</div>
-                <div class="stat-value" id="stat-total">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">成功</div>
-                <div class="stat-value" style="color: #48bb78;" id="stat-completed">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">失败</div>
-                <div class="stat-value" style="color: #f56565;" id="stat-error">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">平均耗时</div>
-                <div class="stat-value" style="font-size: 24px;" id="stat-duration">-</div>
-                <div class="stat-sub">毫秒</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Perfcat报告</div>
-                <div class="stat-value" style="color: #667eea;" id="stat-perfcat">-</div>
-            </div>
-        </div>
-
         <!-- Filters -->
         <div class="filters">
             <div class="filter-group">
@@ -407,7 +488,9 @@
                 <table class="records-table" id="records-table">
                     <thead>
                         <tr>
-                            <th>测试名称</th>
+                            <th style="width: 40px;"></th>
+                            <th>测试场景</th>
+                            <th>备注</th>
                             <th>Runner</th>
                             <th>状态</th>
                             <th>开始时间</th>
@@ -442,22 +525,6 @@
         let currentFilters = {};
         let totalRecords = 0;
 
-        // 加载统计信息
-        async function loadStats() {
-            try {
-                const response = await fetch('/api/test-records/stats');
-                const stats = await response.json();
-
-                document.getElementById('stat-total').textContent = stats.total;
-                document.getElementById('stat-completed').textContent = stats.completed;
-                document.getElementById('stat-error').textContent = stats.error;
-                document.getElementById('stat-duration').textContent = formatDuration(stats.averageDuration);
-                document.getElementById('stat-perfcat').textContent = stats.withPerfcat;
-            } catch (error) {
-                console.error('Failed to load stats:', error);
-            }
-        }
-
         // 加载测试记录
         async function loadRecords() {
             try {
@@ -491,18 +558,47 @@
             }
         }
 
+        // 存储已加载的图表数据
+        const chartsData = new Map();
+
         // 渲染记录列表
         function renderRecords(records) {
             const tbody = document.getElementById('records-tbody');
             tbody.innerHTML = '';
 
-            records.forEach(record => {
+            records.forEach((record, index) => {
+                // 创建主行
                 const tr = document.createElement('tr');
+                tr.className = 'expandable-row';
+                tr.id = `record-row-${record.id}`;
 
-                // 测试名称
+                // 展开/折叠图标
+                const expandTd = document.createElement('td');
+                if (record.reportFile) {
+                    expandTd.innerHTML = `<span class="expand-icon" id="expand-icon-${record.id}">▶</span>`;
+                    expandTd.onclick = () => toggleChartRow(record.id);
+                } else {
+                    expandTd.innerHTML = '';
+                }
+                tr.appendChild(expandTd);
+
+                // 测试场景
                 const nameTd = document.createElement('td');
                 nameTd.innerHTML = `<strong>${escapeHtml(record.name)}</strong>`;
+                if (record.reportFile) {
+                    nameTd.onclick = () => toggleChartRow(record.id);
+                    nameTd.style.cursor = 'pointer';
+                }
                 tr.appendChild(nameTd);
+
+                // 备注
+                const remarksTd = document.createElement('td');
+                if (record.remarks) {
+                    remarksTd.innerHTML = `<span style="color: #4a5568; font-size: 13px;">${escapeHtml(record.remarks)}</span>`;
+                } else {
+                    remarksTd.innerHTML = '<span style="color: #cbd5e0; font-size: 12px;">-</span>';
+                }
+                tr.appendChild(remarksTd);
 
                 // Runner
                 const runnerTd = document.createElement('td');
@@ -530,8 +626,7 @@
                 if (record.perfcatUrl) {
                     perfcatTd.innerHTML = `
                         <div style="display: flex; gap: 6px;">
-                            <a href="${record.perfcatUrl}" target="_blank" class="perfcat-link">📊 报告</a>
-                            <a href="${record.perfcatChartUrl}" target="_blank" class="perfcat-link chart">📈 图表</a>
+                            <a href="${record.perfcatUrl}" target="_blank" class="perfcat-link">📊 Perfcat</a>
                         </div>
                     `;
                 } else {
@@ -549,7 +644,96 @@
                 tr.appendChild(actionTd);
 
                 tbody.appendChild(tr);
+
+                // 如果有报告文件，创建图表展开行
+                if (record.reportFile) {
+                    const chartTr = document.createElement('tr');
+                    chartTr.className = 'chart-row';
+                    chartTr.id = `chart-row-${record.id}`;
+
+                    const chartTd = document.createElement('td');
+                    chartTd.colSpan = 9;
+                    chartTd.className = 'chart-cell';
+                    chartTd.innerHTML = `
+                        <div class="chart-container" id="chart-container-${record.id}">
+                            <div class="loading-chart">加载图表中...</div>
+                        </div>
+                    `;
+
+                    chartTr.appendChild(chartTd);
+                    tbody.appendChild(chartTr);
+                }
             });
+        }
+
+        // 切换图表行显示
+        async function toggleChartRow(recordId) {
+            const chartRow = document.getElementById(`chart-row-${recordId}`);
+            const expandIcon = document.getElementById(`expand-icon-${recordId}`);
+
+            if (!chartRow) return;
+
+            const isVisible = chartRow.classList.contains('visible');
+
+            if (isVisible) {
+                // 折叠
+                chartRow.classList.remove('visible');
+                expandIcon.classList.remove('expanded');
+            } else {
+                // 展开
+                chartRow.classList.add('visible');
+                expandIcon.classList.add('expanded');
+
+                // 如果还没加载过图表数据，则加载
+                if (!chartsData.has(recordId)) {
+                    await loadAndRenderChart(recordId);
+                }
+            }
+        }
+
+        // 加载并渲染图表
+        async function loadAndRenderChart(recordId) {
+            const container = document.getElementById(`chart-container-${recordId}`);
+
+            try {
+                // 获取测试记录
+                const recordResponse = await fetch(`/api/test-records/${recordId}`);
+                if (!recordResponse.ok) throw new Error('Failed to load record');
+                const record = await recordResponse.json();
+
+                // 获取报告数据
+                const reportResponse = await fetch(`/api/test-records/${recordId}/report`);
+                if (!reportResponse.ok) throw new Error('Failed to load report');
+                const reportData = await reportResponse.json();
+
+                // 缓存数据
+                chartsData.set(recordId, {
+                    record,
+                    reportData: reportData.data
+                });
+
+                // 渲染图表
+                renderChart(recordId, record, reportData.data);
+            } catch (error) {
+                console.error('Failed to load chart:', error);
+                container.innerHTML = '<div style="color: #e53e3e; padding: 20px;">加载图表失败: ' + error.message + '</div>';
+            }
+        }
+
+        // 渲染图表内容
+        function renderChart(recordId, record, reportData) {
+            const container = document.getElementById(`chart-container-${recordId}`);
+            const runner = record.runner;
+
+            if (runner === 'Initialization') {
+                renderInitializationChart(container, reportData, recordId);
+            } else if (runner === 'Runtime') {
+                renderRuntimeChart(container, reportData, recordId);
+            } else if (runner === 'MemoryLeak') {
+                renderRuntimeChart(container, reportData, recordId);
+            } else {
+                container.innerHTML = '<div style="padding: 20px;">未知的测试类型</div>';
+            }
         }
 
         // 渲染分页
@@ -602,7 +786,6 @@
         // 刷新记录
         async function refreshRecords() {
             currentPage = 0;
-            await loadStats();
             await loadRecords();
             showToast('已刷新', 'success');
         }
@@ -618,7 +801,6 @@
 
                 if (response.ok) {
                     showToast('记录已删除', 'success');
-                    await loadStats();
                     await loadRecords();
                 } else {
                     showToast('删除失败', 'error');
@@ -642,7 +824,6 @@
 
                 if (response.ok) {
                     showToast('所有记录已清空', 'success');
-                    await loadStats();
                     await loadRecords();
                 } else {
                     showToast('清空失败', 'error');
@@ -693,16 +874,774 @@
             }, 3000);
         }
 
+        // ==================== 图表渲染函数 ====================
+
+        // 渲染Initialization图表
+        function renderInitializationChart(container, reportData, recordId) {
+            if (!reportData || !reportData.initializationRes || reportData.initializationRes.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">没有找到Initialization测试数据</div>';
+                return;
+            }
+
+            try {
+
+            // 提取所有URL的测试结果
+            const allResults = reportData.initializationRes.map(res => ({
+                description: res.value?.description || res.description || '测试页面',
+                data: res.value
+            }));
+
+            // 生成汇总指标HTML
+            let metricsHtml = '';
+            allResults.forEach(({ description, data }) => {
+                metricsHtml += `
+                    <div style="margin-bottom: 24px;">
+                        <h4 style="color: #4a5568; margin-bottom: 12px;">📄 ${escapeHtml(description)}</h4>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <div class="metric-label">First Paint (FP)</div>
+                                <div class="metric-value">${data['fp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">First Contentful Paint (FCP)</div>
+                                <div class="metric-value">${data['fcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Largest Contentful Paint (LCP)</div>
+                                <div class="metric-value">${data['lcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Time to First Byte (TTFB)</div>
+                                <div class="metric-value">${data['ttfb-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Server Response Time (SRT)</div>
+                                <div class="metric-value">${data['srt-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-label">Cumulative Layout Shift (CLS)</div>
+                                <div class="metric-value">${data['cls-cold'].toFixed(4)}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 16px; color: #2d3748;">📊 Initialization 性能指标</h3>
+                ${metricsHtml}
+
+                <div style="margin-top: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">性能指标对比</h4>
+
+                    <!-- FP Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">First Paint (FP)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-fp-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- FCP Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">First Contentful Paint (FCP)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-fcp-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- LCP Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Largest Contentful Paint (LCP)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-lcp-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- TTFB Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Time to First Byte (TTFB)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-ttfb-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- SRT Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Server Response Time (SRT)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-srt-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CLS Chart -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Cumulative Layout Shift (CLS)</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="init-cls-${recordId}"></canvas>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 辅助函数
+            function calculateAverage(arr) {
+                return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+            }
+
+            function addPercentageDiffTooltip(avgValue) {
+                if (!avgValue || avgValue === 0) {
+                    return {};
+                }
+                return {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const value = context.parsed.y;
+                            const diff = ((value - avgValue) / avgValue * 100).toFixed(1);
+                            const symbol = diff > 0 ? '+' : '';
+                            return `与均值差距: ${symbol}${diff}%`;
+                        }
+                    }
+                };
+            }
+
+            // 颜色方案
+            const colors = [
+                { border: 'rgb(102, 126, 234)', bg: 'rgba(102, 126, 234, 0.8)' },
+                { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.8)' },
+                { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.8)' },
+                { border: 'rgb(255, 159, 64)', bg: 'rgba(255, 159, 64, 0.8)' },
+                { border: 'rgb(153, 102, 255)', bg: 'rgba(153, 102, 255, 0.8)' },
+                { border: 'rgb(255, 205, 86)', bg: 'rgba(255, 205, 86, 0.8)' }
+            ];
+
+            // 定义要渲染的指标
+            const metrics = [
+                { id: 'fp', key: 'fp-cold', label: 'FP', unit: 'ms' },
+                { id: 'fcp', key: 'fcp-cold', label: 'FCP', unit: 'ms' },
+                { id: 'lcp', key: 'lcp-cold', label: 'LCP', unit: 'ms' },
+                { id: 'ttfb', key: 'ttfb-cold', label: 'TTFB', unit: 'ms' },
+                { id: 'srt', key: 'srt-cold', label: 'SRT', unit: 'ms' },
+                { id: 'cls', key: 'cls-cold', label: 'CLS', unit: '' }
+            ];
+
+            // 计算所有指标的统计数据
+            const allMetricsStats = metrics.map(metric => {
+                const urlStats = allResults.map((result, index) => {
+                    const iterations = result.data[`${metric.key}-iterations`];
+                    const avg = calculateAverage(iterations);
+
+                    return {
+                        description: result.description,
+                        avg: avg,
+                        iterations: iterations,
+                        color: colors[index % colors.length]
+                    };
+                });
+
+                return {
+                    metric: metric,
+                    urlStats: urlStats
+                };
+            });
+
+            // 构建汇总表格
+            let summaryTableHtml = `
+                <div style="margin-bottom: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">📊 性能指标汇总对比</h4>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>指标</th>
+            `;
+
+            // 添加URL列
+            if (allMetricsStats.length > 0) {
+                allMetricsStats[0].urlStats.forEach(stat => {
+                    summaryTableHtml += `<th class="stats-url-name">${escapeHtml(stat.description)}</th>`;
+                });
+
+                // 如果有多个URL，添加差距列
+                if (allMetricsStats[0].urlStats.length > 1) {
+                    summaryTableHtml += `<th>相对差距</th>`;
+                }
+            }
+
+            summaryTableHtml += `
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // 为每个指标添加一行数据
+            allMetricsStats.forEach(({ metric, urlStats }) => {
+                summaryTableHtml += `
+                    <tr>
+                        <td><strong>${metric.label}</strong></td>
+                `;
+
+                // 添加每个URL的均值
+                urlStats.forEach(stat => {
+                    summaryTableHtml += `<td>${stat.avg.toFixed(metric.id === 'cls' ? 4 : 1)}${metric.unit}</td>`;
+                });
+
+                // 如果有多个URL，添加第二个URL相对于第一个URL的差距
+                if (urlStats.length > 1) {
+                    const diff = ((urlStats[1].avg - urlStats[0].avg) / urlStats[0].avg * 100);
+                    const diffFormatted = diff.toFixed(1);
+                    const diffSymbol = diff > 0 ? '+' : '';
+                    const diffClass = diff > 0 ? 'stats-diff-positive' : (diff < 0 ? 'stats-diff-negative' : 'stats-diff-neutral');
+
+                    summaryTableHtml += `<td class="${diffClass}">${diffSymbol}${diffFormatted}%</td>`;
+                }
+
+                summaryTableHtml += `</tr>`;
+            });
+
+            summaryTableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // 将汇总表格插入到"性能指标对比"标题之前
+            const trendsSection = container.querySelector('div[style*="margin-top: 32px"]');
+            if (trendsSection) {
+                trendsSection.insertAdjacentHTML('beforebegin', summaryTableHtml);
+            }
+
+            // 渲染每个指标的对比图表
+            metrics.forEach((metric, index) => {
+                const { urlStats } = allMetricsStats[index];
+
+                // 获取最大迭代次数，用于统一X轴标签
+                const maxIterations = Math.max(...allResults.map(r => r.data[`${metric.key}-iterations`].length));
+                const labels = Array.from({ length: maxIterations }, (_, i) => `第${i + 1}次`);
+
+                // 渲染图表
+                const ctx = document.getElementById(`init-${metric.id}-${recordId}`)?.getContext('2d');
+                if (!ctx) return;
+
+                const datasets = urlStats.map(stat => {
+                    return {
+                        label: stat.description,
+                        data: stat.iterations,
+                        backgroundColor: stat.color.bg,
+                        borderColor: stat.color.border,
+                        borderWidth: 2,
+                        _avg: stat.avg
+                    };
+                });
+
+                // 计算所有数据点的全局平均值（用于tooltip）
+                const allValues = datasets.flatMap(ds => ds.data);
+                const globalAvg = calculateAverage(allValues);
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: addPercentageDiffTooltip(globalAvg)
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: metric.unit ? `${metric.label} (${metric.unit})` : metric.label
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+            } catch (error) {
+                console.error('Error rendering Initialization chart:', error);
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #e53e3e;">
+                    渲染Initialization图表时出错: ${error.message}
+                </div>`;
+            }
+        }
+
+        // 渲染Runtime图表
+        function renderRuntimeChart(container, reportData, recordId) {
+            if (!reportData || !reportData.flattenedRuntimeData || reportData.flattenedRuntimeData.length === 0) {
+                container.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">没有找到Runtime测试数据</div>';
+                return;
+            }
+
+            try {
+            const data = reportData.flattenedRuntimeData;
+            const runtimeResults = reportData.runtimeRes || [];
+
+            // 提取所有URL的前缀和描述
+            const urlPrefixes = [];
+            const firstDataPoint = data[0];
+            for (const key in firstDataPoint) {
+                if (key !== 'time' && key.includes(':')) {
+                    const prefix = key.split(':')[0];
+                    if (!urlPrefixes.find(p => p.prefix === prefix)) {
+                        const result = runtimeResults.find(r => r.description === prefix || r.value?.description === prefix);
+                        const description = result?.value?.description || result?.description || prefix;
+                        urlPrefixes.push({ prefix, description });
+                    }
+                }
+            }
+
+            // 提取时间序列
+            const timeLabels = data.map(d => `${(d.time / 1000).toFixed(0)}s`);
+
+            // 生成汇总指标HTML
+            let metricsHtml = '';
+            urlPrefixes.forEach(({ prefix, description }) => {
+                const result = runtimeResults.find(r =>
+                    r.value?.description === description ||
+                    r.description === description ||
+                    r.description === prefix
+                );
+                const runtime = result?.value?.runtime;
+                const longtask = result?.value?.longtask;
+                if (runtime) {
+                    metricsHtml += `
+                        <div style="margin-bottom: 24px;">
+                            <h4 style="color: #4a5568; margin-bottom: 12px;">📄 ${escapeHtml(description)}</h4>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-label">CPU Total (平均)</div>
+                                    <div class="metric-value">${runtime['cpu:total'].avg.toFixed(1)}<span class="metric-unit">%</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">CPU Total (P95)</div>
+                                    <div class="metric-value">${runtime['cpu:total'].p95.toFixed(1)}<span class="metric-unit">%</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Heap (平均)</div>
+                                    <div class="metric-value">${runtime.heap.avg.toFixed(1)}<span class="metric-unit">MB</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Heap (最大)</div>
+                                    <div class="metric-value">${runtime.heap.max.toFixed(1)}<span class="metric-unit">MB</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">DOM Nodes</div>
+                                    <div class="metric-value">${runtime['DOM Nodes'][0]} - ${runtime['DOM Nodes'][1]}</div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">JS Event Listeners</div>
+                                    <div class="metric-value">${runtime.JSEventListeners[0]} - ${runtime.JSEventListeners[1]}</div>
+                                </div>
+                                ${longtask ? `
+                                <div class="metric-card" style="border-left-color: #f56565;">
+                                    <div class="metric-label">Long Tasks 数量</div>
+                                    <div class="metric-value">${longtask.count}</div>
+                                </div>
+                                <div class="metric-card" style="border-left-color: #f56565;">
+                                    <div class="metric-label">Long Tasks 总时长</div>
+                                    <div class="metric-value">${longtask.duration.toFixed(0)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            container.innerHTML = `
+                <h3 style="margin-bottom: 16px; color: #2d3748;">📈 Runtime 性能监控</h3>
+                ${metricsHtml}
+
+                <div style="margin-top: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">性能指标趋势图</h4>
+
+                    <!-- CPU Total -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Total 使用率</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-cpu-total-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CPU Thread -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Thread 使用率</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-cpu-thread-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Heap Memory -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Heap 内存使用</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-heap-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- DOM Nodes -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">DOM Nodes</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-dom-nodes-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- JS Event Listeners -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">JS Event Listeners</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-listeners-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CPU Script -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Script 使用率</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-cpu-script-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CPU Style -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Style 使用率</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-cpu-style-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- CPU Layout -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Layout 使用率</h5>
+                        <div class="chart-wrapper">
+                            <canvas id="runtime-cpu-layout-${recordId}"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Long Tasks Timeline -->
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">⚠️ Long Tasks 时间线</h5>
+                        <div id="longtask-timeline-${recordId}" style="min-height: 200px;"></div>
+                    </div>
+                </div>
+            `;
+
+            // 辅助函数：计算均值和百分比差距
+            function calculateAverage(arr) {
+                return arr.reduce((sum, val) => sum + val, 0) / arr.length;
+            }
+
+            function addPercentageDiffTooltipForRuntime(avg) {
+                if (!avg || avg === 0) {
+                    return {};
+                }
+                return {
+                    callbacks: {
+                        afterLabel: function(context) {
+                            const value = context.parsed.y;
+                            const diff = ((value - avg) / avg * 100).toFixed(1);
+                            const symbol = diff > 0 ? '+' : '';
+                            return `与均值差距: ${symbol}${diff}%`;
+                        }
+                    }
+                };
+            }
+
+            // 颜色方案
+            const colors = [
+                { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.1)' },
+                { border: 'rgb(54, 162, 235)', bg: 'rgba(54, 162, 235, 0.1)' },
+                { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.1)' },
+                { border: 'rgb(255, 159, 64)', bg: 'rgba(255, 159, 64, 0.1)' },
+                { border: 'rgb(153, 102, 255)', bg: 'rgba(153, 102, 255, 0.1)' },
+                { border: 'rgb(255, 205, 86)', bg: 'rgba(255, 205, 86, 0.1)' }
+            ];
+
+            // 定义所有指标
+            const metrics = [
+                { id: 'cpu-total', key: 'cpu:total', label: 'CPU Total', unit: '%', multiplier: 100 },
+                { id: 'cpu-thread', key: 'cpu:thread', label: 'CPU Thread', unit: '%', multiplier: 100 },
+                { id: 'heap', key: 'heap', label: 'Heap', unit: 'MB', multiplier: 1/1024/1024 },
+                { id: 'dom-nodes', key: 'DOM Nodes', label: 'DOM Nodes', unit: '', multiplier: 1 },
+                { id: 'listeners', key: 'JSEventListeners', label: 'JS Event Listeners', unit: '', multiplier: 1 },
+                { id: 'cpu-script', key: 'cpu:script', label: 'CPU Script', unit: '%', multiplier: 100 },
+                { id: 'cpu-style', key: 'cpu:style', label: 'CPU Style', unit: '%', multiplier: 100 },
+                { id: 'cpu-layout', key: 'cpu:layout', label: 'CPU Layout', unit: '%', multiplier: 100 }
+            ];
+
+            // 计算所有指标的统计数据
+            const allMetricsStats = metrics.map(metric => {
+                const urlStats = urlPrefixes.map((urlInfo, urlIndex) => {
+                    const values = data.map(d => {
+                        const val = d[`${urlInfo.prefix}:${metric.key}`];
+                        return val !== undefined ? (val * metric.multiplier) : null;
+                    }).filter(v => v !== null);
+
+                    return {
+                        description: urlInfo.description,
+                        avg: calculateAverage(values),
+                        color: colors[urlIndex % colors.length]
+                    };
+                });
+
+                return {
+                    metric: metric,
+                    urlStats: urlStats
+                };
+            });
+
+            // 构建汇总表格
+            let summaryTableHtml = `
+                <div style="margin-bottom: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">📊 性能指标汇总对比</h4>
+                    <table class="stats-table">
+                        <thead>
+                            <tr>
+                                <th>指标</th>
+            `;
+
+            // 添加URL列
+            if (allMetricsStats.length > 0) {
+                allMetricsStats[0].urlStats.forEach(stat => {
+                    summaryTableHtml += `<th class="stats-url-name">${escapeHtml(stat.description)}</th>`;
+                });
+
+                // 如果有多个URL，添加差距列
+                if (allMetricsStats[0].urlStats.length > 1) {
+                    summaryTableHtml += `<th>相对差距</th>`;
+                }
+            }
+
+            summaryTableHtml += `
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            // 为每个指标添加一行数据
+            allMetricsStats.forEach(({ metric, urlStats }) => {
+                summaryTableHtml += `
+                    <tr>
+                        <td><strong>${metric.label}</strong></td>
+                `;
+
+                // 添加每个URL的均值
+                urlStats.forEach(stat => {
+                    summaryTableHtml += `<td>${stat.avg.toFixed(2)}${metric.unit}</td>`;
+                });
+
+                // 如果有多个URL，添加第二个URL相对于第一个URL的差距
+                if (urlStats.length > 1) {
+                    const diff = ((urlStats[1].avg - urlStats[0].avg) / urlStats[0].avg * 100);
+                    const diffFormatted = diff.toFixed(1);
+                    const diffSymbol = diff > 0 ? '+' : '';
+                    const diffClass = diff > 0 ? 'stats-diff-positive' : (diff < 0 ? 'stats-diff-negative' : 'stats-diff-neutral');
+
+                    summaryTableHtml += `<td class="${diffClass}">${diffSymbol}${diffFormatted}%</td>`;
+                }
+
+                summaryTableHtml += `</tr>`;
+            });
+
+            summaryTableHtml += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // 将汇总表格插入到"性能指标趋势图"标题之前
+            const trendsSection = container.querySelector('div[style*="margin-top: 32px"]');
+            if (trendsSection) {
+                trendsSection.insertAdjacentHTML('beforebegin', summaryTableHtml);
+            }
+
+            // 渲染各个指标的图表
+            metrics.forEach((metric, index) => {
+                const { urlStats } = allMetricsStats[index];
+
+                // 渲染图表
+                const ctx = document.getElementById(`runtime-${metric.id}-${recordId}`)?.getContext('2d');
+                if (!ctx) return;
+
+                const datasets = urlStats.map((stat, urlIndex) => {
+                    const urlInfo = urlPrefixes[urlIndex];
+                    return {
+                        label: stat.description,
+                        data: data.map(d => {
+                            const val = d[`${urlInfo.prefix}:${metric.key}`];
+                            return val !== undefined ? (val * metric.multiplier).toFixed(2) : null;
+                        }),
+                        borderColor: stat.color.border,
+                        backgroundColor: stat.color.bg,
+                        tension: 0.4,
+                        fill: true,
+                        _avg: stat.avg
+                    };
+                });
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: timeLabels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    boxWidth: 12,
+                                    padding: 10,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: addPercentageDiffTooltipForRuntime(datasets[0]?._avg || 0)
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: metric.label + (metric.unit ? ` (${metric.unit})` : '')
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: '时间'
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+
+            // 渲染 Long Tasks 时间线
+            const longtaskContainer = document.getElementById(`longtask-timeline-${recordId}`);
+            if (longtaskContainer) {
+                let longtaskHtml = '';
+
+                urlPrefixes.forEach((urlInfo, urlIndex) => {
+                    const result = runtimeResults.find(r =>
+                        r.value?.description === urlInfo.description ||
+                        r.description === urlInfo.description
+                    );
+
+                    const longtask = result?.value?.longtask;
+                    if (longtask && longtask.list && longtask.list.length > 0) {
+                        const longtaskEvents = longtask.list.filter(item => item.name === 'longtask');
+
+                        longtaskHtml += `
+                            <div style="margin-bottom: 24px;">
+                                <h6 style="color: #4a5568; margin-bottom: 12px; font-weight: 600;">${escapeHtml(urlInfo.description)}</h6>
+                                <div style="background: #f7fafc; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+                                    <strong>统计信息:</strong> 共 ${longtask.count} 个 Long Tasks, 总时长 ${longtask.duration.toFixed(0)}ms
+                                </div>
+                        `;
+
+                        if (longtaskEvents.length > 0) {
+                            longtaskHtml += `
+                                <div style="overflow-x: auto;">
+                                    <table class="stats-table">
+                                        <thead>
+                                            <tr>
+                                                <th style="width: 60px;">#</th>
+                                                <th>开始时间</th>
+                                                <th>持续时间</th>
+                                                <th>时间线</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                            `;
+
+                            const maxTime = Math.max(...longtask.list.map(item => item.time || 0));
+
+                            longtaskEvents.forEach((task, index) => {
+                                const startTime = (task.time / 1000).toFixed(2);
+                                const duration = task.duration.toFixed(0);
+                                const barWidth = (task.duration / maxTime * 100).toFixed(2);
+                                const barLeft = ((task.time || 0) / maxTime * 100).toFixed(2);
+
+                                longtaskHtml += `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${startTime}s</td>
+                                        <td><strong style="color: #e53e3e;">${duration}ms</strong></td>
+                                        <td style="padding: 8px;">
+                                            <div style="position: relative; height: 24px; background: #e2e8f0; border-radius: 4px;">
+                                                <div style="position: absolute; left: ${barLeft}%; width: ${Math.max(barWidth, 1)}%; height: 100%; background: linear-gradient(90deg, #f56565, #e53e3e); border-radius: 4px;"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `;
+                            });
+
+                            longtaskHtml += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        } else {
+                            longtaskHtml += `<div style="padding: 20px; text-align: center; color: #718096;">没有检测到 Long Tasks</div>`;
+                        }
+
+                        longtaskHtml += `</div>`;
+                    } else {
+                        longtaskHtml += `
+                            <div style="margin-bottom: 16px;">
+                                <h6 style="color: #4a5568; margin-bottom: 8px; font-weight: 600;">${escapeHtml(urlInfo.description)}</h6>
+                                <div style="padding: 16px; text-align: center; color: #718096; background: #f7fafc; border-radius: 6px;">
+                                    没有 Long Task 数据
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                if (longtaskHtml) {
+                    longtaskContainer.innerHTML = longtaskHtml;
+                } else {
+                    longtaskContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">没有 Long Task 数据</div>';
+                }
+            }
+            } catch (error) {
+                console.error('Error rendering Runtime chart:', error);
+                container.innerHTML = `<div style="padding: 20px; text-align: center; color: #e53e3e;">
+                    渲染Runtime图表时出错: ${error.message}
+                </div>`;
+            }
+        }
+
         // 初始化
         window.onload = () => {
-            loadStats();
             loadRecords();
-
-            // 定时刷新（可选）
-            // setInterval(() => {
-            //     loadStats();
-            //     loadRecords();
-            // }, 30000); // 每30秒刷新一次
         };
     </script>
 </body>

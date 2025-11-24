@@ -1,6 +1,114 @@
 [
   {
-    "name": "测试",
+    "name": "内存泄露对比测试",
+    "runners": {
+      "Initialization": {
+        "enabled": false,
+        "repeatCount": 1
+      },
+      "Runtime": {
+        "enabled": false,
+        "repeatCount": 1,
+        "durationMs": 60000,
+        "delayMs": 10000
+      },
+      "MemoryLeak": {
+        "enabled": true,
+        "repeatCount": 1,
+        "intervalMs": 60000,
+        "iterations": 3,
+        "onPageTesting": ""
+      }
+    },
+    "urls": [
+      "https://www.bilibili.com",
+      "https://www.bilibili.com/video/BV1xx411c7mD"
+    ],
+    "urlsWithDesc": [
+      {
+        "url": "https://www.bilibili.com",
+        "description": "首页"
+      },
+      {
+        "url": "https://www.bilibili.com/video/BV1xx411c7mD",
+        "description": "视频页",
+        "config": {
+          "cookie": "DedeUserID=123456; SESSDATA=custom_session",
+          "customCss": ".ad { display: none; }"
+        }
+      }
+    ],
+    "mode": "headed",
+    "repeatCount": 1,
+    "anonymous": false,
+    "cpuThrottling": 1,
+    "description": "测试per-URL配置功能",
+    "tags": [
+      "test",
+      "per-url-config"
+    ],
+    "createdAt": "2025-11-24T05:25:38.343Z",
+    "executionHistory": [],
+    "id": "testcase_1763961938343_c9oskuf9",
+    "updatedAt": "2025-11-24T05:25:38.343Z"
+  },
+  {
+    "name": "初始化对比测试",
+    "runners": {
+      "Initialization": {
+        "enabled": true,
+        "repeatCount": 1
+      },
+      "Runtime": {
+        "enabled": false,
+        "repeatCount": 1,
+        "durationMs": 60000,
+        "delayMs": 10000
+      },
+      "MemoryLeak": {
+        "enabled": false,
+        "repeatCount": 1,
+        "intervalMs": 60000,
+        "iterations": 3,
+        "onPageTesting": ""
+      }
+    },
+    "urls": [
+      "https://www.bilibili.com",
+      "https://www.bilibili.com/video/BV1xx411c7mD"
+    ],
+    "urlsWithDesc": [
+      {
+        "url": "https://www.bilibili.com",
+        "description": "首页"
+      },
+      {
+        "url": "https://www.bilibili.com/video/BV1xx411c7mD",
+        "description": "视频页",
+        "config": {
+          "cookie": "DedeUserID=123456; SESSDATA=custom_session",
+          "customCss": ".ad { display: none; }"
+        }
+      }
+    ],
+    "mode": "headed",
+    "repeatCount": 1,
+    "anonymous": false,
+    "cpuThrottling": 1,
+    "description": "测试per-URL配置功能",
+    "tags": [
+      "test",
+      "per-url-config"
+    ],
+    "createdAt": "2025-11-24T04:50:06.689Z",
+    "executionHistory": [
+      "task_1763959812820_7o0cqdtg7"
+    ],
+    "id": "testcase_1763959806689_k1ul6o0x",
+    "updatedAt": "2025-11-24T04:50:06.689Z"
+  },
+  {
+    "name": "测试：多URL不同配置",
     "runners": {
       "Initialization": {
         "enabled": false,
@@ -21,116 +129,9 @@
       }
     },
     "urls": [
-      "https://info.bilibili.co/pages/viewpage.action?pageId=246063625"
+      "https://www.bilibili.com",
+      "https://www.bilibili.com/video/BV1xx411c7mD"
     ],
-    "urlsWithDesc": [
-      {
-        "url": "https://info.bilibili.co/pages/viewpage.action?pageId=246063625",
-        "description": "https://info.bilibili.co/pages/viewpage.action?pageId=246063625"
-      }
-    ],
-    "mode": "headless",
-    "repeatCount": 1,
-    "anonymous": true,
-    "cpuThrottling": 1,
-    "description": "",
-    "tags": [],
-    "status": "idle",
-    "createdAt": "2025-11-21T06:56:44.580Z",
-    "id": "testcase_1763708204580_7zeqimw7",
-    "updatedAt": "2025-11-21T06:56:44.580Z",
-    "executionHistory": []
-  },
-  {
-    "name": "完整测试：所有per-URL配置选项",
-    "runners": {
-      "Runtime": {
-        "enabled": true,
-        "durationMs": 30000,
-        "delayMs": 5000
-      }
-    },
-    "urlsWithDesc": [
-      {
-        "url": "https://www.bilibili.com",
-        "description": "首页（默认配置）"
-      },
-      {
-        "url": "https://www.bilibili.com/video/BV1xx411c7mD",
-        "description": "视频页（完整per-URL配置）",
-        "config": {
-          "cookie": "DedeUserID=123456; SESSDATA=custom_session",
-          "delayMs": 5000,
-          "extraHTTPHeaders": {
-            "X-Custom-Header": "test-value",
-            "User-Agent": "Custom User Agent"
-          },
-          "customCss": ".ad-container { display: none !important; }",
-          "blockList": [
-            "*.gif",
-            "*/ad/*"
-          ],
-          "deviceOptions": [
-            "Desktop",
-            {
-              "fullscreen": true
-            }
-          ],
-          "hooks": {
-            "beforePageLoad": "console.log('Before page load - video page');",
-            "onPageLoaded": "console.log('Page loaded - video page');",
-            "onPageTesting": "await page.click('.video-play-button');",
-            "onPageCollecting": "console.log('Collecting data - video page');",
-            "onPageUnload": "console.log('Page unload - video page');"
-          }
-        }
-      },
-      {
-        "url": "https://www.bilibili.com/anime/",
-        "description": "番剧页（Mobile设备配置）",
-        "config": {
-          "cookie": "mobile_cookie=value",
-          "deviceOptions": [
-            "Mobile",
-            {
-              "preset": "iphone13"
-            }
-          ],
-          "hooks": {
-            "beforePageLoad": "console.log('Mobile page - before load');",
-            "onPageLoaded": "console.log('Mobile page - loaded');"
-          }
-        }
-      }
-    ],
-    "mode": "headless",
-    "repeatCount": 1,
-    "anonymous": false,
-    "cpuThrottling": 1,
-    "description": "测试所有per-URL配置选项：Cookie、Headers、CSS、BlockList、Device、Hooks",
-    "tags": [
-      "comprehensive-test",
-      "per-url-config",
-      "all-features"
-    ],
-    "advancedConfig": {
-      "delayMs": 3000,
-      "cookie": "default_cookie=value"
-    },
-    "id": "testcase_1763698112783_3s95e9zs",
-    "createdAt": "2025-11-21T04:08:32.783Z",
-    "updatedAt": "2025-11-21T04:08:32.783Z",
-    "executionHistory": []
-  },
-  {
-    "name": "测试：多URL不同配置",
-    "runners": {
-      "Runtime": {
-        "enabled": true,
-        "durationMs": 60000,
-        "delayMs": 10000
-      }
-    },
     "urlsWithDesc": [
       {
         "url": "https://www.bilibili.com",
@@ -145,7 +146,7 @@
         }
       }
     ],
-    "mode": "headless",
+    "mode": "headed",
     "repeatCount": 1,
     "anonymous": false,
     "cpuThrottling": 1,
@@ -154,13 +155,15 @@
       "test",
       "per-url-config"
     ],
-    "advancedConfig": {
-      "delayMs": 3000,
-      "cookie": "default_cookie=value"
-    },
-    "id": "testcase_1763696742129_r2w2gzpn",
-    "createdAt": "2025-11-21T03:45:42.129Z",
-    "updatedAt": "2025-11-21T03:45:42.129Z",
-    "executionHistory": []
+    "createdAt": "2025-11-21T11:10:13.707Z",
+    "executionHistory": [
+      "task_1763956897290_vwiznux0h",
+      "task_1763955776797_cvsnsh9kj",
+      "task_1763727359664_hcaq15cii",
+      "task_1763727188057_6aywxys2j",
+      "task_1763723957301_5yvgw1kcn"
+    ],
+    "id": "testcase_1763723413707_ai28ms2b",
+    "updatedAt": "2025-11-21T11:10:13.707Z"
   }
 ]

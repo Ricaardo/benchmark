@@ -1,15 +1,59 @@
 [
   {
-    "id": "task_1763722322656_82jza6otp",
-    "name": "🎬 示例2: B站视频页 - Runtime性能监控",
+    "id": "task_1763960897431_tbx09nkzm",
+    "testCaseId": "testcase_1763960369207_z4t6mbc2",
+    "name": "内存泄露对比测试",
+    "runner": "MemoryLeak",
+    "status": "error",
+    "startTime": "2025-11-24T05:08:17.431Z",
+    "endTime": "2025-11-24T05:17:59.095Z",
+    "duration": 581664
+  },
+  {
+    "id": "task_1763959812820_7o0cqdtg7",
+    "testCaseId": "testcase_1763959806689_k1ul6o0x",
+    "name": "初始化对比测试",
+    "runner": "Initialization",
+    "status": "completed",
+    "startTime": "2025-11-24T04:50:12.820Z",
+    "endTime": "2025-11-24T04:52:21.302Z",
+    "duration": 128482,
+    "perfcatId": "gMgZMb",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/gMgZMb?runner=Initialization",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/gMgZMb?runner=Initialization&viewType=chart",
+    "exitCode": 0,
+    "reportFile": "2025-11-24T12-50-13-Initialization-Local.json"
+  },
+  {
+    "id": "task_1763958596063_9xcumoh1t",
+    "testCaseId": "testcase_1763958585890_zwiqyfeq",
+    "name": "[对比] 对比测试",
     "runner": "Runtime",
     "status": "completed",
-    "startTime": "2025-11-21T10:52:02.656Z",
-    "endTime": "2025-11-21T10:52:52.088Z",
-    "duration": 49432,
-    "perfcatId": "YzytSi",
-    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/YzytSi?runner=Runtime",
-    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/YzytSi?runner=Runtime&viewType=chart",
-    "exitCode": 0
+    "startTime": "2025-11-24T04:29:56.063Z",
+    "endTime": "2025-11-24T04:32:33.364Z",
+    "duration": 157301,
+    "perfcatId": "MB9s7x",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/MB9s7x?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/MB9s7x?runner=Runtime&viewType=chart",
+    "exitCode": 0,
+    "remarks": "对比",
+    "reportFile": "2025-11-24T12-29-56-Runtime-Local.json"
+  },
+  {
+    "id": "task_1763956897290_vwiznux0h",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "[哈哈哈哈] 测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-24T04:01:37.290Z",
+    "endTime": "2025-11-24T04:04:14.718Z",
+    "duration": 157428,
+    "perfcatId": "cVtRQ4",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/cVtRQ4?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/cVtRQ4?runner=Runtime&viewType=chart",
+    "exitCode": 0,
+    "remarks": "哈哈哈哈",
+    "reportFile": "2025-11-24T12-01-38-Runtime-Local.json"
   }
 ]
