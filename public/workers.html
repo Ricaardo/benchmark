@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>节点管理 - Benchmark Web Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value.online { color: #52c41a; }
+        .stat-value.busy { color: #faad14; }
+        .stat-value.offline { color: #ff4d4f; }
+
+        .workers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .worker-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .worker-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .worker-card.online {
+            border-left: 4px solid #52c41a;
+        }
+
+        .worker-card.busy {
+            border-left: 4px solid #faad14;
+        }
+
+        .worker-card.offline {
+            border-left: 4px solid #ff4d4f;
+            opacity: 0.7;
+        }
+
+        .worker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .worker-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .worker-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .worker-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .worker-status.busy {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .worker-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .worker-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .info-item .icon {
+            width: 16px;
+            text-align: center;
+        }
+
+        .worker-metrics {
+            display: flex;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .metric {
+            flex: 1;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #52c41a, #73d13d);
+            transition: width 0.3s;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #faad14, #ffc53d);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #ff4d4f, #ff7875);
+        }
+
+        .worker-task {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f7fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .task-label {
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .task-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: #1890ff;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(24,144,255,0.4);
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #40a9ff;
+            transform: scale(1.1);
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🖥️ 节点管理</h1>
+            <p class="subtitle">实时监控所有 Worker 节点状态</p>
+        </header>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">总节点数</div>
+                <div class="stat-value" id="totalWorkers">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">在线节点</div>
+                <div class="stat-value online" id="onlineWorkers">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">执行中</div>
+                <div class="stat-value busy" id="busyWorkers">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">离线节点</div>
+                <div class="stat-value offline" id="offlineWorkers">-</div>
+            </div>
+        </div>
+
+        <div class="workers-grid" id="workersGrid"></div>
+
+        <button class="refresh-btn" id="refreshBtn" title="刷新">↻</button>
+    </div>
+
+    <script>
+        let ws = null;
+        let workers = [];
+
+        // 初始化
+        async function init() {
+            await loadWorkers();
+            connectWebSocket();
+            startAutoRefresh();
+        }
+
+        // 加载 Workers
+        async function loadWorkers() {
+            try {
+                const res = await fetch('/api/workers');
+                const data = await res.json();
+
+                workers = data.workers || [];
+                const stats = data.stats || {};
+
+                updateStats(stats);
+                renderWorkers();
+            } catch (error) {
+                console.error('Failed to load workers:', error);
+            }
+        }
+
+        // 更新统计信息
+        function updateStats(stats) {
+            document.getElementById('totalWorkers').textContent = stats.totalWorkers || 0;
+            document.getElementById('onlineWorkers').textContent = stats.onlineWorkers || 0;
+            document.getElementById('busyWorkers').textContent = stats.busyWorkers || 0;
+            document.getElementById('offlineWorkers').textContent = stats.offlineWorkers || 0;
+        }
+
+        // 渲染 Workers
+        function renderWorkers() {
+            const grid = document.getElementById('workersGrid');
+
+            if (workers.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <div class="empty-icon">📭</div>
+                        <div class="empty-text">暂无 Worker 节点</div>
+                        <p style="color: #999; margin-top: 8px; font-size: 14px;">
+                            请在其他电脑上启动 Worker 客户端
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = workers.map(worker => `
+                <div class="worker-card ${worker.status}">
+                    <div class="worker-header">
+                        <div class="worker-name">${worker.name}</div>
+                        <span class="worker-status ${worker.status}">${getStatusText(worker.status)}</span>
+                    </div>
+
+                    <div class="worker-info">
+                        <div class="info-item">
+                            <span class="icon">${getPlatformIcon(worker.platform)}</span>
+                            <span>${getPlatformName(worker.platform)}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">🏠</span>
+                            <span>${worker.host}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">🧮</span>
+                            <span>${worker.cpuCount} 核</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="icon">💾</span>
+                            <span>${worker.memory} GB</span>
+                        </div>
+                    </div>
+
+                    ${worker.status !== 'offline' ? `
+                        <div class="worker-metrics">
+                            <div class="metric">
+                                <div class="metric-label">CPU 使用率</div>
+                                <div class="metric-value">${(worker.cpuUsage || 0).toFixed(1)}%</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill ${getProgressClass(worker.cpuUsage || 0)}"
+                                         style="width: ${worker.cpuUsage || 0}%"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <div class="metric-label">内存使用率</div>
+                                <div class="metric-value">${(worker.memoryUsage || 0).toFixed(1)}%</div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill ${getProgressClass(worker.memoryUsage || 0)}"
+                                         style="width: ${worker.memoryUsage || 0}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${worker.currentTask ? `
+                        <div class="worker-task">
+                            <div class="task-label">当前任务</div>
+                            <div class="task-name">${worker.currentTask}</div>
+                        </div>
+                    ` : worker.status !== 'offline' ? `
+                        <div class="worker-task">
+                            <div class="task-label">空闲中</div>
+                        </div>
+                    ` : `
+                        <div class="worker-task">
+                            <div class="task-label">最后心跳</div>
+                            <div class="task-name">${formatTime(worker.lastHeartbeat)}</div>
+                        </div>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        // 连接 WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+
+                if (message.type === 'worker-status-update') {
+                    updateWorkerStatus(message.data);
+                } else if (message.type === 'worker-offline') {
+                    updateWorkerStatus(message.data);
+                } else if (message.type === 'workers-list') {
+                    workers = message.data.workers || [];
+                    renderWorkers();
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected, reconnecting...');
+                setTimeout(connectWebSocket, 5000);
+            };
+        }
+
+        // 更新 Worker 状态
+        function updateWorkerStatus(workerData) {
+            const index = workers.findIndex(w => w.id === workerData.id);
+            if (index >= 0) {
+                workers[index] = { ...workers[index], ...workerData };
+            } else {
+                workers.push(workerData);
+            }
+            renderWorkers();
+            loadWorkers(); // 刷新统计
+        }
+
+        // 自动刷新
+        function startAutoRefresh() {
+            setInterval(() => {
+                loadWorkers();
+            }, 30000); // 30秒刷新一次
+        }
+
+        // 手动刷新
+        document.getElementById('refreshBtn').addEventListener('click', async function() {
+            this.classList.add('spinning');
+            await loadWorkers();
+            setTimeout(() => {
+                this.classList.remove('spinning');
+            }, 1000);
+        });
+
+        // 辅助函数
+        function getStatusText(status) {
+            const map = {
+                online: '在线',
+                busy: '执行中',
+                offline: '离线'
+            };
+            return map[status] || status;
+        }
+
+        function getPlatformIcon(platform) {
+            const map = {
+                win32: '🪟',
+                darwin: '🍎',
+                linux: '🐧'
+            };
+            return map[platform] || '🖥️';
+        }
+
+        function getPlatformName(platform) {
+            const map = {
+                win32: 'Windows',
+                darwin: 'macOS',
+                linux: 'Linux'
+            };
+            return map[platform] || platform;
+        }
+
+        function getProgressClass(value) {
+            if (value > 80) return 'danger';
+            if (value > 60) return 'warning';
+            return '';
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            const now = Date.now();
+            const diff = now - timestamp;
+            const seconds = Math.floor(diff / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+
+            if (hours > 0) return `${hours} 小时前`;
+            if (minutes > 0) return `${minutes} 分钟前`;
+            return `${seconds} 秒前`;
+        }
+
+        // 启动
+        init();
+    </script>
+</body>
+</html>

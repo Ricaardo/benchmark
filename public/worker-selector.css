@@ -1,0 +1,134 @@
+/* Worker 节点选择器样式 */
+
+.worker-selector-container {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.worker-selector-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.worker-selector-label > span {
+    min-width: 100px;
+}
+
+.worker-select {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.worker-select:hover {
+    border-color: #667eea;
+}
+
+.worker-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.worker-select option:disabled {
+    color: #999;
+}
+
+.worker-stats {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 13px;
+    color: #666;
+    padding-top: 10px;
+    border-top: 1px solid #e9ecef;
+}
+
+.worker-stats .stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.worker-stats .view-all-link {
+    margin-left: auto;
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.worker-stats .view-all-link:hover {
+    text-decoration: underline;
+}
+
+.worker-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: #fff3cd;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #856404;
+    margin-top: 10px;
+}
+
+.worker-hint a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.worker-hint a:hover {
+    text-decoration: underline;
+}
+
+/* 在卡片标题中的节点选择器（紧凑版） */
+.card .worker-selector-container {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+.card .worker-selector-label {
+    margin-bottom: 0;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+    .worker-selector-label {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .worker-select {
+        width: 100%;
+    }
+
+    .worker-stats {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .worker-stats .view-all-link {
+        margin-left: 0;
+    }
+
+    .worker-hint {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

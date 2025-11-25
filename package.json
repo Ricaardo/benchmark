@@ -7,6 +7,7 @@
     "dev": "tsx --watch server/index.ts",
     "start": "tsx server/index.ts",
     "build": "tsc",
+    "worker": "tsx server/worker-client.ts",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:stop": "pm2 stop benchmark-web",
     "pm2:restart": "pm2 restart benchmark-web",
