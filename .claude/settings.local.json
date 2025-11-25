@@ -10,7 +10,12 @@
       "Bash(lsof:*)",
       "Bash(xargs kill:*)",
       "Bash(npm start)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(PORT=3001 npm run dev:*)",
+      "Bash(PORT=3000 npm start)",
+      "Bash(pkill:*)",
+      "Bash(tsx:*)",
+      "Bash(npx tsx:*)"
     ],
     "deny": [],
     "ask": []

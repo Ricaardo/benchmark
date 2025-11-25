@@ -7,7 +7,6 @@ const config: UserOptions = {
         "usrDataDir": "",
         "preparePage": false
     },
-    reportPath: 'benchmark_report',
     runners: {
         Runtime: {
             testCases: [

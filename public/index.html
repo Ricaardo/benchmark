@@ -1221,8 +1221,15 @@
 
         // 切换匿名模式时联动Cookie配置
         function toggleAnonymousMode() {
-            const isAnonymous = document.getElementById('case-anonymous').checked;
+            const anonymousCheckbox = document.getElementById('case-anonymous');
             const cookieSection = document.getElementById('cookie-config-section');
+
+            // 添加空值检查
+            if (!anonymousCheckbox || !cookieSection) {
+                return;
+            }
+
+            const isAnonymous = anonymousCheckbox.checked;
 
             if (isAnonymous) {
                 // 匿名模式：禁用并隐藏Cookie配置
@@ -1698,9 +1705,18 @@
 
         // 更新高级配置显示
         function updateAdvancedConfigDisplay() {
-            const initializationChecked = document.getElementById('runner-initialization').checked;
-            const runtimeChecked = document.getElementById('runner-runtime').checked;
-            const memoryLeakChecked = document.getElementById('runner-memoryleak').checked;
+            const initializationCheckbox = document.getElementById('runner-initialization');
+            const runtimeCheckbox = document.getElementById('runner-runtime');
+            const memoryLeakCheckbox = document.getElementById('runner-memoryleak');
+
+            // 添加空值检查，防止在某些页面（如records.html）调用此函数时报错
+            if (!initializationCheckbox || !runtimeCheckbox || !memoryLeakCheckbox) {
+                return;
+            }
+
+            const initializationChecked = initializationCheckbox.checked;
+            const runtimeChecked = runtimeCheckbox.checked;
+            const memoryLeakChecked = memoryLeakCheckbox.checked;
 
             const initializationConfig = document.getElementById('initialization-config');
             const runtimeConfig = document.getElementById('runtime-config');
@@ -1708,23 +1724,27 @@
             const noConfig = document.getElementById('no-runner-config');
             const runnerCard = document.getElementById('runner-config-card');
 
-            initializationConfig.style.display = initializationChecked ? 'block' : 'none';
-            runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
-            memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
-            noConfig.style.display = (!initializationChecked && !runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
+            if (initializationConfig) initializationConfig.style.display = initializationChecked ? 'block' : 'none';
+            if (runtimeConfig) runtimeConfig.style.display = runtimeChecked ? 'block' : 'none';
+            if (memoryLeakConfig) memoryLeakConfig.style.display = memoryLeakChecked ? 'block' : 'none';
+            if (noConfig) noConfig.style.display = (!initializationChecked && !runtimeChecked && !memoryLeakChecked) ? 'block' : 'none';
 
             // 显示/隐藏Runner配置卡片
-            runnerCard.style.display = (initializationChecked || runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
+            if (runnerCard) runnerCard.style.display = (initializationChecked || runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
 
             // 根据选择的runner显示/隐藏生命周期钩子
             const onPageTestingContainer = document.getElementById('hook-onpagetesting-container');
             const onPageCollectingContainer = document.getElementById('hook-onpagecollecting-container');
 
             // onPageTesting 只在 Runtime 或 MemoryLeak 时显示
-            onPageTestingContainer.style.display = (runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
+            if (onPageTestingContainer) {
+                onPageTestingContainer.style.display = (runtimeChecked || memoryLeakChecked) ? 'block' : 'none';
+            }
 
             // onPageCollecting 只在 MemoryLeak 时显示
-            onPageCollectingContainer.style.display = memoryLeakChecked ? 'block' : 'none';
+            if (onPageCollectingContainer) {
+                onPageCollectingContainer.style.display = memoryLeakChecked ? 'block' : 'none';
+            }
         }
 
         // 更新设备选项显示
@@ -2115,6 +2135,126 @@ console.log('B站弹幕开关完成');`
             showToast(`已清空${hookName}`, 'info');
         }
 
+        // 更新URL网络条件
+        function updateUrlNetworkCondition(itemId, field, value) {
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            if (!item.config) {
+                item.config = {};
+            }
+
+            if (!item.config.networkConditions) {
+                item.config.networkConditions = {};
+            }
+
+            if (value === '' || value === null || value === undefined || value === false) {
+                delete item.config.networkConditions[field];
+                // 如果networkConditions对象为空，删除它
+                if (Object.keys(item.config.networkConditions).length === 0) {
+                    delete item.config.networkConditions;
+                }
+            } else {
+                item.config.networkConditions[field] = value;
+            }
+        }
+
+        // 应用URL网络预设
+        function applyUrlNetworkPreset(itemId) {
+            const presetKey = document.getElementById(`url-${itemId}-network-preset`).value;
+            if (!presetKey) return;
+
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            if (!item.config) {
+                item.config = {};
+            }
+
+            // 网络预设配置
+            const networkPresets = {
+                offline: {
+                    name: '离线模式',
+                    value: {
+                        offline: true,
+                        downloadThroughput: 0,
+                        uploadThroughput: 0,
+                        latency: 0,
+                        connectionType: 'none'
+                    }
+                },
+                slow_3g: {
+                    name: '慢速3G',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 50 * 1024, // 50 KB/s
+                        uploadThroughput: 50 * 1024,
+                        latency: 2000,
+                        connectionType: 'cellular3g'
+                    }
+                },
+                fast_3g: {
+                    name: '快速3G',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 1.6 * 1024 * 1024, // 1.6 MB/s
+                        uploadThroughput: 750 * 1024, // 750 KB/s
+                        latency: 562.5,
+                        connectionType: 'cellular3g'
+                    }
+                },
+                '4g': {
+                    name: '4G',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 4 * 1024 * 1024, // 4 MB/s
+                        uploadThroughput: 3 * 1024 * 1024, // 3 MB/s
+                        latency: 20,
+                        connectionType: 'cellular4g'
+                    }
+                },
+                wifi: {
+                    name: 'WiFi',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 30 * 1024 * 1024, // 30 MB/s
+                        uploadThroughput: 15 * 1024 * 1024, // 15 MB/s
+                        latency: 2,
+                        connectionType: 'wifi'
+                    }
+                },
+                dsl: {
+                    name: 'DSL',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 2 * 1024 * 1024, // 2 MB/s
+                        uploadThroughput: 1 * 1024 * 1024, // 1 MB/s
+                        latency: 5,
+                        connectionType: 'ethernet'
+                    }
+                },
+                custom_low_end: {
+                    name: '低端网络',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 400 * 1024, // 400 KB/s
+                        uploadThroughput: 400 * 1024,
+                        latency: 400,
+                        connectionType: 'other'
+                    }
+                }
+            };
+
+            const preset = networkPresets[presetKey];
+            if (!preset) return;
+
+            item.config.networkConditions = preset.value;
+
+            // 更新UI显示
+            renderUrlList();
+            showToast(`已应用网络预设: ${preset.name}`, 'success');
+        }
+
         // 渲染URL配置面板 - 优化布局，更紧凑易用
         function renderUrlConfigPanel(item) {
             const config = item.config || {};
@@ -2279,6 +2419,69 @@ console.log('B站弹幕开关完成');`
                             </select>
                         </div>
                         <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
+                    </div>
+
+                    <!-- 网络模拟配置 -->
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🌐 网络模拟 (networkConditions)</label>
+                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
+                            <select id="url-${item.id}-network-preset" onchange="applyUrlNetworkPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
+                                <option value="">✨ 选择网络预设...</option>
+                                <option value="offline">📵 离线模式 (Offline)</option>
+                                <option value="slow_3g">🐌 慢速3G (Slow 3G)</option>
+                                <option value="fast_3g">📶 快速3G (Fast 3G)</option>
+                                <option value="4g">📶 4G</option>
+                                <option value="wifi">📡 WiFi</option>
+                                <option value="dsl">🌐 DSL</option>
+                                <option value="custom_low_end">⚠️ 低端网络 (自定义)</option>
+                            </select>
+                            <button type="button" onclick="clearUrlConfig('${item.id}', 'networkConditions')" class="btn-small" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                        </div>
+                        <div style="background: #f7fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
+                            <div style="margin-bottom: 8px;">
+                                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                                    <input type="checkbox" id="url-${item.id}-network-offline" ${config.networkConditions?.offline ? 'checked' : ''} onchange="updateUrlNetworkCondition('${item.id}', 'offline', this.checked)">
+                                    <span style="font-size: 0.9em; color: #4a5568;">离线模式 (Offline)</span>
+                                </label>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">下载速度 (Download Throughput)</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="url-${item.id}-network-download" value="${config.networkConditions?.downloadThroughput !== undefined ? config.networkConditions.downloadThroughput : ''}" placeholder="字节/秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'downloadThroughput', this.value ? parseFloat(this.value) : undefined)">
+                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">bytes/s</span>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">上传速度 (Upload Throughput)</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="url-${item.id}-network-upload" value="${config.networkConditions?.uploadThroughput !== undefined ? config.networkConditions.uploadThroughput : ''}" placeholder="字节/秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'uploadThroughput', this.value ? parseFloat(this.value) : undefined)">
+                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">bytes/s</span>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 8px;">
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">延迟 (Latency)</label>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <input type="number" id="url-${item.id}-network-latency" value="${config.networkConditions?.latency !== undefined ? config.networkConditions.latency : ''}" placeholder="毫秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'latency', this.value ? parseFloat(this.value) : undefined)">
+                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">ms</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">连接类型 (Connection Type)</label>
+                                <select id="url-${item.id}-network-connection-type" style="width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" onchange="updateUrlNetworkCondition('${item.id}', 'connectionType', this.value)">
+                                    <option value="">不设置</option>
+                                    <option value="none" ${config.networkConditions?.connectionType === 'none' ? 'selected' : ''}>none</option>
+                                    <option value="cellular2g" ${config.networkConditions?.connectionType === 'cellular2g' ? 'selected' : ''}>cellular2g</option>
+                                    <option value="cellular3g" ${config.networkConditions?.connectionType === 'cellular3g' ? 'selected' : ''}>cellular3g</option>
+                                    <option value="cellular4g" ${config.networkConditions?.connectionType === 'cellular4g' ? 'selected' : ''}>cellular4g</option>
+                                    <option value="bluetooth" ${config.networkConditions?.connectionType === 'bluetooth' ? 'selected' : ''}>bluetooth</option>
+                                    <option value="ethernet" ${config.networkConditions?.connectionType === 'ethernet' ? 'selected' : ''}>ethernet</option>
+                                    <option value="wifi" ${config.networkConditions?.connectionType === 'wifi' ? 'selected' : ''}>wifi</option>
+                                    <option value="wimax" ${config.networkConditions?.connectionType === 'wimax' ? 'selected' : ''}>wimax</option>
+                                    <option value="other" ${config.networkConditions?.connectionType === 'other' ? 'selected' : ''}>other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同网络环境，用于测试页面在低速网络下的表现</small>
                     </div>
 
                     <!-- 生命周期钩子 -->
@@ -2559,7 +2762,7 @@ console.log('B站弹幕开关完成');`
 
         // 编辑用例
         function editCase(id) {
-            console.log('✏️ editCase - ID:', id);
+            console.log('✏️ editCase - 编辑用例 ID:', id);
             const testCase = testCases.find(tc => tc.id === id || tc.id == id);
             if (!testCase) {
                 console.error('无法找到测试用例:', id, '现有用例IDs:', testCases.map(tc => tc.id));
@@ -2629,7 +2832,6 @@ console.log('B站弹幕开关完成');`
             // 标记为编辑模式
             const editModal = document.getElementById('case-modal');
             editModal.dataset.editId = id;
-            console.log('✏️ editCase - 设置后 editId:', editModal.dataset.editId);
         }
 
         // 保存用例
@@ -2735,14 +2937,12 @@ console.log('B站弹幕开关完成');`
             const modal = document.getElementById('case-modal');
             const editId = modal.dataset.editId;
 
-            // 调试日志
-            console.log('💾 saveCase - editId:', editId, 'type:', typeof editId);
-            console.log('💾 saveCase - hasEditId:', 'editId' in modal.dataset);
-
-            if (editId && editId !== 'undefined') {
+            if (editId && editId !== 'undefined' && editId !== '') {
                 // 编辑模式
-                console.log('✏️ 编辑模式 - ID:', editId);
-                const testCase = testCases.find(tc => tc.id === parseInt(editId) || tc.id === editId);
+                console.log('✏️ 编辑模式 - 更新用例 ID:', editId);
+                const testCase = testCases.find(tc => {
+                    return tc.id === parseInt(editId) || tc.id === editId || String(tc.id) === String(editId);
+                });
                 if (testCase) {
                     testCase.name = name;
                     testCase.runners = runners;
@@ -2763,14 +2963,21 @@ console.log('B站弹幕开关完成');`
                         if (saved) {
                             // 更新本地ID为后端返回的ID
                             testCase.id = saved.id;
-                            saveToStorage();
-                            renderCases();
                         }
+                        saveToStorage();
+                        renderCases();
                     });
 
                     showToast('用例更新成功', 'success');
                     // 清除编辑模式标记
                     delete modal.dataset.editId;
+
+                    // 编辑模式下立即关闭模态框并刷新显示
+                    saveToStorage();
+                    renderCases();
+                    closeModal();
+                } else {
+                    showToast('无法找到要编辑的用例', 'error');
                 }
             } else {
                 // 新增模式
@@ -2805,11 +3012,10 @@ console.log('B站弹幕开关完成');`
                 });
 
                 showToast('用例添加成功', 'success');
-            }
 
-            saveToStorage();
-            renderCases();
-            closeModal();
+                // 新增模式下立即关闭模态框
+                closeModal();
+            }
         }
 
         // 删除用例
@@ -3909,12 +4115,13 @@ console.log('B站弹幕开关完成');`
             }, 3000);
         }
 
-        // 点击模态框外部关闭
-        document.getElementById('case-modal').addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                closeModal();
-            }
-        });
+        // 点击模态框外部关闭 - 已禁用，防止误操作导致编辑内容丢失
+        // 用户必须点击"取消"或"保存"按钮来关闭模态框
+        // document.getElementById('case-modal').addEventListener('click', (e) => {
+        //     if (e.target.classList.contains('modal')) {
+        //         closeModal();
+        //     }
+        // });
 
         // 快捷键支持
         document.addEventListener('keydown', (e) => {
@@ -3924,10 +4131,11 @@ console.log('B站弹幕开关完成');`
                 showAddCaseModal();
             }
 
-            // Esc: 关闭模态框
-            if (e.key === 'Escape') {
-                closeModal();
-            }
+            // Esc: 关闭模态框 - 已禁用，防止误操作导致编辑内容丢失
+            // 用户必须点击"取消"或"保存"按钮来关闭模态框
+            // if (e.key === 'Escape') {
+            //     closeModal();
+            // }
         });
 
         // 页面卸载时清理

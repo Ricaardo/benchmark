@@ -574,7 +574,8 @@
 
                 // 展开/折叠图标
                 const expandTd = document.createElement('td');
-                if (record.reportFile) {
+                // 如果有报告文件或错误信息，都可以展开
+                if (record.reportFile || record.errorMessage) {
                     expandTd.innerHTML = `<span class="expand-icon" id="expand-icon-${record.id}">▶</span>`;
                     expandTd.onclick = () => toggleChartRow(record.id);
                 } else {
@@ -585,7 +586,7 @@
                 // 测试场景
                 const nameTd = document.createElement('td');
                 nameTd.innerHTML = `<strong>${escapeHtml(record.name)}</strong>`;
-                if (record.reportFile) {
+                if (record.reportFile || record.errorMessage) {
                     nameTd.onclick = () => toggleChartRow(record.id);
                     nameTd.style.cursor = 'pointer';
                 }
@@ -645,8 +646,8 @@
 
                 tbody.appendChild(tr);
 
-                // 如果有报告文件，创建图表展开行
-                if (record.reportFile) {
+                // 如果有报告文件或错误信息，创建图表/错误展开行
+                if (record.reportFile || record.errorMessage) {
                     const chartTr = document.createElement('tr');
                     chartTr.className = 'chart-row';
                     chartTr.id = `chart-row-${record.id}`;
@@ -654,11 +655,36 @@
                     const chartTd = document.createElement('td');
                     chartTd.colSpan = 9;
                     chartTd.className = 'chart-cell';
-                    chartTd.innerHTML = `
-                        <div class="chart-container" id="chart-container-${record.id}">
-                            <div class="loading-chart">加载图表中...</div>
-                        </div>
-                    `;
+
+                    // 如果有报告文件，显示加载提示（无论成功失败都尝试加载）
+                    if (record.reportFile) {
+                        chartTd.innerHTML = `
+                            <div class="chart-container" id="chart-container-${record.id}">
+                                <div class="loading-chart">加载${record.status === 'error' ? '失败详情' : '图表'}中...</div>
+                            </div>
+                        `;
+                    } else if (record.errorMessage || record.status === 'error') {
+                        // 没有报告文件但有错误信息时，显示错误信息
+                        chartTd.innerHTML = `
+                            <div class="chart-container" id="chart-container-${record.id}">
+                                <div style="padding: 20px;">
+                                    <h4 style="color: #e53e3e; margin-bottom: 12px;">❌ 测试失败</h4>
+                                    ${record.errorMessage ? `
+                                        <div style="background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 16px; margin-top: 12px;">
+                                            <div style="font-weight: 600; color: #742a2a; margin-bottom: 8px;">错误信息：</div>
+                                            <pre style="white-space: pre-wrap; word-wrap: break-word; color: #742a2a; font-size: 13px; line-height: 1.5; margin: 0;">${escapeHtml(record.errorMessage)}</pre>
+                                        </div>
+                                    ` : '<p style="color: #718096;">无详细错误信息</p>'}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        chartTd.innerHTML = `
+                            <div class="chart-container" id="chart-container-${record.id}">
+                                <div class="loading-chart">加载图表中...</div>
+                            </div>
+                        `;
+                    }
 
                     chartTr.appendChild(chartTd);
                     tbody.appendChild(chartTr);
@@ -684,8 +710,12 @@
                 chartRow.classList.add('visible');
                 expandIcon.classList.add('expanded');
 
-                // 如果还没加载过图表数据，则加载
-                if (!chartsData.has(recordId)) {
+                // 检查是否需要加载图表数据
+                const container = document.getElementById(`chart-container-${recordId}`);
+                const loadingChart = container?.querySelector('.loading-chart');
+
+                // 只有成功的测试且还没加载过图表数据时才加载
+                if (loadingChart && !chartsData.has(recordId)) {
                     await loadAndRenderChart(recordId);
                 }
             }
@@ -725,12 +755,36 @@
             const container = document.getElementById(`chart-container-${recordId}`);
             const runner = record.runner;
 
+            // 如果测试失败但有报告数据，先显示失败摘要
+            if (record.status === 'error') {
+                // 检查报告中是否有失败的URL
+                const hasFailedUrls = (reportData.runtimeRes || reportData.initializationRes || []).some(r => r.status === 'rejected');
+
+                if (hasFailedUrls) {
+                    // 继续渲染图表，因为图表函数会处理失败的URL
+                } else {
+                    // 没有URL级别的详细信息，显示总体错误
+                    container.innerHTML = `
+                        <div style="padding: 20px;">
+                            <h4 style="color: #e53e3e; margin-bottom: 12px;">❌ 测试失败</h4>
+                            ${record.errorMessage ? `
+                                <div style="background: #fff5f5; border: 1px solid #feb2b2; border-radius: 6px; padding: 16px; margin-top: 12px;">
+                                    <div style="font-weight: 600; color: #742a2a; margin-bottom: 8px;">错误信息：</div>
+                                    <pre style="white-space: pre-wrap; word-wrap: break-word; color: #742a2a; font-size: 13px; line-height: 1.5; margin: 0; max-height: 200px; overflow-y: auto;">${escapeHtml(record.errorMessage)}</pre>
+                                </div>
+                            ` : '<p style="color: #718096;">无详细错误信息</p>'}
+                        </div>
+                    `;
+                    return;
+                }
+            }
+
             if (runner === 'Initialization') {
-                renderInitializationChart(container, reportData, recordId);
+                renderInitializationChart(container, reportData, recordId, record);
             } else if (runner === 'Runtime') {
-                renderRuntimeChart(container, reportData, recordId);
+                renderRuntimeChart(container, reportData, recordId, record);
             } else if (runner === 'MemoryLeak') {
-                renderRuntimeChart(container, reportData, recordId);
+                renderRuntimeChart(container, reportData, recordId, record);
             } else {
                 container.innerHTML = '<div style="padding: 20px;">未知的测试类型</div>';
             }
@@ -877,7 +931,7 @@
         // ==================== 图表渲染函数 ====================
 
         // 渲染Initialization图表
-        function renderInitializationChart(container, reportData, recordId) {
+        function renderInitializationChart(container, reportData, recordId, record) {
             if (!reportData || !reportData.initializationRes || reportData.initializationRes.length === 0) {
                 container.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">没有找到Initialization测试数据</div>';
                 return;
@@ -885,50 +939,84 @@
 
             try {
 
-            // 提取所有URL的测试结果
+            // 提取所有URL的测试结果（包括失败的）
             const allResults = reportData.initializationRes.map(res => ({
                 description: res.value?.description || res.description || '测试页面',
-                data: res.value
+                data: res.value,
+                status: res.status,
+                reason: res.reason
             }));
+
+            // 检查是否有失败的URL
+            const failedResults = allResults.filter(r => r.status === 'rejected');
+            const successfulResults = allResults.filter(r => r.data);
 
             // 生成汇总指标HTML
             let metricsHtml = '';
-            allResults.forEach(({ description, data }) => {
-                metricsHtml += `
-                    <div style="margin-bottom: 24px;">
-                        <h4 style="color: #4a5568; margin-bottom: 12px;">📄 ${escapeHtml(description)}</h4>
-                        <div class="metrics-grid">
-                            <div class="metric-card">
-                                <div class="metric-label">First Paint (FP)</div>
-                                <div class="metric-value">${data['fp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">First Contentful Paint (FCP)</div>
-                                <div class="metric-value">${data['fcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Largest Contentful Paint (LCP)</div>
-                                <div class="metric-value">${data['lcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Time to First Byte (TTFB)</div>
-                                <div class="metric-value">${data['ttfb-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Server Response Time (SRT)</div>
-                                <div class="metric-value">${data['srt-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
-                            </div>
-                            <div class="metric-card">
-                                <div class="metric-label">Cumulative Layout Shift (CLS)</div>
-                                <div class="metric-value">${data['cls-cold'].toFixed(4)}</div>
+            allResults.forEach(({ description, data, status, reason }) => {
+                if (status === 'rejected') {
+                    // 显示失败的URL
+                    metricsHtml += `
+                        <div style="margin-bottom: 24px; border: 2px solid #feb2b2; border-radius: 8px; padding: 16px; background: #fff5f5;">
+                            <h4 style="color: #e53e3e; margin-bottom: 12px;">❌ ${escapeHtml(description)}</h4>
+                            <div style="background: white; border-radius: 6px; padding: 12px;">
+                                <div style="font-weight: 600; color: #742a2a; margin-bottom: 8px;">测试失败</div>
+                                ${reason ? `
+                                    <pre style="white-space: pre-wrap; word-wrap: break-word; color: #742a2a; font-size: 12px; line-height: 1.4; margin: 0; max-height: 150px; overflow-y: auto;">${escapeHtml(reason.message || reason.toString())}</pre>
+                                ` : '<p style="color: #742a2a; margin: 0;">未知错误</p>'}
                             </div>
                         </div>
+                    `;
+                } else if (data) {
+                    // 显示成功的URL指标
+                    metricsHtml += `
+                        <div style="margin-bottom: 24px;">
+                            <h4 style="color: #4a5568; margin-bottom: 12px;">📄 ${escapeHtml(description)}</h4>
+                            <div class="metrics-grid">
+                                <div class="metric-card">
+                                    <div class="metric-label">First Paint (FP)</div>
+                                    <div class="metric-value">${data['fp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">First Contentful Paint (FCP)</div>
+                                    <div class="metric-value">${data['fcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Largest Contentful Paint (LCP)</div>
+                                    <div class="metric-value">${data['lcp-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Time to First Byte (TTFB)</div>
+                                    <div class="metric-value">${data['ttfb-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Server Response Time (SRT)</div>
+                                    <div class="metric-value">${data['srt-cold'].toFixed(1)}<span class="metric-unit">ms</span></div>
+                                </div>
+                                <div class="metric-card">
+                                    <div class="metric-label">Cumulative Layout Shift (CLS)</div>
+                                    <div class="metric-value">${data['cls-cold'].toFixed(4)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            // 生成失败摘要（如果有失败的URL）
+            let failureSummaryHtml = '';
+            if (failedResults.length > 0) {
+                failureSummaryHtml = `
+                    <div style="margin-bottom: 24px; padding: 16px; background: #fff5f5; border: 2px solid #feb2b2; border-radius: 8px;">
+                        <h4 style="color: #e53e3e; margin-bottom: 8px;">⚠️ ${failedResults.length} 个URL测试失败</h4>
+                        <p style="color: #742a2a; margin: 0; font-size: 14px;">请查看下方各URL的详细失败信息</p>
                     </div>
                 `;
-            });
+            }
 
             container.innerHTML = `
                 <h3 style="margin-bottom: 16px; color: #2d3748;">📊 Initialization 性能指标</h3>
+                ${failureSummaryHtml}
                 ${metricsHtml}
 
                 <div style="margin-top: 32px;">
@@ -1025,9 +1113,10 @@
                 { id: 'cls', key: 'cls-cold', label: 'CLS', unit: '' }
             ];
 
-            // 计算所有指标的统计数据
+            // 计算所有指标的统计数据（只处理成功的URL）
+            const successfulResults = allResults.filter(r => r.data);
             const allMetricsStats = metrics.map(metric => {
-                const urlStats = allResults.map((result, index) => {
+                const urlStats = successfulResults.map((result, index) => {
                     const iterations = result.data[`${metric.key}-iterations`];
                     const avg = calculateAverage(iterations);
 
@@ -1035,7 +1124,8 @@
                         description: result.description,
                         avg: avg,
                         iterations: iterations,
-                        color: colors[index % colors.length]
+                        color: colors[index % colors.length],
+                        isFailed: false
                     };
                 });
 
@@ -1110,12 +1200,15 @@
                 trendsSection.insertAdjacentHTML('beforebegin', summaryTableHtml);
             }
 
-            // 渲染每个指标的对比图表
+            // 渲染每个指标的对比图表（只处理成功的URL）
             metrics.forEach((metric, index) => {
                 const { urlStats } = allMetricsStats[index];
 
+                // 如果没有成功的URL，跳过图表渲染
+                if (urlStats.length === 0) return;
+
                 // 获取最大迭代次数，用于统一X轴标签
-                const maxIterations = Math.max(...allResults.map(r => r.data[`${metric.key}-iterations`].length));
+                const maxIterations = Math.max(...successfulResults.map(r => r.data[`${metric.key}-iterations`].length));
                 const labels = Array.from({ length: maxIterations }, (_, i) => `第${i + 1}次`);
 
                 // 渲染图表
@@ -1184,15 +1277,21 @@
         }
 
         // 渲染Runtime图表
-        function renderRuntimeChart(container, reportData, recordId) {
-            if (!reportData || !reportData.flattenedRuntimeData || reportData.flattenedRuntimeData.length === 0) {
+        function renderRuntimeChart(container, reportData, recordId, record) {
+            // 检查是否有runtime结果
+            const runtimeResults = reportData.runtimeRes || [];
+
+            if (runtimeResults.length === 0 && (!reportData.flattenedRuntimeData || reportData.flattenedRuntimeData.length === 0)) {
                 container.innerHTML = '<div style="padding: 20px; text-align: center; color: #718096;">没有找到Runtime测试数据</div>';
                 return;
             }
 
             try {
-            const data = reportData.flattenedRuntimeData;
-            const runtimeResults = reportData.runtimeRes || [];
+            const data = reportData.flattenedRuntimeData || [];
+
+            // 检查是否有失败的URL
+            const failedResults = runtimeResults.filter(r => r.status === 'rejected');
+            const successfulResults = runtimeResults.filter(r => r.status === 'fulfilled');
 
             // 提取所有URL的前缀和描述
             const urlPrefixes = [];
@@ -1211,17 +1310,34 @@
             // 提取时间序列
             const timeLabels = data.map(d => `${(d.time / 1000).toFixed(0)}s`);
 
-            // 生成汇总指标HTML
+            // 生成汇总指标HTML（包括失败的URL）
             let metricsHtml = '';
-            urlPrefixes.forEach(({ prefix, description }) => {
-                const result = runtimeResults.find(r =>
-                    r.value?.description === description ||
-                    r.description === description ||
-                    r.description === prefix
-                );
+
+            // 先处理runtimeResults中的所有URL（包括失败的）
+            runtimeResults.forEach((result, index) => {
+                const description = result?.value?.description || result?.description || `URL ${index + 1}`;
                 const runtime = result?.value?.runtime;
                 const longtask = result?.value?.longtask;
-                if (runtime) {
+
+                // 检查是否失败
+                const isFailed = result.status === 'rejected';
+                const errorReason = result.reason;
+
+                if (isFailed) {
+                    // 显示失败的URL信息
+                    metricsHtml += `
+                        <div style="margin-bottom: 24px; border: 2px solid #feb2b2; border-radius: 8px; padding: 16px; background: #fff5f5;">
+                            <h4 style="color: #e53e3e; margin-bottom: 12px;">❌ ${escapeHtml(description)}</h4>
+                            <div style="background: white; border-radius: 6px; padding: 12px;">
+                                <div style="font-weight: 600; color: #742a2a; margin-bottom: 8px;">测试失败</div>
+                                ${errorReason ? `
+                                    <pre style="white-space: pre-wrap; word-wrap: break-word; color: #742a2a; font-size: 12px; line-height: 1.4; margin: 0; max-height: 150px; overflow-y: auto;">${escapeHtml(errorReason.message || errorReason.toString())}</pre>
+                                ` : '<p style="color: #742a2a; margin: 0;">未知错误</p>'}
+                            </div>
+                        </div>
+                    `;
+                } else if (runtime) {
+                    // 显示成功的URL指标
                     metricsHtml += `
                         <div style="margin-bottom: 24px;">
                             <h4 style="color: #4a5568; margin-bottom: 12px;">📄 ${escapeHtml(description)}</h4>

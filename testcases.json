@@ -27,7 +27,16 @@
     "urlsWithDesc": [
       {
         "url": "https://www.bilibili.com",
-        "description": "首页"
+        "description": "首页",
+        "config": {
+          "networkConditions": {
+            "offline": true,
+            "downloadThroughput": 0,
+            "uploadThroughput": 0,
+            "latency": 0,
+            "connectionType": "none"
+          }
+        }
       },
       {
         "url": "https://www.bilibili.com/video/BV1xx411c7mD",
@@ -50,7 +59,7 @@
     "createdAt": "2025-11-24T05:25:38.343Z",
     "executionHistory": [],
     "id": "testcase_1763961938343_c9oskuf9",
-    "updatedAt": "2025-11-24T05:25:38.343Z"
+    "updatedAt": "2025-11-25T04:28:52.066Z"
   },
   {
     "name": "初始化对比测试",
@@ -135,7 +144,16 @@
     "urlsWithDesc": [
       {
         "url": "https://www.bilibili.com",
-        "description": "首页（默认配置）"
+        "description": "首页（默认配置）",
+        "config": {
+          "networkConditions": {
+            "offline": true,
+            "downloadThroughput": 0,
+            "uploadThroughput": 0,
+            "latency": 0,
+            "connectionType": "none"
+          }
+        }
       },
       {
         "url": "https://www.bilibili.com/video/BV1xx411c7mD",
@@ -157,6 +175,13 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764045595644_6ib64julv",
+      "task_1764044972160_4kosbh3e6",
+      "task_1764044304964_1opavz6pb",
+      "task_1764044096566_9xxnts6jj",
+      "task_1763985415130_4d9a2rkjd",
+      "task_1763985443816_kt6u8s3lw",
+      "task_1763985430692_55ecjzp72",
       "task_1763956897290_vwiznux0h",
       "task_1763955776797_cvsnsh9kj",
       "task_1763727359664_hcaq15cii",
@@ -164,6 +189,6 @@
       "task_1763723957301_5yvgw1kcn"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-11-21T11:10:13.707Z"
+    "updatedAt": "2025-11-25T04:29:29.857Z"
   }
 ]

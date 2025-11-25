@@ -1,3 +1,3 @@
-2025/11/24-13:08:19.687 f4939f Reusing MANIFEST /Users/bilibili/benchmark/usr_data/Default/Service Worker/Database/MANIFEST-000001
-2025/11/24-13:08:19.688 f4939f Recovering log #3
-2025/11/24-13:08:19.688 f4939f Reusing old log /Users/bilibili/benchmark/usr_data/Default/Service Worker/Database/000003.log 
+2025/11/25-12:29:34.340 10d66ba Reusing MANIFEST /Users/bilibili/benchmark/usr_data/Default/Service Worker/Database/MANIFEST-000001
+2025/11/25-12:29:34.340 10d66ba Recovering log #3
+2025/11/25-12:29:34.340 10d66ba Reusing old log /Users/bilibili/benchmark/usr_data/Default/Service Worker/Database/000003.log 

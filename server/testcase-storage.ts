@@ -24,6 +24,13 @@ export interface PerUrlConfig {
         onPageUnload?: string;
     };
     delayMs?: number;
+    networkConditions?: {
+        offline?: boolean;
+        downloadThroughput?: number; // bytes/s
+        uploadThroughput?: number; // bytes/s
+        latency?: number; // ms
+        connectionType?: string; // 'none' | 'cellular2g' | 'cellular3g' | 'cellular4g' | 'bluetooth' | 'ethernet' | 'wifi' | 'wimax' | 'other'
+    };
 }
 
 /**
@@ -70,6 +77,13 @@ export interface AdvancedConfig {
     blockList?: string[];
     customCss?: string;
     deviceOptions?: [string, Record<string, any>];
+    networkConditions?: {
+        offline?: boolean;
+        downloadThroughput?: number; // bytes/s
+        uploadThroughput?: number; // bytes/s
+        latency?: number; // ms
+        connectionType?: string; // 'none' | 'cellular2g' | 'cellular3g' | 'cellular4g' | 'bluetooth' | 'ethernet' | 'wifi' | 'wimax' | 'other'
+    };
     hooks?: {
         beforePageLoad?: string;
         onPageLoaded?: string;

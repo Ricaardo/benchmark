@@ -126,6 +126,7 @@ interface TestRecord {
     exitCode?: number;
     remarks?: string; // 备注：测试目的、版本等信息
     reportFile?: string; // 本地报告文件名
+    errorMessage?: string; // 错误信息（失败时）
 }
 
 let testRecords: TestRecord[] = [];
@@ -485,49 +486,50 @@ async function startTask(taskId: string) {
             }
             */
 
-            // 如果任务成功完成，尝试上传报告到Perfcat
-            if (code === 0) {
-                try {
-                    // 等待一小段时间，确保报告文件已完全写入
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+            // 查找测试报告文件（无论成功或失败）
+            try {
+                // 等待一小段时间，确保报告文件已完全写入
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-                    // 查找最新的测试报告文件
-                    const reportsDir = path.join(__dirname, '../benchmark_report');
-                    const files = await fs.readdir(reportsDir);
+                // 查找最新的测试报告文件
+                const reportsDir = path.join(__dirname, '../benchmark_report');
+                const files = await fs.readdir(reportsDir);
 
-                    // 改进的文件匹配逻辑：
-                    // 1. 必须是.json文件
-                    // 2. 文件修改时间在任务启动之后
-                    // 3. 文件名包含runner类型
-                    const taskStartTime = task.startTime.getTime();
-                    const jsonFiles = await Promise.all(
-                        files
-                            .filter(f => f.endsWith('.json') && f.includes(task.runner))
-                            .map(async (f) => {
-                                const filePath = path.join(reportsDir, f);
-                                const stat = await fs.stat(filePath);
-                                return {
-                                    name: f,
-                                    path: filePath,
-                                    mtime: stat.mtime.getTime()
-                                };
-                            })
-                    );
+                // 改进的文件匹配逻辑：
+                // 1. 必须是.json文件
+                // 2. 文件修改时间在任务启动之后
+                // 3. 文件名包含runner类型
+                const taskStartTime = task.startTime.getTime();
+                const jsonFiles = await Promise.all(
+                    files
+                        .filter(f => f.endsWith('.json') && f.includes(task.runner))
+                        .map(async (f) => {
+                            const filePath = path.join(reportsDir, f);
+                            const stat = await fs.stat(filePath);
+                            return {
+                                name: f,
+                                path: filePath,
+                                mtime: stat.mtime.getTime()
+                            };
+                        })
+                );
 
-                    // 只选择任务启动后生成的文件
-                    const validFiles = jsonFiles
-                        .filter(f => f.mtime >= taskStartTime)
-                        .sort((a, b) => b.mtime - a.mtime);
+                // 只选择任务启动后生成的文件
+                const validFiles = jsonFiles
+                    .filter(f => f.mtime >= taskStartTime)
+                    .sort((a, b) => b.mtime - a.mtime);
 
-                    console.log(`[TaskManager] 📂 找到 ${validFiles.length} 个有效报告文件 (任务: ${task.name})`);
+                console.log(`[TaskManager] 📂 找到 ${validFiles.length} 个有效报告文件 (任务: ${task.name})`);
 
-                    if (validFiles.length > 0) {
-                        const latestReport = validFiles[0];
-                        console.log(`[TaskManager] 📄 选择报告文件: ${latestReport.name}`);
+                if (validFiles.length > 0) {
+                    const latestReport = validFiles[0];
+                    console.log(`[TaskManager] 📄 选择报告文件: ${latestReport.name}`);
 
-                        // 保存报告文件名到任务
-                        (task as any).reportFile = latestReport.name;
+                    // 保存报告文件名到任务（无论成功或失败）
+                    (task as any).reportFile = latestReport.name;
 
+                    // 只有成功时才上传到Perfcat
+                    if (code === 0) {
                         // 读取并解析JSON
                         const reportContent = await fs.readFile(latestReport.path, 'utf-8');
                         const reportData = JSON.parse(reportContent);
@@ -558,16 +560,16 @@ async function startTask(taskId: string) {
                                 appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                             }
                         }
-                    } else {
-                        appendTaskOutput(taskId, `\n⚠️ 未找到测试报告文件\n`);
-                        appendTaskOutput(taskId, `可能原因: 生成失败或文件名不匹配\n`);
-                        console.warn(`[TaskManager] ⚠️  未找到有效报告文件，任务: ${task.name}, runner: ${task.runner}`);
                     }
-                } catch (error) {
-                    console.error('[TaskManager] 上传Perfcat失败:', error);
-                    appendTaskOutput(taskId, `\n⚠️ 处理测试报告时出错\n`);
-                    appendTaskOutput(taskId, `错误信息: ${(error as Error).message}\n`);
+                } else {
+                    appendTaskOutput(taskId, `\n⚠️ 未找到测试报告文件\n`);
+                    appendTaskOutput(taskId, `可能原因: 生成失败或文件名不匹配\n`);
+                    console.warn(`[TaskManager] ⚠️  未找到有效报告文件，任务: ${task.name}, runner: ${task.runner}`);
                 }
+            } catch (error) {
+                console.error('[TaskManager] 处理测试报告失败:', error);
+                appendTaskOutput(taskId, `\n⚠️ 处理测试报告时出错\n`);
+                appendTaskOutput(taskId, `错误信息: ${(error as Error).message}\n`);
             }
 
             // 清理超时定时器
@@ -582,6 +584,27 @@ async function startTask(taskId: string) {
             // 保存测试记录
             if (task.endTime && task.startTime) {
                 const duration = task.endTime.getTime() - task.startTime.getTime();
+
+                // 从输出中提取错误信息（如果失败）
+                let errorMessage: string | undefined;
+                if (code !== 0) {
+                    const outputLines = task.output.split('\n');
+                    // 查找包含错误信息的行
+                    const errorLines = outputLines.filter(line =>
+                        line.includes('Error') ||
+                        line.includes('error') ||
+                        line.includes('失败') ||
+                        line.includes('Exception') ||
+                        line.includes('ELIFECYCLE')
+                    ).slice(-10); // 最后10行错误信息
+
+                    if (errorLines.length > 0) {
+                        errorMessage = errorLines.join('\n').trim();
+                    } else {
+                        errorMessage = `测试失败，退出码: ${code}`;
+                    }
+                }
+
                 const record: TestRecord = {
                     id: task.id,
                     testCaseId: task.testCaseId, // 关联测试用例ID
@@ -596,10 +619,11 @@ async function startTask(taskId: string) {
                     perfcatChartUrl: task.perfcatUrl ? `${task.perfcatUrl}&viewType=chart` : undefined,
                     exitCode: code ?? undefined,
                     remarks: task.remarks, // 从任务中获取备注
-                    reportFile: (task as any).reportFile // 报告文件名
+                    reportFile: (task as any).reportFile, // 报告文件名（无论成功失败都有）
+                    errorMessage: errorMessage // 错误信息（仅失败时）
                 };
                 await addTestRecord(record);
-                console.log(`[TestRecords] 📝 已保存测试记录: ${task.name}`);
+                console.log(`[TestRecords] 📝 已保存测试记录: ${task.name} ${errorMessage ? '(含错误信息)' : ''}`);
             }
 
             // 发送 Webhook 通知（包含Perfcat链接）
@@ -992,16 +1016,44 @@ function generateTestCase(tc: any, runnerType: string): string {
         }
     }
 
-    // 生命周期钩子 - 优先使用 per-URL config，然后使用 global config
-    const hooks = tc.config?.hooks ?? tc.hooks;
-    if (hooks) {
-        if (hooks.beforePageLoad) {
-            lines.push(`beforePageLoad: async ({ page, context, session }: any) => {\n                        ${hooks.beforePageLoad}\n                    }`);
-        }
+    // networkConditions - 优先使用 per-URL config
+    const networkConditions = tc.config?.networkConditions ?? tc.networkConditions;
+    if (networkConditions && Object.keys(networkConditions).length > 0) {
+        // 网络模拟必须在 beforePageLoad 钩子中应用（在导航到URL之前设置）
+        const networkCode = `await session.send("Network.emulateNetworkConditions", ${JSON.stringify(networkConditions)});`;
 
-        if (hooks.onPageLoaded) {
-            lines.push(`onPageLoaded: async ({ page, context, session }: any) => {\n                        ${hooks.onPageLoaded}\n                    }`);
-        }
+        // 将网络模拟代码添加到 beforePageLoad 钩子中
+        const existingBeforePageLoad = tc.config?.hooks?.beforePageLoad ?? tc.hooks?.beforePageLoad ?? '';
+        const networkBeforePageLoad = existingBeforePageLoad
+            ? `${networkCode}\n                        ${existingBeforePageLoad}`
+            : networkCode;
+
+        // 如果还没有hooks对象，创建一个临时的
+        if (!tc.config) tc.config = {};
+        if (!tc.config.hooks) tc.config.hooks = {};
+
+        // 临时保存网络模拟代码，稍后在hooks部分处理
+        tc.config.hooks._networkSimulation = networkBeforePageLoad;
+    }
+
+    // 生命周期钩子 - 如果有网络模拟，tc.config.hooks 已被创建并包含 _networkSimulation
+    // 优先使用 tc.config.hooks（可能包含网络模拟），否则使用 tc.hooks
+    const hooks = tc.config?.hooks ?? tc.hooks;
+
+    // beforePageLoad: 处理网络模拟和用户自定义的 beforePageLoad
+    const beforePageLoadCode = hooks?._networkSimulation ?? (tc.config?.hooks?.beforePageLoad ?? tc.hooks?.beforePageLoad);
+    if (beforePageLoadCode) {
+        lines.push(`beforePageLoad: async ({ page, context, session }: any) => {\n                        ${beforePageLoadCode}\n                    }`);
+    }
+
+    // onPageLoaded: 只处理用户自定义的 onPageLoaded（网络模拟不应该在这里）
+    const onPageLoadedCode = tc.config?.hooks?.onPageLoaded ?? tc.hooks?.onPageLoaded;
+    if (onPageLoadedCode) {
+        lines.push(`onPageLoaded: async ({ page, context, session }: any) => {\n                        ${onPageLoadedCode}\n                    }`);
+    }
+
+    // 继续处理其他钩子
+    if (hooks) {
 
         if (hooks.onPageTesting && (runnerType === 'Runtime' || runnerType === 'MemoryLeak')) {
             lines.push(`onPageTesting: async ({ page, context, session }: any) => {\n                        ${hooks.onPageTesting}\n                    }`);
@@ -2274,9 +2326,9 @@ app.delete('/api/test-records/:id', async (req, res) => {
 
         // 同时从测试用例的executionHistory中删除
         if (record.testCaseId) {
-            const testCase = await TestCaseStorage.getTestCase(record.testCaseId);
+            const testCase = TestCaseStorage.getTestCaseById(record.testCaseId);
             if (testCase && testCase.executionHistory) {
-                testCase.executionHistory = testCase.executionHistory.filter((r: any) => r.id !== id);
+                testCase.executionHistory = testCase.executionHistory.filter((r: any) => r !== id);
                 await TestCaseStorage.updateTestCase(record.testCaseId, testCase);
             }
         }

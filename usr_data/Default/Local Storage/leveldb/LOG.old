@@ -1,15 +1,3 @@
-2025/11/24-13:08:19.731 f493fb Reusing MANIFEST /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/MANIFEST-000001
-2025/11/24-13:08:19.732 f493fb Recovering log #59
-2025/11/24-13:08:19.733 f493fb Reusing old log /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/000059.log 
-2025/11/24-13:09:19.737 f493fe Level-0 table #63: started
-2025/11/24-13:09:19.740 f493fe Level-0 table #63: 17739 bytes OK
-2025/11/24-13:09:19.741 f493fe Delete type=0 #59
-2025/11/24-13:09:19.742 f493fe Compacting 4@0 + 1@1 files
-2025/11/24-13:09:19.753 f493fe Generated table #64@0: 62 keys, 655190 bytes
-2025/11/24-13:09:19.753 f493fe Compacted 4@0 + 1@1 files => 655190 bytes
-2025/11/24-13:09:19.754 f493fe compacted to: files[ 0 1 0 0 0 0 0 ]
-2025/11/24-13:09:19.755 f493fe Delete type=2 #63
-2025/11/24-13:09:19.755 f493fe Delete type=2 #60
-2025/11/24-13:09:19.755 f493fe Delete type=2 #58
-2025/11/24-13:09:19.755 f493fe Delete type=2 #56
-2025/11/24-13:09:19.755 f493fe Delete type=2 #54
+2025/11/25-12:29:34.378 10d6706 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/MANIFEST-000001
+2025/11/25-12:29:34.380 10d6706 Recovering log #78
+2025/11/25-12:29:34.380 10d6706 Reusing old log /Users/bilibili/benchmark/usr_data/Default/Local Storage/leveldb/000078.log 
