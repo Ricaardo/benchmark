@@ -8,6 +8,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import crypto from 'crypto';
 import LZ from 'lz-string';
 import * as TestCaseStorage from './testcase-storage.js';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,6 +58,26 @@ async function saveWebhookConfig() {
 // 生成新的API密钥
 function generateApiKey(): string {
     return 'bm_' + crypto.randomBytes(24).toString('hex');
+}
+
+// 获取本机网络IP地址
+function getNetworkAddress(): string[] {
+    const interfaces = os.networkInterfaces();
+    const addresses: string[] = [];
+
+    for (const name of Object.keys(interfaces)) {
+        const iface = interfaces[name];
+        if (!iface) continue;
+
+        for (const alias of iface) {
+            // 只获取 IPv4 地址，排除内部地址
+            if (alias.family === 'IPv4' && !alias.internal) {
+                addresses.push(alias.address);
+            }
+        }
+    }
+
+    return addresses;
 }
 
 // 验证API密钥中间件
@@ -2781,13 +2802,30 @@ app.get('/api/v1/reports', validateApiKey, async (req, res) => {
 
 // 启动服务器，带端口冲突处理
 const server = app.listen(PORT, async () => {
-    console.log(`\n🚀 Benchmark Web Server running at http://localhost:${PORT}`);
-    console.log(`   - View UI: http://localhost:${PORT}`);
-    console.log(`   - Config: http://localhost:${PORT}/config.html`);
-    console.log(`   - API Status: http://localhost:${PORT}/api/status`);
-    console.log(`   - Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`   - WebSocket: ws://localhost:${PORT}`);
-    console.log(`   - API Docs: http://localhost:${PORT}/api.html\n`);
+    const networkAddresses = getNetworkAddress();
+
+    console.log(`\n🚀 Benchmark Web Server is running!\n`);
+    console.log(`📍 Local Access:`);
+    console.log(`   http://localhost:${PORT}\n`);
+
+    if (networkAddresses.length > 0) {
+        console.log(`🌐 Network Access (from other devices):`);
+        networkAddresses.forEach(addr => {
+            console.log(`   http://${addr}:${PORT}`);
+        });
+        console.log();
+    }
+
+    console.log(`📋 Available Pages:`);
+    console.log(`   - Main UI:       http://localhost:${PORT}`);
+    console.log(`   - Test Records:  http://localhost:${PORT}/records.html`);
+    console.log(`   - API Debug:     http://localhost:${PORT}/debug.html`);
+    console.log(`   - API Docs:      http://localhost:${PORT}/api.html\n`);
+
+    console.log(`🔌 API Endpoints:`);
+    console.log(`   - Health Check:  http://localhost:${PORT}/api/health`);
+    console.log(`   - API Status:    http://localhost:${PORT}/api/status`);
+    console.log(`   - WebSocket:     ws://localhost:${PORT}\n`);
 
     // 启动时加载配置
     await ensureReportsDir();

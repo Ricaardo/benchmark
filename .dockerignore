@@ -1,0 +1,59 @@
+# Node modules
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+dist
+
+# Test reports and user data
+benchmark_report
+usr_data
+logs
+
+# Configuration files (will be mounted as volumes)
+testcases.json
+test-records.json
+perfcat-config.json
+api-keys.json
+webhook-config.json
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+!README.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Deployment scripts
+deploy.sh
+deploy.bat
+ecosystem.config.js
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+*.tmp
+*.temp
+.cache

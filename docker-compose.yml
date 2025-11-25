@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  benchmark-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: benchmark-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persist test reports
+      - ./benchmark_report:/app/benchmark_report
+      # Persist user data (browser profiles)
+      - ./usr_data:/app/usr_data
+      # Persist test cases
+      - ./testcases.json:/app/testcases.json
+      # Persist test records
+      - ./test-records.json:/app/test-records.json
+      # Persist Perfcat config
+      - ./perfcat-config.json:/app/perfcat-config.json
+      # Persist API keys
+      - ./api-keys.json:/app/api-keys.json
+      # Persist webhook config
+      - ./webhook-config.json:/app/webhook-config.json
+      # Persist logs
+      - ./logs:/app/logs
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      # Add timezone (optional)
+      - TZ=Asia/Shanghai
+    networks:
+      - benchmark-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Resource limits (optional, adjust based on your needs)
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  benchmark-network:
+    driver: bridge
+
+# Optional: Add a volume for better performance
+volumes:
+  node_modules:

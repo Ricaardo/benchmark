@@ -16,7 +16,8 @@
       "Bash(pkill:*)",
       "Bash(tsx:*)",
       "Bash(npx tsx:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
