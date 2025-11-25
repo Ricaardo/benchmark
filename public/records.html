@@ -1114,7 +1114,7 @@
             ];
 
             // 计算所有指标的统计数据（只处理成功的URL）
-            const successfulResults = allResults.filter(r => r.data);
+            // successfulResults 已经在上面定义过了，这里直接使用
             const allMetricsStats = metrics.map(metric => {
                 const urlStats = successfulResults.map((result, index) => {
                     const iterations = result.data[`${metric.key}-iterations`];
@@ -1382,8 +1382,20 @@
                 }
             });
 
+            // 生成失败摘要（如果有失败的URL）
+            let failureSummaryHtml = '';
+            if (failedResults.length > 0) {
+                failureSummaryHtml = `
+                    <div style="margin-bottom: 24px; padding: 16px; background: #fff5f5; border: 2px solid #feb2b2; border-radius: 8px;">
+                        <h4 style="color: #e53e3e; margin-bottom: 8px;">⚠️ ${failedResults.length} 个URL测试失败</h4>
+                        <p style="color: #742a2a; margin: 0; font-size: 14px;">请查看下方各URL的详细失败信息</p>
+                    </div>
+                `;
+            }
+
             container.innerHTML = `
                 <h3 style="margin-bottom: 16px; color: #2d3748;">📈 Runtime 性能监控</h3>
+                ${failureSummaryHtml}
                 ${metricsHtml}
 
                 <div style="margin-top: 32px;">

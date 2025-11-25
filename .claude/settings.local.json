@@ -15,7 +15,8 @@
       "Bash(PORT=3000 npm start)",
       "Bash(pkill:*)",
       "Bash(tsx:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []

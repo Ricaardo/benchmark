@@ -1,5 +1,35 @@
 [
   {
+    "id": "task_1764071282525_9azbz70mn",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-25T11:48:02.526Z",
+    "endTime": "2025-11-25T11:49:26.036Z",
+    "duration": 83510,
+    "perfcatId": "4JWN4O",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/4JWN4O?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/4JWN4O?runner=Runtime&viewType=chart",
+    "exitCode": 0,
+    "reportFile": "2025-11-25T19-48-03-Runtime-Local.json"
+  },
+  {
+    "id": "task_1764071258627_qoknu3aul",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-25T11:47:38.627Z",
+    "endTime": "2025-11-25T11:49:03.495Z",
+    "duration": 84868,
+    "perfcatId": "-O4KOC",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/-O4KOC?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/-O4KOC?runner=Runtime&viewType=chart",
+    "exitCode": 0,
+    "reportFile": "2025-11-25T19-47-39-Runtime-Local.json"
+  },
+  {
     "id": "task_1764045595644_6ib64julv",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "[off] 测试：多URL不同配置",

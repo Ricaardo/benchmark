@@ -421,7 +421,7 @@ async function startTask(taskId: string) {
         await processAutoCookies(task.config, taskId);
 
         // 生成配置文件
-        const tempConfigCode = generateConfig(task.config);
+        const tempConfigCode = generateConfig(task.config, taskId);
         const tempConfigPath = path.join(__dirname, `../benchmark.config.${taskId}.mts`);
         await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
 
@@ -485,6 +485,15 @@ async function startTask(taskId: string) {
                 console.error(`[TaskManager] ⚠️  删除配置文件失败: ${tempConfigPath}`, e);
             }
             */
+
+            // 清理临时用户数据目录（用于并发执行隔离）
+            const tempUserDataDir = path.join(__dirname, `../usr_data/${taskId}`);
+            try {
+                await fs.rm(tempUserDataDir, { recursive: true, force: true });
+                console.log(`[TaskManager] 🗑️  已删除临时用户数据目录: ${tempUserDataDir}`);
+            } catch (e) {
+                console.error(`[TaskManager] ⚠️  删除用户数据目录失败: ${tempUserDataDir}`, e);
+            }
 
             // 查找测试报告文件（无论成功或失败）
             try {
@@ -760,7 +769,7 @@ function stopTask(taskId: string, force: boolean = false) {
 }
 
 // 删除任务
-function deleteTask(taskId: string): boolean {
+async function deleteTask(taskId: string): Promise<boolean> {
     const task = tasks.get(taskId);
     if (!task) return false;
 
@@ -774,19 +783,32 @@ function deleteTask(taskId: string): boolean {
         clearTimeout(task.killTimeout);
     }
 
+    // 清理临时配置文件和用户数据目录
+    try {
+        const tempConfigPath = path.join(__dirname, `../benchmark.config.${taskId}.mts`);
+        await fs.unlink(tempConfigPath).catch(() => {});
+
+        const tempUserDataDir = path.join(__dirname, `../usr_data/${taskId}`);
+        await fs.rm(tempUserDataDir, { recursive: true, force: true }).catch(() => {});
+
+        console.log(`[TaskManager] 🗑️  已清理任务相关文件: ${taskId}`);
+    } catch (e) {
+        console.error(`[TaskManager] ⚠️  清理任务文件失败: ${taskId}`, e);
+    }
+
     tasks.delete(taskId);
     broadcastTaskList();
     return true;
 }
 
 // 清理所有已完成的任务
-function clearCompletedTasks() {
+async function clearCompletedTasks() {
     const completedIds = Array.from(tasks.values())
         .filter(t => t.status === 'completed' || t.status === 'error')
         .map(t => t.id);
 
-    completedIds.forEach(id => tasks.delete(id));
-    broadcastTaskList();
+    // 使用 deleteTask 来确保正确清理所有相关资源
+    await Promise.all(completedIds.map(id => deleteTask(id)));
 
     return completedIds.length;
 }
@@ -1078,13 +1100,18 @@ function generateTestCase(tc: any, runnerType: string): string {
 }
 
 // 生成配置文件内容（改进版本）
-function generateConfig(config: any): string {
+function generateConfig(config: any, taskId?: string): string {
     const mode = config.mode || { anonymous: true, headless: false };
     const runners = config.runners || {
         Initialization: { enabled: false, testCases: [], iterations: 7, includeWarmNavigation: false },
         Runtime: { enabled: false, testCases: [], durationMs: 60000, delayMs: 10000, metrics: ['runtime', 'longtask'] },
         MemoryLeak: { enabled: false, testCases: [], intervalMs: 60000, iterations: 3, onPageTesting: '' }
     };
+
+    // 如果提供了taskId，为该任务设置唯一的usrDataDir以避免并发冲突
+    if (taskId && !mode.anonymous && !mode.usrDataDir) {
+        mode.usrDataDir = `./usr_data/${taskId}`;
+    }
 
     // Root级别配置
     const rootOptions: string[] = [];
@@ -1306,10 +1333,10 @@ app.post('/api/tasks/:taskId/stop', (req, res) => {
 });
 
 // 删除任务
-app.delete('/api/tasks/:taskId', (req, res) => {
+app.delete('/api/tasks/:taskId', async (req, res) => {
     const { taskId } = req.params;
 
-    if (deleteTask(taskId)) {
+    if (await deleteTask(taskId)) {
         res.json({ success: true, message: 'Task deleted' });
     } else {
         res.status(404).json({ error: 'Task not found' });
@@ -1317,8 +1344,8 @@ app.delete('/api/tasks/:taskId', (req, res) => {
 });
 
 // 清理所有已完成的任务
-app.post('/api/tasks/clear-completed', (req, res) => {
-    const count = clearCompletedTasks();
+app.post('/api/tasks/clear-completed', async (req, res) => {
+    const count = await clearCompletedTasks();
     res.json({ success: true, message: `Cleared ${count} completed tasks` });
 });
 
@@ -1497,14 +1524,10 @@ app.post('/api/stop', (req, res) => {
 });
 
 // 强制重置状态（新增接口，用于错误恢复）
-app.post('/api/reset', (req, res) => {
-    // 停止所有运行中的任务
-    Array.from(tasks.values())
-        .filter(t => t.status === 'running')
-        .forEach(t => stopTask(t.id));
-
-    // 清空所有任务
-    tasks.clear();
+app.post('/api/reset', async (req, res) => {
+    // 停止并删除所有任务（包括清理临时文件）
+    const allTaskIds = Array.from(tasks.keys());
+    await Promise.all(allTaskIds.map(id => deleteTask(id)));
 
     // 重置向后兼容的状态变量
     if (currentBenchmark) {
