@@ -108,6 +108,7 @@ export interface TestCase {
     description: string;
     tags: string[];
     advancedConfig?: AdvancedConfig; // 默认配置（应用于所有URL，除非URL有自己的配置）
+    workerId?: string; // Worker节点ID（可选，用于指定执行节点）
     createdAt: string; // ISO timestamp
     updatedAt: string; // ISO timestamp
     executionHistory?: string[]; // 执行记录ID数组（关联到ExecutionRecord）

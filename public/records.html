@@ -115,10 +115,17 @@
             border-radius: 6px;
             font-size: 14px;
             outline: none;
+            transition: all 0.2s;
         }
 
         select:focus, input:focus {
             border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #a0aec0;
+            font-size: 13px;
         }
 
         .records-table-container {
@@ -250,8 +257,55 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #4a5568;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f7fafc;
+        }
+
+        .page-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            background: #f7fafc;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn.active:hover {
+            background: #5568d3;
+            border-color: #5568d3;
+        }
+
+        .page-info {
+            color: #718096;
+            font-size: 14px;
+            padding: 0 8px;
         }
 
         .duration {
@@ -454,6 +508,14 @@
 
         <!-- Filters -->
         <div class="filters">
+            <div class="filter-group" style="flex: 1; max-width: 300px;">
+                <label class="filter-label">搜索</label>
+                <input type="text"
+                       id="filter-search"
+                       placeholder="搜索测试场景或备注..."
+                       oninput="handleSearchInput()"
+                       style="width: 100%;">
+            </div>
             <div class="filter-group">
                 <label class="filter-label">Runner类型</label>
                 <select id="filter-runner" onchange="applyFilters()">
@@ -474,8 +536,11 @@
             <div class="filter-group">
                 <label class="filter-label">每页显示</label>
                 <select id="filter-limit" onchange="applyFilters()">
+                    <option value="1">1条</option>
+                    <option value="5">5条</option>
+                    <option value="10" selected>10条</option>
                     <option value="20">20条</option>
-                    <option value="50" selected>50条</option>
+                    <option value="50">50条</option>
                     <option value="100">100条</option>
                 </select>
             </div>
@@ -521,9 +586,10 @@
 
     <script>
         let currentPage = 0;
-        let currentLimit = 50;
+        let currentLimit = 10;
         let currentFilters = {};
         let totalRecords = 0;
+        let searchTimeout = null;
 
         // 加载测试记录
         async function loadRecords() {
@@ -796,24 +862,98 @@
             const totalPages = Math.ceil(total / limit);
             const currentPageNum = Math.floor(offset / limit);
 
-            if (totalPages <= 1) {
+            // 如果没有记录，不显示分页
+            if (total === 0) {
                 pagination.innerHTML = '';
                 return;
             }
 
-            let html = `<div style="color: #718096; font-size: 14px;">共 ${total} 条记录</div>`;
+            let html = '';
 
-            if (currentPageNum > 0) {
-                html += `<button class="btn btn-secondary btn-small" onclick="goToPage(${currentPageNum - 1})">← 上一页</button>`;
-            }
+            // 总记录数信息
+            html += `<div class="page-info">共 ${total} 条记录，${totalPages} 页</div>`;
 
-            html += `<div style="color: #4a5568; font-weight: 500;">第 ${currentPageNum + 1} / ${totalPages} 页</div>`;
+            // 只有在多页时才显示导航按钮
+            if (totalPages > 1) {
+                // 首页按钮
+                html += `<button class="page-btn" onclick="goToPage(0)" ${currentPageNum === 0 ? 'disabled' : ''}>
+                    ⟪ 首页
+                </button>`;
 
-            if (currentPageNum < totalPages - 1) {
-                html += `<button class="btn btn-secondary btn-small" onclick="goToPage(${currentPageNum + 1})">下一页 →</button>`;
+                // 上一页按钮
+                html += `<button class="page-btn" onclick="goToPage(${currentPageNum - 1})" ${currentPageNum === 0 ? 'disabled' : ''}>
+                    ← 上一页
+                </button>`;
+
+                // 生成页码按钮
+                const pageNumbers = generatePageNumbers(currentPageNum, totalPages);
+                pageNumbers.forEach(pageNum => {
+                    if (pageNum === '...') {
+                        html += `<span class="page-info">...</span>`;
+                    } else {
+                        const isActive = pageNum === currentPageNum;
+                        html += `<button class="page-btn ${isActive ? 'active' : ''}" onclick="goToPage(${pageNum})" ${isActive ? 'disabled' : ''}>
+                            ${pageNum + 1}
+                        </button>`;
+                    }
+                });
+
+                // 下一页按钮
+                html += `<button class="page-btn" onclick="goToPage(${currentPageNum + 1})" ${currentPageNum >= totalPages - 1 ? 'disabled' : ''}>
+                    下一页 →
+                </button>`;
+
+                // 末页按钮
+                html += `<button class="page-btn" onclick="goToPage(${totalPages - 1})" ${currentPageNum >= totalPages - 1 ? 'disabled' : ''}>
+                    末页 ⟫
+                </button>`;
             }
 
             pagination.innerHTML = html;
+        }
+
+        // 生成页码数组（智能显示页码）
+        function generatePageNumbers(currentPage, totalPages) {
+            const delta = 2; // 当前页前后显示的页码数量
+            const pages = [];
+            const rangeStart = Math.max(0, currentPage - delta);
+            const rangeEnd = Math.min(totalPages - 1, currentPage + delta);
+
+            // 总是显示第一页
+            if (rangeStart > 0) {
+                pages.push(0);
+                if (rangeStart > 1) {
+                    pages.push('...');
+                }
+            }
+
+            // 显示当前页附近的页码
+            for (let i = rangeStart; i <= rangeEnd; i++) {
+                pages.push(i);
+            }
+
+            // 总是显示最后一页
+            if (rangeEnd < totalPages - 1) {
+                if (rangeEnd < totalPages - 2) {
+                    pages.push('...');
+                }
+                pages.push(totalPages - 1);
+            }
+
+            return pages;
+        }
+
+        // 处理搜索输入（带防抖）
+        function handleSearchInput() {
+            // 清除之前的定时器
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // 设置新的定时器，500ms后执行搜索
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
         }
 
         // 应用过滤器
@@ -821,10 +961,12 @@
             currentPage = 0;
             currentFilters = {};
 
+            const search = document.getElementById('filter-search').value.trim();
             const runner = document.getElementById('filter-runner').value;
             const status = document.getElementById('filter-status').value;
             currentLimit = parseInt(document.getElementById('filter-limit').value);
 
+            if (search) currentFilters.search = search;
             if (runner) currentFilters.runner = runner;
             if (status) currentFilters.status = status;
 
@@ -835,6 +977,12 @@
         function goToPage(page) {
             currentPage = page;
             loadRecords();
+
+            // 平滑滚动到顶部
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         }
 
         // 刷新记录

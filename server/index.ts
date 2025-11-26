@@ -1339,19 +1339,34 @@ app.get('/api/tasks/:taskId', (req, res) => {
     });
 });
 
-// 停止任务
-app.post('/api/tasks/:taskId/stop', (req, res) => {
+// 停止任务（支持本地和分布式）
+// 注意：分布式任务管理器将在服务器启动后注入
+let distributedTaskManager: any = null;
+app.post('/api/tasks/:taskId/stop', async (req, res) => {
     const { taskId } = req.params;
     const { force = false } = req.body;
 
+    // 先尝试停止本地任务
     if (stopTask(taskId, force)) {
-        res.json({
+        return res.json({
             success: true,
             message: force ? 'Task force stopped' : 'Task stopping...'
         });
-    } else {
-        res.status(400).json({ error: 'Task not found or not running' });
     }
+
+    // 如果不是本地任务，尝试停止分布式任务
+    if (distributedTaskManager) {
+        const success = await distributedTaskManager.cancelTask(taskId);
+        if (success) {
+            return res.json({
+                success: true,
+                message: 'Distributed task cancelled'
+            });
+        }
+    }
+
+    // 任务不存在
+    res.status(400).json({ error: 'Task not found or not running' });
 });
 
 // 删除任务
@@ -2306,7 +2321,7 @@ app.post('/api/perfcat/test', async (req, res) => {
 // 获取测试记录列表
 app.get('/api/test-records', async (req, res) => {
     try {
-        const { runner, status, limit = 50, offset = 0 } = req.query;
+        const { runner, status, search, limit = 50, offset = 0 } = req.query;
 
         let filteredRecords = [...testRecords];
 
@@ -2318,6 +2333,16 @@ app.get('/api/test-records', async (req, res) => {
         // 按状态过滤
         if (status && typeof status === 'string') {
             filteredRecords = filteredRecords.filter(r => r.status === status);
+        }
+
+        // 按关键词搜索（搜索测试场景名称和备注）
+        if (search && typeof search === 'string') {
+            const searchLower = search.toLowerCase().trim();
+            filteredRecords = filteredRecords.filter(r => {
+                const nameMatch = r.name.toLowerCase().includes(searchLower);
+                const remarksMatch = r.remarks ? r.remarks.toLowerCase().includes(searchLower) : false;
+                return nameMatch || remarksMatch;
+            });
         }
 
         // 分页
@@ -2846,6 +2871,9 @@ const server = app.listen(PORT, async () => {
     console.log(`\n🌐 Initializing distributed execution...\n`);
     const distributed = await enableDistributedExecution(app, server);
     const distributedWss = distributed.getWebSocketServer();
+
+    // 注入分布式任务管理器，用于停止任务等操作
+    distributedTaskManager = distributed.getTaskManager();
 
     // 设置 upgrade 事件处理，根据路径和参数分发
     server.on('upgrade', (request, socket, head) => {

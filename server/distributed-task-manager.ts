@@ -130,7 +130,9 @@ export class DistributedTaskManager {
             runner: request.runner,
             status: 'pending',
             progress: 0,
-            createdAt: Date.now()
+            createdAt: Date.now(),
+            name: testCase.name,  // 添加任务显示名称
+            logs: []  // 初始化日志数组
         };
 
         this.tasks.set(taskId, task);
@@ -180,6 +182,32 @@ export class DistributedTaskManager {
     }
 
     /**
+     * 添加任务日志
+     */
+    appendTaskLog(taskId: string, logLine: string): boolean {
+        const task = this.tasks.get(taskId);
+        if (!task) {
+            return false;
+        }
+
+        if (!task.logs) {
+            task.logs = [];
+        }
+
+        task.logs.push(logLine);
+
+        // 保持日志在合理范围内（最多1000行）
+        if (task.logs.length > 1000) {
+            task.logs = task.logs.slice(-1000);
+        }
+
+        // 通知前端更新（但不保存到文件，减少I/O）
+        this.notifyTaskUpdate(task);
+
+        return true;
+    }
+
+    /**
      * 更新任务状态
      */
     async updateTaskStatus(
@@ -196,6 +224,10 @@ export class DistributedTaskManager {
 
         if (status === 'running' && !task.startedAt) {
             task.startedAt = Date.now();
+            // 初始化日志数组
+            if (!task.logs) {
+                task.logs = [];
+            }
         }
 
         if (status === 'completed' || status === 'failed') {
@@ -459,9 +491,11 @@ export class DistributedTaskManager {
             return;
         }
 
-        // 这里可以存储日志或转发给前端
-        // 简化处理，直接输出
+        // 输出到控制台
         console.log(`[${task.workerName}] ${log}`);
+
+        // 存储日志并通知前端更新
+        this.appendTaskLog(taskId, log);
     }
 
     /**

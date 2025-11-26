@@ -83,6 +83,8 @@ export interface DistributedTask {
     exitCode?: number;       // 退出码
     perfcatUrl?: string;     // Perfcat报告URL
     localReportPath?: string; // 本地报告路径
+    logs?: string[];         // 执行日志（实时输出）
+    name?: string;           // 任务显示名称
 }
 
 // 任务分发请求
