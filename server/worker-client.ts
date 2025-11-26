@@ -34,7 +34,9 @@ export class WorkerClient {
         private masterUrl: string,
         private workerName: string,
         private workerPort: number = 0,
-        private tags: string[] = []
+        private tags: string[] = [],
+        private performanceTier?: 'high' | 'medium' | 'low' | 'custom',
+        private description?: string
     ) {}
 
     /**
@@ -104,6 +106,8 @@ export class WorkerClient {
             arch: os.arch(),
             cpuCount: os.cpus().length,
             memory: Math.round(os.totalmem() / (1024 * 1024 * 1024)), // GB
+            performanceTier: this.performanceTier,
+            description: this.description,
             capabilities: ['chromium'], // 可以根据实际情况添加
             tags: this.tags
         };
@@ -446,8 +450,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const workerName = process.env.WORKER_NAME || `Worker-${os.hostname()}`;
     const workerPort = parseInt(process.env.WORKER_PORT || '0');
     const tags = (process.env.WORKER_TAGS || '').split(',').filter(t => t);
+    const performanceTier = (process.env.PERFORMANCE_TIER || '') as 'high' | 'medium' | 'low' | 'custom' | '';
+    const description = process.env.WORKER_DESCRIPTION || '';
 
-    const worker = new WorkerClient(masterUrl, workerName, workerPort, tags);
+    const worker = new WorkerClient(
+        masterUrl,
+        workerName,
+        workerPort,
+        tags,
+        performanceTier || undefined,
+        description || undefined
+    );
 
     // 优雅关闭
     process.on('SIGINT', async () => {

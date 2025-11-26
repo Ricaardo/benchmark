@@ -44,6 +44,14 @@
 
 .worker-select option:disabled {
     color: #999;
+    font-weight: bold;
+    font-style: italic;
+}
+
+/* 性能等级分组样式 */
+.worker-select optgroup {
+    font-weight: bold;
+    color: #495057;
 }
 
 .worker-stats {

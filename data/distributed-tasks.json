@@ -1,0 +1,48 @@
+[
+  {
+    "id": "12d5a8eb-2cd8-489d-859a-174ffb01deeb",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "testCaseName": "测试：多URL不同配置",
+    "workerId": "9f6181c7-3230-4649-9e25-0cbed6f6f0af",
+    "workerName": "中配测试机-1",
+    "runner": "Runtime",
+    "status": "dispatched",
+    "progress": 0,
+    "createdAt": 1764127812106,
+    "dispatchedAt": 1764127812106
+  },
+  {
+    "id": "bcb40411-bd0f-48f4-a0d5-d6f218bb38b8",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "testCaseName": "测试：多URL不同配置",
+    "workerId": "9f6181c7-3230-4649-9e25-0cbed6f6f0af",
+    "workerName": "中配测试机-1",
+    "runner": "Runtime",
+    "status": "pending",
+    "progress": 0,
+    "createdAt": 1764127843184
+  },
+  {
+    "id": "c058b0b7-43c5-4bda-82c7-c76695d97bab",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "testCaseName": "测试：多URL不同配置",
+    "workerId": "e77108a3-aa8b-45e7-9ae2-8dfb154fb720",
+    "workerName": "中配测试机-1",
+    "runner": "Runtime",
+    "status": "dispatched",
+    "progress": 0,
+    "createdAt": 1764128055599,
+    "dispatchedAt": 1764128055600
+  },
+  {
+    "id": "e89dda82-3d11-40bb-88e6-9fd06a8cdf43",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "testCaseName": "测试：多URL不同配置",
+    "workerId": "2d66e575-3d89-47c9-8843-e82e79e7cf5d",
+    "workerName": "中配测试机-1",
+    "runner": "Runtime",
+    "status": "pending",
+    "progress": 0,
+    "createdAt": 1764128165156
+  }
+]

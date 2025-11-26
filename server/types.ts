@@ -5,6 +5,9 @@
 // Worker 节点状态
 export type WorkerStatus = 'online' | 'offline' | 'busy';
 
+// Worker 性能等级
+export type PerformanceTier = 'high' | 'medium' | 'low' | 'custom';
+
 // Worker 节点信息
 export interface WorkerNode {
     id: string;              // 唯一标识 (UUID)
@@ -15,6 +18,8 @@ export interface WorkerNode {
     arch: string;            // CPU架构 (x64/arm64)
     cpuCount: number;        // CPU核心数
     memory: number;          // 内存大小 (GB)
+    performanceTier?: PerformanceTier;  // 性能等级 (高/中/低配)
+    description?: string;    // 机器描述 (如: "MacBook Pro M1, 32GB RAM")
     status: WorkerStatus;    // 节点状态
     lastHeartbeat: number;   // 最后心跳时间戳
     currentTask?: string;    // 当前执行的任务ID
@@ -34,6 +39,8 @@ export interface WorkerRegistration {
     arch: string;
     cpuCount: number;
     memory: number;
+    performanceTier?: PerformanceTier;  // 性能等级
+    description?: string;    // 机器描述
     capabilities?: string[];
     tags?: string[];
 }

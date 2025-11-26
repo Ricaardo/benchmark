@@ -1,5 +1,20 @@
 [
   {
+    "id": "task_1764127917182_xa4y6ank8",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-26T03:31:57.182Z",
+    "endTime": "2025-11-26T03:33:20.485Z",
+    "duration": 83303,
+    "perfcatId": "RWAlaj",
+    "perfcatUrl": "https://fe-perfcat.bilibili.co/utils/shorten/RWAlaj?runner=Runtime",
+    "perfcatChartUrl": "https://fe-perfcat.bilibili.co/utils/shorten/RWAlaj?runner=Runtime&viewType=chart",
+    "exitCode": 0,
+    "reportFile": "2025-11-26T11-31-58-Runtime-Local.json"
+  },
+  {
     "id": "task_1764071262709_dfftmkwo8",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",

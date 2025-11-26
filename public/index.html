@@ -3224,7 +3224,32 @@ console.log('B站弹幕开关完成');`
                 }
 
                 // 检查是否选择了 Worker 节点
-                const selectedWorkerId = workerSelector ? workerSelector.getSelectedWorkerId() : null;
+                let selectedWorkerId = workerSelector ? workerSelector.getSelectedWorkerId() : null;
+
+                // 🆕 默认中端性能机器：如果未选择Worker，自动选择中配Worker
+                if (!selectedWorkerId || selectedWorkerId === 'local') {
+                    const workers = workerSelector ? workerSelector.getOnlineWorkers() : [];
+                    if (workers.length > 0) {
+                        // 优先选择中配Worker
+                        const mediumWorker = workers.find(w => w.performanceTier === 'medium');
+                        if (mediumWorker) {
+                            selectedWorkerId = mediumWorker.id;
+                            console.log(`[RunCase] 🎯 未选择Worker，默认使用中配Worker: ${mediumWorker.name}`);
+                            appendOutput(`[系统] 🎯 自动选择中配Worker: ${mediumWorker.name}`);
+                        } else {
+                            // 如果没有中配，按优先级选择：low > high > custom
+                            const lowWorker = workers.find(w => w.performanceTier === 'low');
+                            const highWorker = workers.find(w => w.performanceTier === 'high');
+                            const fallbackWorker = lowWorker || highWorker || workers[0];
+
+                            if (fallbackWorker) {
+                                selectedWorkerId = fallbackWorker.id;
+                                console.log(`[RunCase] ⚠️ 无中配Worker，使用备选: ${fallbackWorker.name} (${fallbackWorker.performanceTier})`);
+                                appendOutput(`[系统] ⚠️ 无中配Worker，使用备选: ${fallbackWorker.name}`);
+                            }
+                        }
+                    }
+                }
 
                 let response, result;
 
@@ -4286,5 +4311,21 @@ console.log('B站弹幕开关完成');`
 
     <!-- Worker 节点选择器脚本 -->
     <script src="worker-selector.js"></script>
+
+    <!-- 批量分发组件脚本 -->
+    <script src="batch-dispatcher.js"></script>
+    <script>
+        // 初始化批量分发组件
+        let batchDispatcher = null;
+
+        // 在页面加载后延迟初始化
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                batchDispatcher = new BatchDispatcher();
+                batchDispatcher.init();
+                console.log('[BatchDispatcher] ✅ 批量分发功能已启用');
+            }, 1000); // 延迟1秒确保DOM已完全加载
+        });
+    </script>
 </body>
 </html>

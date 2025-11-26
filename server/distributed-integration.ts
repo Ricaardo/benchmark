@@ -50,6 +50,15 @@ export class DistributedIntegration {
             this.wsManager?.sendToWorker(workerId, message);
         });
 
+        // 设置 Worker 状态变化监听 - 推送到前端
+        this.workerManager.onStatusChange((worker) => {
+            this.wsManager?.broadcastToClients({
+                type: 'worker-status-update',
+                data: worker,
+                timestamp: Date.now()
+            });
+        });
+
         console.log('✅ Distributed execution initialized\n');
         this.printStatus();
     }

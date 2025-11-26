@@ -98,6 +98,8 @@ export class WorkerManager {
             arch: registration.arch,
             cpuCount: registration.cpuCount,
             memory: registration.memory,
+            performanceTier: registration.performanceTier,
+            description: registration.description,
             capabilities: registration.capabilities || [],
             tags: registration.tags || [],
             status: 'online',

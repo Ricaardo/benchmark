@@ -17,7 +17,7 @@ class WorkerSelector {
     async init() {
         await this.loadWorkers();
         this.connectWebSocket();
-        this.startAutoRefresh();
+        // 已使用 WebSocket 实时更新，无需轮询
         return this;
     }
 
@@ -42,9 +42,13 @@ class WorkerSelector {
      */
     connectWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}`;
+        const wsUrl = `${protocol}//${window.location.host}/ws/distributed`;
 
         this.ws = new WebSocket(wsUrl);
+
+        this.ws.onopen = () => {
+            console.log('[WorkerSelector] ✅ WebSocket connected');
+        };
 
         this.ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
@@ -52,7 +56,7 @@ class WorkerSelector {
             if (message.type === 'worker-status-update') {
                 this.updateWorker(message.data);
             } else if (message.type === 'worker-offline') {
-                this.updateWorker(message.data);
+                this.updateWorker({ ...message.data, status: 'offline' });
             } else if (message.type === 'workers-list') {
                 this.workers = message.data.workers || [];
                 this.notifyChange();
@@ -60,8 +64,12 @@ class WorkerSelector {
         };
 
         this.ws.onclose = () => {
-            console.log('Worker selector WebSocket disconnected, reconnecting...');
+            console.log('[WorkerSelector] ❌ WebSocket disconnected, reconnecting...');
             setTimeout(() => this.connectWebSocket(), 5000);
+        };
+
+        this.ws.onerror = (error) => {
+            console.error('[WorkerSelector] WebSocket error:', error);
         };
     }
 
@@ -132,13 +140,7 @@ class WorkerSelector {
                         <option value="">自动分配（推荐）</option>
                         ${this.workers.length === 0 ?
                             '<option value="" disabled>暂无 Worker 节点</option>' :
-                            this.workers.map(w => `
-                                <option value="${w.id}"
-                                        ${w.status !== 'online' ? 'disabled' : ''}
-                                        ${this.selectedWorkerId === w.id ? 'selected' : ''}>
-                                    ${this.getWorkerDisplayName(w)}
-                                </option>
-                            `).join('')
+                            this.renderWorkerOptions()
                         }
                     </select>
                 </label>
@@ -168,13 +170,110 @@ class WorkerSelector {
     }
 
     /**
-     * 获取 Worker 显示名称
+     * 渲染 Worker 选项（按性能等级分组）
+     */
+    renderWorkerOptions() {
+        // 按性能等级分组
+        const tiers = ['high', 'medium', 'low', 'custom', null];
+        const tierNames = {
+            high: '高配节点',
+            medium: '中配节点',
+            low: '低配节点',
+            custom: '自定义节点',
+            null: '未分类节点'
+        };
+
+        let html = '';
+
+        for (const tier of tiers) {
+            const workersInTier = this.workers.filter(w => w.performanceTier === tier);
+            if (workersInTier.length === 0) continue;
+
+            // 添加分组标题（仅当有多个分组时）
+            const hasMixedTiers = this.workers.some(w => w.performanceTier) &&
+                                  this.workers.some(w => !w.performanceTier);
+            if (hasMixedTiers || new Set(this.workers.map(w => w.performanceTier)).size > 1) {
+                html += `<option disabled>── ${tierNames[tier] || tierNames.null} ──</option>`;
+            }
+
+            // 添加该分组的 workers
+            html += workersInTier.map(w => `
+                <option value="${w.id}"
+                        ${w.status !== 'online' ? 'disabled' : ''}
+                        ${this.selectedWorkerId === w.id ? 'selected' : ''}
+                        title="${this.getWorkerTooltip(w)}">
+                    ${this.getWorkerDisplayName(w)}
+                </option>
+            `).join('');
+        }
+
+        return html;
+    }
+
+    /**
+     * 获取 Worker 显示名称（极简版 - 只显示高中低配）
      */
     getWorkerDisplayName(worker) {
-        const platform = this.getPlatformIcon(worker.platform);
-        const status = this.getStatusBadge(worker.status);
-        const cpu = worker.cpuUsage ? ` [CPU: ${worker.cpuUsage.toFixed(0)}%]` : '';
-        return `${platform} ${worker.name} ${status}${cpu}`;
+        const tierName = this.getPerformanceTierName(worker.performanceTier);
+        const name = worker.name;
+
+        if (tierName) {
+            return `${tierName} - ${name}`;
+        }
+        return name;
+    }
+
+    /**
+     * 获取 Worker Tooltip（详细信息）
+     */
+    getWorkerTooltip(worker) {
+        const parts = [
+            `节点: ${worker.name}`,
+            `性能: ${this.getPerformanceTierName(worker.performanceTier) || '未设置'}`,
+            `平台: ${worker.platform} ${worker.arch}`,
+            `CPU: ${worker.cpuCount} 核`,
+            `内存: ${worker.memory} GB`,
+        ];
+
+        if (worker.cpuUsage !== null && worker.cpuUsage !== undefined) {
+            parts.push(`CPU使用率: ${worker.cpuUsage.toFixed(1)}%`);
+        }
+
+        if (worker.memoryUsage !== null && worker.memoryUsage !== undefined) {
+            parts.push(`内存使用率: ${worker.memoryUsage.toFixed(1)}%`);
+        }
+
+        if (worker.description) {
+            parts.push(`描述: ${worker.description}`);
+        }
+
+        return parts.join('\n');
+    }
+
+    /**
+     * 获取性能等级名称
+     */
+    getPerformanceTierName(tier) {
+        const names = {
+            high: '高配',
+            medium: '中配',
+            low: '低配',
+            custom: '自定义'
+        };
+        return names[tier];
+    }
+
+    /**
+     * 获取性能等级标识
+     */
+    getPerformanceTierBadge(tier) {
+        const badges = {
+            high: '🔥 ',
+            medium: '⚡ ',
+            low: '💡 ',
+            custom: '🔧 '
+        };
+        return badges[tier] || '';
     }
 
     /**
@@ -199,15 +298,6 @@ class WorkerSelector {
             offline: '❌'
         };
         return map[status] || '';
-    }
-
-    /**
-     * 自动刷新
-     */
-    startAutoRefresh() {
-        setInterval(() => {
-            this.loadWorkers();
-        }, 30000); // 30秒刷新一次
     }
 
     /**
