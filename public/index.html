@@ -3621,6 +3621,19 @@ console.log('B站弹幕开关完成');`
             }
         }
 
+        // 获取状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '等待中',
+                'running': '运行中',
+                'completed': '已完成',
+                'error': '失败',
+                'failed': '失败',
+                'stopped': '已停止'
+            };
+            return statusMap[status] || status;
+        }
+
         // 更新状态
         function updateStatus(status, runner) {
             document.getElementById('current-status').textContent = getStatusText(status);

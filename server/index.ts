@@ -2847,19 +2847,36 @@ const server = app.listen(PORT, async () => {
     const distributed = await enableDistributedExecution(app, server);
     const distributedWss = distributed.getWebSocketServer();
 
-    // 在 upgrade 事件中添加分布式 WebSocket 路径处理
-    if (distributedWss) {
-        server.prependListener('upgrade', (request, socket, head) => {
-            const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+    // 设置 upgrade 事件处理，根据路径和参数分发
+    server.on('upgrade', (request, socket, head) => {
+        const url = new URL(request.url!, `http://${request.headers.host}`);
+        const pathname = url.pathname;
+        const workerId = url.searchParams.get('workerId');
 
-            // /ws/distributed 路径由分布式 WebSocket 处理
-            if (pathname === '/ws/distributed') {
-                distributedWss.handleUpgrade(request, socket, head, (ws) => {
-                    distributedWss.emit('connection', ws, request);
-                });
-            }
-        });
-    }
+        // Worker 连接（带 workerId 参数）由分布式管理器处理
+        if (workerId && distributedWss) {
+            console.log(`🔀 Routing Worker WebSocket connection (ID: ${workerId.substring(0, 20)}...)`);
+            distributedWss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+                distributedWss.emit('connection', ws, request);
+            });
+        }
+        // /ws/distributed 路径由分布式 WebSocket 处理
+        else if (pathname === '/ws/distributed' && distributedWss) {
+            distributedWss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+                distributedWss.emit('connection', ws, request);
+            });
+        }
+        // 默认路径 '/' 由主 WebSocket 处理
+        else if (pathname === '/' || pathname === '') {
+            wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+                wss.emit('connection', ws, request);
+            });
+        }
+        // 未知路径
+        else {
+            socket.destroy();
+        }
+    });
 
     console.log(`\n✅ Distributed execution initialized`);
     console.log(`   - Worker Management: http://localhost:${PORT}/workers.html\n`);
@@ -2882,19 +2899,8 @@ const server = app.listen(PORT, async () => {
 // 创建 WebSocket 服务器（使用 noServer 模式以支持多个 WebSocket 端点）
 const wss = new WebSocketServer({ noServer: true });
 
-// 手动处理 upgrade 事件，根据路径分发
-server.on('upgrade', (request, socket, head) => {
-    const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
-
-    // 默认路径 '/' 由主 WebSocket 处理
-    if (pathname === '/' || pathname === '') {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-            wss.emit('connection', ws, request);
-        });
-    }
-    // 其他路径（如 /ws/distributed）由分布式模块处理
-    // 分布式模块会添加自己的 upgrade 监听器
-});
+// 手动处理 upgrade 事件将在 server.listen 回调中设置
+// 因为需要访问 distributed 变量
 
 wss.on('connection', (ws: WebSocket) => {
     console.log('WebSocket client connected (main)');

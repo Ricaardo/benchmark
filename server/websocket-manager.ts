@@ -69,7 +69,7 @@ export class WebSocketManager {
      * 处理 Worker 连接
      */
     private handleWorkerConnection(ws: WebSocket, workerId: string): void {
-        console.log(`🔌 Worker connected: ${workerId}`);
+        console.log(`🔌 Worker WebSocket connected with ID: ${workerId}`);
 
         this.workerConnections.set(workerId, ws);
         this.connections.set(workerId, {
@@ -254,9 +254,11 @@ export class WebSocketManager {
     sendToWorker(workerId: string, message: WSMessage): boolean {
         const ws = this.workerConnections.get(workerId);
         if (!ws || ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  Cannot send to worker ${workerId.substring(0, 8)}...: ${!ws ? 'No connection' : 'Connection closed'}`);
             return false;
         }
 
+        console.log(`📤 Sending to worker ${workerId.substring(0, 8)}...: ${message.type}`);
         this.sendMessage(ws, message);
         return true;
     }

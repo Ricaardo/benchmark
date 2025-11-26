@@ -19,9 +19,29 @@ import { WorkerManager } from './worker-manager.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// 测试记录类型
+interface TestRecord {
+    id: string;
+    testCaseId?: string;
+    name: string;
+    runner: string;
+    status: 'completed' | 'error';
+    startTime: Date;
+    endTime: Date;
+    duration: number;
+    perfcatId?: string;
+    perfcatUrl?: string;
+    perfcatChartUrl?: string;
+    exitCode?: number;
+    remarks?: string;
+    reportFile?: string;
+    errorMessage?: string;
+}
+
 export class DistributedTaskManager {
     private tasks: Map<string, DistributedTask> = new Map();
     private tasksFile: string;
+    private testRecordsFile: string;
     private workerManager: WorkerManager;
     private taskUpdateCallbacks: Array<(task: DistributedTask) => void> = [];
     private workerMessageSender: ((workerId: string, message: WSMessage) => void) | null = null;
@@ -32,6 +52,7 @@ export class DistributedTaskManager {
     ) {
         this.workerManager = workerManager;
         this.tasksFile = path.join(dataDir, 'distributed-tasks.json');
+        this.testRecordsFile = path.join(dataDir, 'test-records.json');
     }
 
     /**
@@ -132,8 +153,15 @@ export class DistributedTaskManager {
         task.dispatchedAt = Date.now();
         this.notifyTaskUpdate(task);
 
-        // 更新 Worker 状态
-        await this.workerManager.updateWorkerTask(task.workerId, task.id);
+        // 添加任务到 Worker（并发支持）
+        const added = await this.workerManager.addTaskToWorker(task.workerId, task.id);
+        if (!added) {
+            console.error(`⚠️  Failed to add task to worker ${task.workerId}`);
+            task.status = 'failed';
+            task.error = 'Worker reached max concurrency';
+            this.notifyTaskUpdate(task);
+            return;
+        }
 
         // 通过 WebSocket 发送任务到 Worker
         if (this.workerMessageSender) {
@@ -207,15 +235,72 @@ export class DistributedTaskManager {
         task.localReportPath = result.reportPath;
         task.progress = 100;
 
-        // 释放 Worker
-        await this.workerManager.updateWorkerTask(task.workerId, undefined);
+        // 从 Worker 移除任务（并发支持）
+        await this.workerManager.removeTaskFromWorker(task.workerId, taskId);
 
         await this.saveTasks();
         this.notifyTaskUpdate(task);
 
+        // 创建测试记录
+        await this.createTestRecord(task, result);
+
         console.log(`✅ Task ${result.status}: ${taskId}`);
 
         return true;
+    }
+
+    /**
+     * 创建测试记录
+     */
+    private async createTestRecord(task: DistributedTask, result: TaskExecutionResult): Promise<void> {
+        try {
+            // 读取现有测试记录
+            let testRecords: TestRecord[] = [];
+            try {
+                const data = await fs.readFile(this.testRecordsFile, 'utf-8');
+                testRecords = JSON.parse(data);
+            } catch (error) {
+                // 文件不存在，使用空数组
+            }
+
+            // 创建测试记录
+            const startTime = new Date(task.createdAt);
+            const endTime = new Date(task.completedAt!);
+            const duration = task.completedAt! - task.createdAt;
+
+            const record: TestRecord = {
+                id: task.id,
+                testCaseId: task.testCaseId,
+                name: task.testCaseName,
+                runner: task.runner,
+                status: task.status === 'completed' ? 'completed' : 'error',
+                startTime,
+                endTime,
+                duration,
+                perfcatId: result.perfcatUrl ? result.perfcatUrl.split('/').pop() : undefined,
+                perfcatUrl: result.perfcatUrl,
+                perfcatChartUrl: result.perfcatUrl ? `${result.perfcatUrl}&viewType=chart` : undefined,
+                exitCode: result.exitCode,
+                reportFile: result.reportPath,
+                errorMessage: result.error
+            };
+
+            // 添加到记录列表
+            testRecords.unshift(record);
+
+            // 保持最多1000条记录
+            if (testRecords.length > 1000) {
+                testRecords = testRecords.slice(0, 1000);
+            }
+
+            // 保存
+            await fs.writeFile(this.testRecordsFile, JSON.stringify(testRecords, null, 2));
+
+            console.log(`📝 Test record created: ${task.testCaseName} (${task.status})`);
+
+        } catch (error) {
+            console.error('Failed to create test record:', error);
+        }
     }
 
     /**

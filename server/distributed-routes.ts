@@ -135,7 +135,7 @@ export function createDistributedRoutes(
      */
     router.post('/distributed-tasks', async (req, res) => {
         try {
-            const { testCaseId, workerId, runner } = req.body;
+            const { testCaseId, workerId, runner, config } = req.body;
 
             // 验证必填字段
             if (!testCaseId || !runner) {
@@ -157,10 +157,16 @@ export function createDistributedRoutes(
                 });
             }
 
+            // 合并配置：前端发送的 config 优先于测试用例中的配置
+            const mergedTestCase = {
+                ...testCase,
+                ...(config || {})
+            };
+
             // 创建任务
             const result = await taskManager.createTask(
                 { testCaseId, workerId, runner },
-                testCase
+                mergedTestCase
             );
 
             if (!result) {

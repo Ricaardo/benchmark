@@ -1,0 +1,13 @@
+[
+  {
+    "id": "bced29b9-e688-4a3d-b375-7e62107b2edf",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-26T08:04:07.412Z",
+    "endTime": "2025-11-26T08:05:33.123Z",
+    "duration": 85711,
+    "exitCode": 0
+  }
+]

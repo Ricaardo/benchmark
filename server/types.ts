@@ -22,7 +22,9 @@ export interface WorkerNode {
     description?: string;    // 机器描述 (如: "MacBook Pro M1, 32GB RAM")
     status: WorkerStatus;    // 节点状态
     lastHeartbeat: number;   // 最后心跳时间戳
-    currentTask?: string;    // 当前执行的任务ID
+    currentTask?: string;    // 当前执行的任务ID（兼容旧版，已废弃）
+    currentTasks: string[];  // 当前执行的任务ID列表（并发支持）
+    maxConcurrency: number;  // 最大并发任务数
     capabilities: string[];  // 能力标签 (如: ['chromium', 'firefox'])
     tags: string[];          // 自定义标签 (如: ['production', 'testing'])
     registeredAt: number;    // 注册时间
@@ -41,6 +43,7 @@ export interface WorkerRegistration {
     memory: number;
     performanceTier?: PerformanceTier;  // 性能等级
     description?: string;    // 机器描述
+    maxConcurrency?: number; // 最大并发任务数（默认根据CPU核心数）
     capabilities?: string[];
     tags?: string[];
 }
@@ -110,7 +113,9 @@ export type WSMessageType =
     | 'task-log'            // 任务日志
     | 'task-completed'       // 任务完成
     | 'task-failed'         // 任务失败
-    | 'heartbeat-ack';      // 心跳确认
+    | 'heartbeat-ack'       // 心跳确认
+    | 'tasks'               // 任务列表（Master发送给前端）
+    | 'status';             // 状态更新（Master发送给前端）
 
 // WebSocket 消息
 export interface WSMessage {

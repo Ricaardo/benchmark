@@ -1,127 +1,6 @@
 [
   {
-    "id": "d987fde3-fc8a-4e66-945e-21ceb9d7efbb",
-    "name": "高配测试机-MacBook",
-    "host": "192.168.1.101",
-    "port": 0,
-    "platform": "darwin",
-    "arch": "arm64",
-    "cpuCount": 10,
-    "memory": 32,
-    "performanceTier": "high",
-    "description": "MacBook Pro M2 Max, 32GB RAM, macOS 13",
-    "capabilities": [
-      "chromium",
-      "firefox"
-    ],
-    "tags": [
-      "mac",
-      "high-performance",
-      "production"
-    ],
-    "status": "offline",
-    "lastHeartbeat": 1764126033965,
-    "registeredAt": 1764126033965
-  },
-  {
-    "id": "b00bc754-8ccb-4561-9494-e9935b95e5bd",
-    "name": "中配测试机-Dell",
-    "host": "192.168.1.102",
-    "port": 0,
-    "platform": "win32",
-    "arch": "x64",
-    "cpuCount": 8,
-    "memory": 16,
-    "performanceTier": "medium",
-    "description": "Dell XPS 15, Intel i7-11800H, 16GB RAM, Windows 11",
-    "capabilities": [
-      "chromium"
-    ],
-    "tags": [
-      "windows",
-      "medium-performance",
-      "testing"
-    ],
-    "status": "offline",
-    "lastHeartbeat": 1764126033973,
-    "registeredAt": 1764126033973
-  },
-  {
-    "id": "fb0ea6fa-e956-410c-bdaf-de7d11925752",
-    "name": "低配测试机-ThinkPad",
-    "host": "192.168.1.103",
-    "port": 0,
-    "platform": "linux",
-    "arch": "x64",
-    "cpuCount": 4,
-    "memory": 8,
-    "performanceTier": "low",
-    "description": "ThinkPad T480, Intel i5-8250U, 8GB RAM, Ubuntu 22.04",
-    "capabilities": [
-      "chromium"
-    ],
-    "tags": [
-      "linux",
-      "low-performance",
-      "compatibility"
-    ],
-    "status": "offline",
-    "lastHeartbeat": 1764126033980,
-    "registeredAt": 1764126033980
-  },
-  {
-    "id": "ad62dcf1-503a-4e3f-af72-c4dfdb83ae2f",
-    "name": "高配测试机",
-    "host": "192.168.1.101",
-    "port": 0,
-    "platform": "darwin",
-    "arch": "arm64",
-    "cpuCount": 10,
-    "memory": 32,
-    "performanceTier": "high",
-    "description": "MacBook Pro M2 Max",
-    "capabilities": [],
-    "tags": [],
-    "status": "offline",
-    "lastHeartbeat": 1764126602943,
-    "registeredAt": 1764126602943
-  },
-  {
-    "id": "72154a29-fb8a-49d7-8f70-bb1c0a0ed3d1",
-    "name": "中配测试机",
-    "host": "192.168.1.102",
-    "port": 0,
-    "platform": "win32",
-    "arch": "x64",
-    "cpuCount": 8,
-    "memory": 16,
-    "performanceTier": "medium",
-    "description": "Dell XPS 15",
-    "capabilities": [],
-    "tags": [],
-    "status": "offline",
-    "lastHeartbeat": 1764126608190,
-    "registeredAt": 1764126608190
-  },
-  {
-    "id": "2379c0ed-d38d-4f9d-9aea-322427887a6a",
-    "name": "低配测试机",
-    "host": "192.168.1.103",
-    "port": 0,
-    "platform": "linux",
-    "arch": "x64",
-    "cpuCount": 4,
-    "memory": 8,
-    "performanceTier": "low",
-    "description": "ThinkPad T480",
-    "capabilities": [],
-    "tags": [],
-    "status": "offline",
-    "lastHeartbeat": 1764126608198,
-    "registeredAt": 1764126608198
-  },
-  {
-    "id": "2d66e575-3d89-47c9-8843-e82e79e7cf5d",
+    "id": "worker-73a8b1a5-972a-63c2-1c50-63d9f97da4c5",
     "name": "中配测试机-1",
     "host": "10.23.182.34",
     "port": 0,
@@ -138,8 +17,15 @@
       "medium-performance",
       "testing"
     ],
-    "status": "online",
-    "lastHeartbeat": 1764128158361,
-    "registeredAt": 1764128158361
+    "status": "busy",
+    "lastHeartbeat": 1764144772594,
+    "registeredAt": 1764144652559,
+    "currentTasks": [
+      "a3781db2-b054-4d9d-86e2-4bf9acd66839"
+    ],
+    "maxConcurrency": 10,
+    "cpuUsage": 62.014553150385375,
+    "memoryUsage": 99.11603927612305,
+    "currentTask": "a3781db2-b054-4d9d-86e2-4bf9acd66839"
   }
 ]
