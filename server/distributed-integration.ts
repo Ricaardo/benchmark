@@ -58,8 +58,21 @@ export class DistributedIntegration {
      * 设置 WebSocket
      */
     private setupWebSocket(): void {
-        // 创建 WebSocket 服务器（复用 HTTP 服务器）
-        const wss = new WebSocketServer({ server: this.server });
+        // 创建 WebSocket 服务器（使用 noServer 模式避免与现有 WebSocket 冲突）
+        const wss = new WebSocketServer({ noServer: true });
+
+        // 手动处理 upgrade 事件
+        this.server.on('upgrade', (request, socket, head) => {
+            const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
+
+            // 只处理特定路径的 WebSocket 连接
+            if (pathname === '/ws/distributed') {
+                wss.handleUpgrade(request, socket, head, (ws) => {
+                    wss.emit('connection', ws, request);
+                });
+            }
+            // 其他路径的 WebSocket 由现有处理器处理
+        });
 
         // 创建 WebSocket 管理器
         this.wsManager = new WebSocketManager(

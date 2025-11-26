@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import LZ from 'lz-string';
 import * as TestCaseStorage from './testcase-storage.js';
 import os from 'os';
+import { enableDistributedExecution } from './distributed-integration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -2840,6 +2841,12 @@ const server = app.listen(PORT, async () => {
     console.log(`📊 Perfcat: ${perfcatConfig.cookie ? 'Enabled' : 'Disabled'}`);
     console.log(`📝 Test Records: ${testRecords.length} records loaded`);
     console.log(`📋 Test Cases: ${TestCaseStorage.getAllTestCases().length} test cases loaded\n`);
+
+    // 启用分布式执行（暂时禁用，需要解决WebSocket冲突）
+    // console.log(`🌐 Initializing distributed execution...`);
+    // const distributed = await enableDistributedExecution(app, server);
+    // console.log(`\n✅ Distributed execution initialized`);
+    // console.log(`   - Worker Management: http://localhost:${PORT}/workers.html\n`);
 }).on('error', (err: any) => {
     if (err.code === 'EADDRINUSE') {
         console.error(`\n❌ Error: Port ${PORT} is already in use.`);

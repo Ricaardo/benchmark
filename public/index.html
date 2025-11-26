@@ -556,6 +556,9 @@
             margin-top: 5px;
         }
     </style>
+
+    <!-- Worker 节点选择器样式 -->
+    <link rel="stylesheet" href="worker-selector.css">
 </head>
 <body>
     <div class="container">
@@ -612,6 +615,12 @@
                     <p>点击"添加用例"创建第一个测试用例</p>
                 </div>
             </div>
+        </div>
+
+        <!-- Worker 节点选择器 -->
+        <div class="card" id="worker-selector-card">
+            <h2>🖥️ 执行节点选择</h2>
+            <div id="workerSelectorContainer"></div>
         </div>
 
         <!-- 任务队列 -->
@@ -1021,6 +1030,9 @@
         let backendTasks = new Map(); // taskId -> task对象
         const MAX_CONCURRENT = 3;
         let serverMaxConcurrent = 10; // 服务器的并发限制，从API获取
+
+        // Worker 节点选择器
+        let workerSelector = null;
 
         // ==================== 预设系统 ====================
         let currentPresetParams = {}; // 当前预设的参数值
@@ -1527,9 +1539,36 @@
             updateQueueDisplay();
         }
 
+        // 初始化 Worker 节点选择器
+        async function initWorkerSelector() {
+            try {
+                workerSelector = new WorkerSelector();
+                await workerSelector.init();
+
+                // 渲染到容器
+                workerSelector.render('workerSelectorContainer');
+
+                // 监听变化
+                workerSelector.onChange((workers, selectedWorkerId) => {
+                    console.log('[Worker选择器] Workers更新:', workers.length);
+                    console.log('[Worker选择器] 选中节点:', selectedWorkerId);
+
+                    // 重新渲染选择器
+                    workerSelector.render('workerSelectorContainer');
+                });
+
+                console.log('[Worker选择器] ✅ 初始化完成');
+            } catch (error) {
+                console.error('[Worker选择器] 初始化失败:', error);
+            }
+        }
+
         // 初始化
         window.onload = async () => {
             connectWebSocket();
+
+            // 初始化 Worker 节点选择器
+            initWorkerSelector();
 
             // 🆕 从后端加载测试用例
             console.log('[初始化] 正在从服务器加载测试用例...');
@@ -3184,33 +3223,75 @@ console.log('B站弹幕开关完成');`
                     throw new Error('测试用例没有启用任何测试类型');
                 }
 
-                // 发送请求到后端任务API
-                const response = await fetch('/api/start', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name: taskName, // 使用带标记的任务名称
-                        testCaseId: testCase.id && testCase.id.toString().startsWith('testcase_') ? testCase.id : undefined, // 关联测试用例ID
-                        remarks: testLabel || undefined, // 备注：测试目的、版本等信息
-                        config: {
-                            mode: {
-                                anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
-                                headless: mode === 'headless'
+                // 检查是否选择了 Worker 节点
+                const selectedWorkerId = workerSelector ? workerSelector.getSelectedWorkerId() : null;
+
+                let response, result;
+
+                if (selectedWorkerId && selectedWorkerId !== 'local') {
+                    // 使用分布式 API
+                    appendOutput(`[系统] 🌐 使用分布式执行，目标节点: ${selectedWorkerId}`);
+
+                    response = await fetch('/api/distributed-tasks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            testCaseId: testCase.id,
+                            workerId: selectedWorkerId,
+                            runner: enabledRunners[0], // 分布式API当前只支持单个runner
+                            config: {
+                                mode: {
+                                    anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
+                                    headless: mode === 'headless'
+                                },
+                                cpuThrottlingRate: testCase.cpuThrottling || 1,
+                                runners: runnersConfig
                             },
-                            cpuThrottlingRate: testCase.cpuThrottling || 1,
-                            runners: runnersConfig
-                        }
-                    })
-                });
+                            remarks: testLabel || undefined
+                        })
+                    });
 
-                const result = await response.json();
+                    result = await response.json();
 
-                if (!result.success) {
-                    throw new Error(result.message || result.error || '启动测试失败');
+                    if (!result.success) {
+                        throw new Error(result.message || result.error || '分布式任务创建失败');
+                    }
+
+                    showToast(`✅ 分布式任务已创建: ${taskName}`, 'success');
+                    appendOutput(`[系统] 🌐 分布式任务已提交到节点: ${selectedWorkerId}`);
+                } else {
+                    // 使用本地执行 API
+                    appendOutput(`[系统] 💻 使用本地执行`);
+
+                    response = await fetch('/api/start', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: taskName, // 使用带标记的任务名称
+                            testCaseId: testCase.id && testCase.id.toString().startsWith('testcase_') ? testCase.id : undefined, // 关联测试用例ID
+                            remarks: testLabel || undefined, // 备注：测试目的、版本等信息
+                            config: {
+                                mode: {
+                                    anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
+                                    headless: mode === 'headless'
+                                },
+                                cpuThrottlingRate: testCase.cpuThrottling || 1,
+                                runners: runnersConfig
+                            }
+                        })
+                    });
+
+                    result = await response.json();
+
+                    if (!result.success) {
+                        throw new Error(result.message || result.error || '启动测试失败');
+                    }
+
+                    showToast(`任务已创建: ${taskName}`, 'success');
+                    appendOutput(`[系统] 测试用例 "${taskName}" 已提交到任务队列`);
                 }
 
-                showToast(`任务已创建: ${taskName}`, 'success');
-                appendOutput(`[系统] 测试用例 "${taskName}" 已提交到任务队列`);
+                // 通用输出
                 if (testLabel) {
                     appendOutput(`[系统] 测试标记: ${testLabel}`);
                 }
@@ -4202,5 +4283,8 @@ console.log('B站弹幕开关完成');`
             }
         }
     </script>
+
+    <!-- Worker 节点选择器脚本 -->
+    <script src="worker-selector.js"></script>
 </body>
 </html>
