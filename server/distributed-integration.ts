@@ -61,18 +61,7 @@ export class DistributedIntegration {
         // 创建 WebSocket 服务器（使用 noServer 模式避免与现有 WebSocket 冲突）
         const wss = new WebSocketServer({ noServer: true });
 
-        // 手动处理 upgrade 事件
-        this.server.on('upgrade', (request, socket, head) => {
-            const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
-
-            // 只处理特定路径的 WebSocket 连接
-            if (pathname === '/ws/distributed') {
-                wss.handleUpgrade(request, socket, head, (ws) => {
-                    wss.emit('connection', ws, request);
-                });
-            }
-            // 其他路径的 WebSocket 由现有处理器处理
-        });
+        console.log('✅ WebSocket manager initialized');
 
         // 创建 WebSocket 管理器
         this.wsManager = new WebSocketManager(
@@ -80,6 +69,13 @@ export class DistributedIntegration {
             this.workerManager,
             this.taskManager
         );
+    }
+
+    /**
+     * 获取 WebSocket 服务器（供主服务器的 upgrade 事件使用）
+     */
+    getWebSocketServer() {
+        return this.wsManager ? this.wsManager.getWebSocketServer() : null;
     }
 
     /**

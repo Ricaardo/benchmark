@@ -31,6 +31,13 @@ export class WebSocketManager {
     }
 
     /**
+     * 获取 WebSocket 服务器实例
+     */
+    getWebSocketServer(): WebSocketServer {
+        return this.wss;
+    }
+
+    /**
      * 设置 WebSocket 服务器
      */
     private setupWebSocketServer(): void {
