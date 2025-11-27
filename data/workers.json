@@ -46,15 +46,12 @@
       "local",
       "same-machine"
     ],
-    "status": "busy",
-    "lastHeartbeat": 1764233661020,
+    "status": "online",
+    "lastHeartbeat": 1764233751025,
     "registeredAt": 1764233661012,
-    "currentTasks": [
-      "819f396b-1107-4d38-98fc-bd729ceba723"
-    ],
+    "currentTasks": [],
     "maxConcurrency": 10,
-    "cpuUsage": 1.213001447220352,
-    "memoryUsage": 99.35798645019531,
-    "currentTask": "819f396b-1107-4d38-98fc-bd729ceba723"
+    "cpuUsage": 21.729106907364127,
+    "memoryUsage": 97.19362258911133
   }
 ]

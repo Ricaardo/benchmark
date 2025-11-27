@@ -196,10 +196,9 @@ class WorkerSelector {
                 html += `<option disabled>── ${tierNames[tier] || tierNames.null} ──</option>`;
             }
 
-            // 添加该分组的 workers
+            // 添加该分组的 workers（允许选择任何状态的节点）
             html += workersInTier.map(w => `
                 <option value="${w.id}"
-                        ${w.status !== 'online' ? 'disabled' : ''}
                         ${this.selectedWorkerId === w.id ? 'selected' : ''}
                         title="${this.getWorkerTooltip(w)}">
                     ${this.getWorkerDisplayName(w)}

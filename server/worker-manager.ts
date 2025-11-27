@@ -255,7 +255,8 @@ export class WorkerManager {
      */
     isWorkerAvailable(workerId: string): boolean {
         const worker = this.workers.get(workerId);
-        if (!worker || worker.status !== 'online') return false;
+        // 允许 online 或 busy 状态的节点（只检查是否 offline）
+        if (!worker || worker.status === 'offline') return false;
 
         const currentTasks = worker.currentTasks || (worker.currentTask ? [worker.currentTask] : []);
         return currentTasks.length < worker.maxConcurrency;

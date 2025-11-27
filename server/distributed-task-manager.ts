@@ -125,7 +125,8 @@ export class DistributedTaskManager {
         let worker;
         if (request.workerId) {
             worker = this.workerManager.getWorker(request.workerId);
-            if (!worker || worker.status !== 'online') {
+            // 允许选择 online 或 busy 状态的节点（只要不是 offline）
+            if (!worker || (worker.status !== 'online' && worker.status !== 'busy')) {
                 return null;
             }
         } else {

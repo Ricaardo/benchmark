@@ -1,5 +1,18 @@
 [
   {
+    "id": "819f396b-1107-4d38-98fc-bd729ceba723",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T08:54:37.199Z",
+    "endTime": "2025-11-27T08:56:02.053Z",
+    "duration": 84854,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T16-54-38-Runtime-Local.json",
+    "logFile": "task_819f396b-1107-4d38-98fc-bd729ceba723_1764233762055.log"
+  },
+  {
     "id": "9006eb16-4c06-4e83-938c-c8d21bc0e044",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",
