@@ -204,6 +204,44 @@ export class WorkerManager {
     }
 
     /**
+     * 更新 Worker 属性（性能等级、描述、并发数等）
+     */
+    async updateWorkerProperties(
+        workerId: string,
+        updates: Partial<Pick<WorkerNode, 'performanceTier' | 'description' | 'maxConcurrency'>>
+    ): Promise<WorkerNode | null> {
+        const worker = this.workers.get(workerId);
+        if (!worker) {
+            console.error(`Worker not found: ${workerId}`);
+            return null;
+        }
+
+        // 更新属性
+        if (updates.performanceTier !== undefined) {
+            worker.performanceTier = updates.performanceTier;
+        }
+        if (updates.description !== undefined) {
+            worker.description = updates.description;
+        }
+        if (updates.maxConcurrency !== undefined) {
+            worker.maxConcurrency = updates.maxConcurrency;
+        }
+
+        // 保存到文件
+        await this.saveWorkers();
+
+        console.log(`✅ Worker properties updated: ${worker.name}`);
+        console.log(`   Performance Tier: ${worker.performanceTier || 'not set'}`);
+        console.log(`   Description: ${worker.description || 'not set'}`);
+        console.log(`   Max Concurrency: ${worker.maxConcurrency}`);
+
+        // 通知状态更新
+        this.notifyStatusChange(worker);
+
+        return worker;
+    }
+
+    /**
      * 获取单个 Worker 信息
      */
     getWorker(workerId: string): WorkerNode | undefined {

@@ -1,5 +1,31 @@
 [
   {
+    "id": "5688b4af-ed4b-4c53-ad1a-c95e86a8417d",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T09:02:42.648Z",
+    "endTime": "2025-11-27T09:04:07.978Z",
+    "duration": 85330,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-02-43-Runtime-Local.json",
+    "logFile": "task_5688b4af-ed4b-4c53-ad1a-c95e86a8417d_1764234247981.log"
+  },
+  {
+    "id": "934dcb76-9825-4a0e-a015-776cf2d87d47",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T09:00:26.493Z",
+    "endTime": "2025-11-27T09:01:51.573Z",
+    "duration": 85080,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-00-27-Runtime-Local.json",
+    "logFile": "task_934dcb76-9825-4a0e-a015-776cf2d87d47_1764234111577.log"
+  },
+  {
     "id": "819f396b-1107-4d38-98fc-bd729ceba723",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",

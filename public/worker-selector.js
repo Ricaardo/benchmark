@@ -94,17 +94,25 @@ class WorkerSelector {
     }
 
     /**
-     * 获取在线 Workers
+     * 获取在线 Workers（包括 busy 状态）
      */
     getOnlineWorkers() {
-        return this.workers.filter(w => w.status === 'online');
+        return this.workers.filter(w => w.status === 'online' || w.status === 'busy');
     }
 
     /**
-     * 获取可用 Workers（在线且不忙）
+     * 获取可用 Workers（还有并发容量的节点）
      */
     getAvailableWorkers() {
-        return this.workers.filter(w => w.status === 'online' && !w.currentTask);
+        return this.workers.filter(w => {
+            // 只统计非 offline 的节点
+            if (w.status === 'offline') return false;
+
+            // 检查并发容量
+            const currentTasks = w.currentTasks || (w.currentTask ? [w.currentTask] : []);
+            const maxConcurrency = w.maxConcurrency || 1;
+            return currentTasks.length < maxConcurrency;
+        });
     }
 
     /**

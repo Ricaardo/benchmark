@@ -242,6 +242,142 @@
             font-size: 16px;
         }
 
+        .edit-btn {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .edit-btn:hover {
+            background: #40a9ff;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-save {
+            background: #1890ff;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #40a9ff;
+        }
+
+        .performance-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .performance-badge.high {
+            background: #fff1f0;
+            color: #cf1322;
+        }
+
+        .performance-badge.medium {
+            background: #fffbe6;
+            color: #d48806;
+        }
+
+        .performance-badge.low {
+            background: #e6f7ff;
+            color: #0050b3;
+        }
+
+        .performance-badge.custom {
+            background: #f0f0f0;
+            color: #666;
+        }
+
         .refresh-btn {
             position: fixed;
             bottom: 30px;
@@ -308,6 +444,47 @@
         <button class="refresh-btn" id="refreshBtn" title="刷新">↻</button>
     </div>
 
+    <!-- 编辑 Worker 模态框 -->
+    <div id="editModal" class="modal-overlay" onclick="closeEditModal(event)">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">编辑节点配置</div>
+            <form id="editForm" onsubmit="saveWorkerEdit(event)">
+                <input type="hidden" id="editWorkerId">
+
+                <div class="form-group">
+                    <label class="form-label">节点名称</label>
+                    <input type="text" id="editWorkerName" class="form-input" readonly style="background: #f5f5f5;">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">性能等级</label>
+                    <select id="editPerformanceTier" class="form-select" required>
+                        <option value="">未设置</option>
+                        <option value="high">🔥 高配节点 (High Performance)</option>
+                        <option value="medium">⚡ 中配节点 (Medium Performance)</option>
+                        <option value="low">💡 低配节点 (Low Performance)</option>
+                        <option value="custom">🔧 自定义节点 (Custom)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">机器描述</label>
+                    <input type="text" id="editDescription" class="form-input" placeholder="例如: MacBook Pro M1, 32GB RAM">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">最大并发数</label>
+                    <input type="number" id="editMaxConcurrency" class="form-input" min="1" max="32" placeholder="默认为 CPU 核心数">
+                </div>
+
+                <div class="form-buttons">
+                    <button type="button" class="btn btn-cancel" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-save">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let ws = null;
         let workers = [];
@@ -363,8 +540,14 @@
             grid.innerHTML = workers.map(worker => `
                 <div class="worker-card ${worker.status}">
                     <div class="worker-header">
-                        <div class="worker-name">${worker.name}</div>
-                        <span class="worker-status ${worker.status}">${getStatusText(worker.status)}</span>
+                        <div class="worker-name">
+                            ${worker.name}
+                            ${worker.performanceTier ? `<span class="performance-badge ${worker.performanceTier}">${getPerformanceTierName(worker.performanceTier)}</span>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="edit-btn" onclick="openEditModal('${worker.id}')">✏️ 编辑</button>
+                            <span class="worker-status ${worker.status}">${getStatusText(worker.status)}</span>
+                        </div>
                     </div>
 
                     <div class="worker-info">
@@ -525,6 +708,82 @@
             if (hours > 0) return `${hours} 小时前`;
             if (minutes > 0) return `${minutes} 分钟前`;
             return `${seconds} 秒前`;
+        }
+
+        function getPerformanceTierName(tier) {
+            const map = {
+                high: '🔥 高配',
+                medium: '⚡ 中配',
+                low: '💡 低配',
+                custom: '🔧 自定义'
+            };
+            return map[tier] || '';
+        }
+
+        // 打开编辑模态框
+        function openEditModal(workerId) {
+            const worker = workers.find(w => w.id === workerId);
+            if (!worker) return;
+
+            document.getElementById('editWorkerId').value = worker.id;
+            document.getElementById('editWorkerName').value = worker.name;
+            document.getElementById('editPerformanceTier').value = worker.performanceTier || '';
+            document.getElementById('editDescription').value = worker.description || '';
+            document.getElementById('editMaxConcurrency').value = worker.maxConcurrency || '';
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        // 关闭编辑模态框
+        function closeEditModal(event) {
+            if (event && event.target !== event.currentTarget) return;
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // 保存 Worker 编辑
+        async function saveWorkerEdit(event) {
+            event.preventDefault();
+
+            const workerId = document.getElementById('editWorkerId').value;
+            const updates = {
+                performanceTier: document.getElementById('editPerformanceTier').value || undefined,
+                description: document.getElementById('editDescription').value || undefined,
+                maxConcurrency: parseInt(document.getElementById('editMaxConcurrency').value) || undefined
+            };
+
+            try {
+                console.log('Sending update request:', { workerId, updates });
+
+                const response = await fetch(`/api/workers/${workerId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updates)
+                });
+
+                console.log('Response status:', response.status);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error response:', errorData);
+                    const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                const result = await response.json();
+                console.log('Worker updated successfully:', result);
+
+                // 关闭模态框
+                closeEditModal();
+
+                // 重新加载数据
+                await loadWorkers();
+
+                alert('节点配置更新成功！');
+            } catch (error) {
+                console.error('Error updating worker:', error);
+                console.error('Request details:', { workerId, updates });
+                alert('更新失败: ' + error.message);
+            }
         }
 
         // 启动

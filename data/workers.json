@@ -47,11 +47,11 @@
       "same-machine"
     ],
     "status": "online",
-    "lastHeartbeat": 1764233751025,
+    "lastHeartbeat": 1764234231049,
     "registeredAt": 1764233661012,
     "currentTasks": [],
     "maxConcurrency": 10,
-    "cpuUsage": 21.729106907364127,
-    "memoryUsage": 97.19362258911133
+    "cpuUsage": 68.95405094175675,
+    "memoryUsage": 99.50742721557617
   }
 ]

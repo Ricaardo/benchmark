@@ -98,6 +98,54 @@ export function createDistributedRoutes(
     });
 
     /**
+     * 更新 Worker 属性（性能等级、描述、并发数等）
+     * PUT /api/workers/:workerId
+     */
+    router.put('/workers/:workerId', async (req, res) => {
+        try {
+            const { workerId } = req.params;
+            const { performanceTier, description, maxConcurrency } = req.body;
+
+            // 验证 performanceTier
+            if (performanceTier && !['high', 'medium', 'low', 'custom'].includes(performanceTier)) {
+                return res.status(400).json({
+                    error: 'Invalid performance tier',
+                    message: 'Performance tier must be one of: high, medium, low, custom'
+                });
+            }
+
+            // 验证 maxConcurrency
+            if (maxConcurrency !== undefined && (maxConcurrency < 1 || maxConcurrency > 32)) {
+                return res.status(400).json({
+                    error: 'Invalid max concurrency',
+                    message: 'Max concurrency must be between 1 and 32'
+                });
+            }
+
+            const updates = {
+                performanceTier,
+                description,
+                maxConcurrency
+            };
+
+            const updatedWorker = await workerManager.updateWorkerProperties(workerId, updates);
+
+            if (!updatedWorker) {
+                return res.status(404).json({ error: 'Worker not found' });
+            }
+
+            res.json({
+                success: true,
+                message: 'Worker properties updated successfully',
+                worker: updatedWorker
+            });
+        } catch (error) {
+            console.error('Error updating worker properties:', error);
+            res.status(500).json({ error: 'Failed to update worker properties' });
+        }
+    });
+
+    /**
      * 注销 Worker 节点
      * DELETE /api/workers/:workerId
      */
