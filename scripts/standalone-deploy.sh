@@ -416,7 +416,14 @@ start_master() {
     # 启动新服务
     if [ "$USE_PM2" = true ]; then
         print_step "使用 PM2 启动 Master..."
-        PORT=$service_port pm2 start npm --name benchmark-master -- start
+        # 创建临时启动脚本
+        cat > /tmp/start-master.sh <<EOF
+#!/bin/bash
+export PORT=$service_port
+npm start
+EOF
+        chmod +x /tmp/start-master.sh
+        pm2 start /tmp/start-master.sh --name benchmark-master
         pm2 save
 
         print_info "设置开机自启动"
@@ -623,7 +630,19 @@ main() {
         export WORKER_TAGS="local,same-machine"
 
         # 等待 Master 启动
-        sleep 2
+        print_step "等待 Master 完全启动..."
+        sleep 5
+
+        # 验证 Master 是否启动成功
+        local retry_count=0
+        while [ $retry_count -lt 10 ]; do
+            if curl -f -s "http://localhost:${master_port}/" > /dev/null 2>&1; then
+                print_success "Master 已就绪"
+                break
+            fi
+            sleep 1
+            retry_count=$((retry_count + 1))
+        done
 
         # 启动 Worker
         if [ "$USE_PM2" = true ]; then

@@ -17,7 +17,7 @@
       "medium-performance",
       "testing"
     ],
-    "status": "busy",
+    "status": "offline",
     "lastHeartbeat": 1764144772594,
     "registeredAt": 1764144652559,
     "currentTasks": [
@@ -27,5 +27,34 @@
     "cpuUsage": 62.014553150385375,
     "memoryUsage": 99.11603927612305,
     "currentTask": "a3781db2-b054-4d9d-86e2-4bf9acd66839"
+  },
+  {
+    "id": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb",
+    "name": "Worker-X.local",
+    "host": "10.23.182.34",
+    "port": 0,
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCount": 10,
+    "memory": 16,
+    "performanceTier": "medium",
+    "description": "本机 Worker - macOS",
+    "capabilities": [
+      "chromium"
+    ],
+    "tags": [
+      "local",
+      "same-machine"
+    ],
+    "status": "busy",
+    "lastHeartbeat": 1764233661020,
+    "registeredAt": 1764233661012,
+    "currentTasks": [
+      "819f396b-1107-4d38-98fc-bd729ceba723"
+    ],
+    "maxConcurrency": 10,
+    "cpuUsage": 1.213001447220352,
+    "memoryUsage": 99.35798645019531,
+    "currentTask": "819f396b-1107-4d38-98fc-bd729ceba723"
   }
 ]

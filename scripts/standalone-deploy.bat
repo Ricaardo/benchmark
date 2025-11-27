@@ -411,14 +411,18 @@ if "%USE_PM2%"=="true" (
 REM 启动服务
 if "%USE_PM2%"=="true" (
     echo %BLUE%➤ 使用 PM2 启动 Master...%NC%
-    call pm2 start npm --name benchmark-master -- start
+    REM 创建临时启动脚本
+    echo @echo off > %TEMP%\start-master.bat
+    echo set PORT=%service_port% >> %TEMP%\start-master.bat
+    echo npm start >> %TEMP%\start-master.bat
+    call pm2 start %TEMP%\start-master.bat --name benchmark-master
     call pm2 save
 ) else (
     echo %BLUE%➤ 使用 npm 启动 Master...%NC%
     start "benchmark-master" /MIN cmd /c "set PORT=%service_port% && npm start"
 )
 
-timeout /t 3 /nobreak >nul
+timeout /t 5 /nobreak >nul
 
 echo.
 echo %GREEN%╔════════════════════════════════════════════════════════╗%NC%
@@ -568,9 +572,24 @@ set "WORKER_DESCRIPTION=本机 Worker"
 set "WORKER_TAGS=local,same-machine"
 
 REM 等待 Master 启动
-echo %BLUE%➤ 等待 Master 启动...%NC%
-timeout /t 3 /nobreak >nul
+echo %BLUE%➤ 等待 Master 完全启动...%NC%
+timeout /t 5 /nobreak >nul
 
+REM 验证 Master 是否启动成功
+set "retry_count=0"
+:WAIT_MASTER_LOOP
+curl -f -s --max-time 1 "http://localhost:!master_port!/" >nul 2>nul
+if !ERRORLEVEL! EQU 0 (
+    echo %GREEN%✅ Master 已就绪%NC%
+    goto :MASTER_READY
+)
+set /a retry_count+=1
+if !retry_count! LSS 10 (
+    timeout /t 1 /nobreak >nul
+    goto :WAIT_MASTER_LOOP
+)
+
+:MASTER_READY
 REM 启动 Worker
 if "%USE_PM2%"=="true" (
     echo %BLUE%➤ 使用 PM2 启动 Worker...%NC%
@@ -613,14 +632,18 @@ for /f "tokens=2 delims=:" %%i in ('type "%CONFIG_FILE%" ^| findstr "local_ip"')
 
 if "%USE_PM2%"=="true" (
     call pm2 delete benchmark-master 2>nul
-    call pm2 start npm --name benchmark-master -- start
+    REM 创建临时启动脚本
+    echo @echo off > %TEMP%\start-master.bat
+    echo set PORT=%service_port% >> %TEMP%\start-master.bat
+    echo npm start >> %TEMP%\start-master.bat
+    call pm2 start %TEMP%\start-master.bat --name benchmark-master
     call pm2 save
 ) else (
     taskkill /F /IM node.exe /FI "WINDOWTITLE eq benchmark-master*" 2>nul
     start "benchmark-master" /MIN cmd /c "set PORT=%service_port% && npm start"
 )
 
-timeout /t 3 /nobreak >nul
+timeout /t 5 /nobreak >nul
 echo %GREEN%✅ Master 已启动%NC%
 goto :EOF
 

@@ -23,7 +23,9 @@
       "Bash(git rm:*)",
       "Bash(git push:*)",
       "Bash(jq:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pm2 logs:*)",
+      "Bash(pm2 delete:*)"
     ],
     "deny": [],
     "ask": []
