@@ -59,7 +59,8 @@
     "createdAt": "2025-11-24T05:25:38.343Z",
     "executionHistory": [],
     "id": "testcase_1763961938343_c9oskuf9",
-    "updatedAt": "2025-11-25T04:28:52.066Z"
+    "updatedAt": "2025-11-27T09:34:31.857Z",
+    "workerId": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb"
   },
   {
     "name": "初始化对比测试",

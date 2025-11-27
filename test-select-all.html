@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>测试全选功能</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: white;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; font-size: 18px; margin-bottom: 15px; }
+        .instruction {
+            background: #e7f3ff;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-left: 4px solid #007bff;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .info {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        ol {
+            line-height: 1.8;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>✅ 全选功能测试指南</h1>
+
+    <div class="test-section">
+        <h2>测试场景 1: 基本全选功能</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>打开主页面: <a href="http://localhost:3001" target="_blank">http://localhost:3001</a></li>
+                <li>在测试用例表格的表头找到全选复选框（左上角第一列）</li>
+                <li>点击全选复选框</li>
+                <li><strong>预期结果</strong>: 所有测试用例的复选框都应该被选中</li>
+                <li>查看工具栏，应该显示 <code>⚡ 并行运行 (3)</code></li>
+                <li>再次点击全选复选框取消全选</li>
+                <li><strong>预期结果</strong>: 所有测试用例的复选框都应该被取消选中</li>
+                <li>计数器应该显示 <code>⚡ 并行运行 (0)</code></li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果全选复选框能正确选中/取消所有测试用例，并且界面状态同步更新，则测试通过
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试场景 2: 搜索后的全选功能</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>在搜索框中输入关键词，例如 <code>初始化</code></li>
+                <li>应该只显示匹配的测试用例（应该显示1个结果）</li>
+                <li>点击全选复选框</li>
+                <li><strong>预期结果</strong>: 只有当前显示的测试用例被选中</li>
+                <li>计数器应该显示 <code>⚡ 并行运行 (1)</code>，而不是 (3)</li>
+                <li>清除搜索（点击搜索框的 ✕ 按钮）</li>
+                <li><strong>预期结果</strong>: 显示所有测试用例，之前选中的用例仍然保持选中状态</li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果搜索后全选只选中筛选结果，且清除搜索后之前的选择保持不变，则测试通过
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试场景 3: 标签筛选后的全选功能</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>在标签筛选框中输入 <code>test</code></li>
+                <li>应该显示所有包含 "test" 标签的测试用例（应该显示3个结果）</li>
+                <li>点击全选复选框</li>
+                <li><strong>预期结果</strong>: 所有显示的测试用例被选中</li>
+                <li>计数器应该显示 <code>⚡ 并行运行 (3)</code></li>
+                <li>再次点击全选复选框取消全选</li>
+                <li><strong>预期结果</strong>: 所有复选框被取消选中</li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果标签筛选后全选功能正常工作，则测试通过
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试场景 4: 部分选择状态</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>确保显示所有测试用例（清除所有筛选）</li>
+                <li>手动选择其中的1-2个测试用例（不要使用全选）</li>
+                <li><strong>预期结果</strong>: 全选复选框应该不被选中</li>
+                <li>手动选中所有3个测试用例</li>
+                <li><strong>预期结果</strong>: 全选复选框应该自动变为选中状态</li>
+                <li>取消其中一个测试用例的选择</li>
+                <li><strong>预期结果</strong>: 全选复选框应该自动变为未选中状态</li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果全选复选框的状态能正确反映当前选择情况，则测试通过
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试场景 5: 组合搜索后的全选</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>在搜索框中输入 <code>测试</code></li>
+                <li>在标签筛选框中输入 <code>per-url-config</code></li>
+                <li>应该只显示同时满足两个条件的测试用例</li>
+                <li>点击全选复选框</li>
+                <li><strong>预期结果</strong>: 只有当前显示的测试用例被选中</li>
+                <li>点击"重置筛选"按钮</li>
+                <li><strong>预期结果</strong>: 显示所有测试用例，之前选中的保持选中</li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果组合搜索后全选功能正常工作，则测试通过
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>测试场景 6: 全选复选框视觉状态</h2>
+        <div class="instruction">
+            <strong>测试步骤：</strong>
+            <ol>
+                <li>确保显示所有测试用例</li>
+                <li>观察全选复选框的初始状态（应该是未选中）</li>
+                <li>点击全选复选框</li>
+                <li><strong>预期结果</strong>: 复选框显示为选中状态（有勾选标记）</li>
+                <li>在搜索框中输入关键词进行筛选</li>
+                <li><strong>预期结果</strong>: 全选复选框状态应该正确反映筛选结果的选择状态</li>
+            </ol>
+        </div>
+        <div class="success">
+            ✅ 如果全选复选框的视觉状态在所有场景下都能正确显示，则测试通过
+        </div>
+    </div>
+
+    <div class="info">
+        <strong>💡 关键修复点：</strong>
+        <ul>
+            <li>全选功能现在只选择<strong>当前显示的测试用例</strong>，而不是所有用例</li>
+            <li>全选复选框的状态会根据当前显示的用例的选择状态自动更新</li>
+            <li>搜索/筛选后，全选只影响筛选结果</li>
+            <li>每次渲染时都会保存当前显示的用例列表，确保全选功能准确</li>
+        </ul>
+    </div>
+
+    <div style="margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 5px;">
+        <h3 style="margin-top: 0;">🔍 已修复的问题</h3>
+        <p><strong>问题描述：</strong></p>
+        <ul>
+            <li>❌ 全选按钮点击失效</li>
+            <li>❌ 全选复选框点击后不显示选中状态</li>
+        </ul>
+        <p><strong>根本原因：</strong></p>
+        <ul>
+            <li>原代码在 <code>toggleSelectAll</code> 函数中使用 <code>testCases</code>（全部用例）而不是当前显示的用例</li>
+            <li>全选复选框没有根据当前选择状态设置 <code>checked</code> 属性</li>
+        </ul>
+        <p><strong>修复方案：</strong></p>
+        <ul>
+            <li>✅ 添加 <code>currentDisplayedCases</code> 变量跟踪当前显示的用例</li>
+            <li>✅ 修改 <code>toggleSelectAll</code> 只操作当前显示的用例</li>
+            <li>✅ 在渲染时计算全选复选框应该是否选中</li>
+            <li>✅ 全选复选框添加 <code>id="select-all-checkbox"</code> 以便调试</li>
+        </ul>
+    </div>
+</body>
+</html>

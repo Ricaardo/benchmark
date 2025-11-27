@@ -380,5 +380,50 @@
     "completedAt": 1764234247978,
     "exitCode": 0,
     "localReportPath": "2025-11-27T17-02-43-Runtime-Local.json"
+  },
+  {
+    "id": "f52a679e-5775-49d5-8fc1-48dd54a712b3",
+    "testCaseId": "testcase_1763961938343_c9oskuf9",
+    "testCaseName": "内存泄露对比测试",
+    "workerId": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb",
+    "workerName": "Worker-X.local",
+    "runner": "MemoryLeak",
+    "status": "running",
+    "progress": 0,
+    "createdAt": 1764236794652,
+    "name": "内存泄露对比测试",
+    "logs": [],
+    "dispatchedAt": 1764236794655,
+    "startedAt": 1764236794686
+  },
+  {
+    "id": "50d4c3fa-5a7d-4b2c-933c-cbf33b8c2cae",
+    "testCaseId": "testcase_1763959806689_k1ul6o0x",
+    "testCaseName": "初始化对比测试",
+    "workerId": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb",
+    "workerName": "Worker-X.local",
+    "runner": "Initialization",
+    "status": "running",
+    "progress": 0,
+    "createdAt": 1764236794654,
+    "name": "初始化对比测试",
+    "logs": [],
+    "dispatchedAt": 1764236794657,
+    "startedAt": 1764236794689
+  },
+  {
+    "id": "26846b4e-6c96-4702-9757-46fc84fcf973",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "testCaseName": "测试：多URL不同配置",
+    "workerId": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb",
+    "workerName": "Worker-X.local",
+    "runner": "Runtime",
+    "status": "running",
+    "progress": 0,
+    "createdAt": 1764236794655,
+    "name": "测试：多URL不同配置",
+    "logs": [],
+    "dispatchedAt": 1764236794659,
+    "startedAt": 1764236794689
   }
 ]

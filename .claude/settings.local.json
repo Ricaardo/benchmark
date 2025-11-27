@@ -25,7 +25,8 @@
       "Bash(jq:*)",
       "Bash(git commit:*)",
       "Bash(pm2 logs:*)",
-      "Bash(pm2 delete:*)"
+      "Bash(pm2 delete:*)",
+      "Bash(PORT=3001 npm start)"
     ],
     "deny": [],
     "ask": []

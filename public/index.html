@@ -609,6 +609,41 @@
                 </div>
             </div>
 
+            <!-- 搜索和筛选工具栏 -->
+            <div class="search-toolbar" style="margin-top: 15px; display: flex; gap: 10px; align-items: center;">
+                <div style="flex: 1; position: relative;">
+                    <input
+                        type="text"
+                        id="search-input"
+                        placeholder="🔍 搜索用例名称、描述..."
+                        style="width: 100%; padding: 8px 35px 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                        oninput="filterTestCases()"
+                    />
+                    <button
+                        onclick="clearSearch()"
+                        id="clear-search-btn"
+                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #999; font-size: 18px; padding: 0 8px; display: none;"
+                        title="清除搜索"
+                    >✕</button>
+                </div>
+                <div style="position: relative;">
+                    <input
+                        type="text"
+                        id="tag-filter-input"
+                        placeholder="🏷️ 标签筛选 (逗号分隔)"
+                        style="width: 250px; padding: 8px 35px 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
+                        oninput="filterTestCases()"
+                    />
+                    <button
+                        onclick="clearTagFilter()"
+                        id="clear-tag-btn"
+                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #999; font-size: 18px; padding: 0 8px; display: none;"
+                        title="清除标签筛选"
+                    >✕</button>
+                </div>
+                <button class="btn-secondary btn-small" onclick="resetFilters()">🔄 重置筛选</button>
+            </div>
+
             <div id="cases-container">
                 <div class="empty-state">
                     <h3>暂无测试用例</h3>
@@ -1636,9 +1671,16 @@
             console.log('✓ editCase 函数类型:', typeof editCase);
         };
 
+        // 当前显示的测试用例（用于全选功能）
+        let currentDisplayedCases = [];
+
         // 渲染用例列表
-        function renderCases() {
+        function renderCases(filteredCases = null) {
             const container = document.getElementById('cases-container');
+            const casesToRender = filteredCases !== null ? filteredCases : testCases;
+
+            // 保存当前显示的测试用例
+            currentDisplayedCases = casesToRender;
 
             if (testCases.length === 0) {
                 container.innerHTML = `
@@ -1650,11 +1692,24 @@
                 return;
             }
 
+            if (casesToRender.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>未找到匹配的测试用例</h3>
+                        <p>请尝试修改搜索条件或清除筛选</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // 检查是否所有当前显示的用例都已被选中
+            const allSelected = casesToRender.length > 0 && casesToRender.every(tc => selectedCases.has(tc.id));
+
             const table = `
                 <table class="test-cases-table">
                     <thead>
                         <tr>
-                            <th><input type="checkbox" onchange="toggleSelectAll(this.checked)"></th>
+                            <th><input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this.checked)" ${allSelected ? 'checked' : ''}></th>
                             <th>用例名称</th>
                             <th>测试类型</th>
                             <th>URL数量</th>
@@ -1665,7 +1720,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        ${testCases.map(testCase => {
+                        ${casesToRender.map(testCase => {
                             const urls = testCase.urls || (testCase.url ? [testCase.url] : []);
                             const mode = testCase.mode || 'headless';
                             const urlsTitle = urls.join('\\n');
@@ -1749,11 +1804,15 @@
         }
 
         function toggleSelectAll(checked) {
-            selectedCases.clear();
             if (checked) {
-                testCases.forEach(tc => selectedCases.add(tc.id));
+                // 只选择当前显示的测试用例
+                currentDisplayedCases.forEach(tc => selectedCases.add(tc.id));
+            } else {
+                // 取消选择当前显示的测试用例
+                currentDisplayedCases.forEach(tc => selectedCases.delete(tc.id));
             }
-            renderCases();
+            // 重新渲染以更新复选框状态
+            renderCases(currentDisplayedCases.length === testCases.length ? null : currentDisplayedCases);
             updateSelectionUI();
         }
 
@@ -1762,6 +1821,73 @@
             document.getElementById('run-selected-btn').disabled = selectedCases.size === 0;
             document.getElementById('delete-selected-btn').disabled = selectedCases.size === 0;
         }
+
+        // ==================== 搜索和筛选功能 ====================
+
+        // 筛选测试用例
+        function filterTestCases() {
+            const searchInput = document.getElementById('search-input');
+            const tagFilterInput = document.getElementById('tag-filter-input');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+            const clearTagBtn = document.getElementById('clear-tag-btn');
+
+            const searchQuery = searchInput.value.trim().toLowerCase();
+            const tagQuery = tagFilterInput.value.trim();
+
+            // 显示/隐藏清除按钮
+            clearSearchBtn.style.display = searchQuery ? 'block' : 'none';
+            clearTagBtn.style.display = tagQuery ? 'block' : 'none';
+
+            let filtered = testCases;
+
+            // 根据搜索关键词筛选（搜索名称和描述）
+            if (searchQuery) {
+                filtered = filtered.filter(testCase => {
+                    const name = (testCase.name || '').toLowerCase();
+                    const description = (testCase.description || '').toLowerCase();
+                    return name.includes(searchQuery) || description.includes(searchQuery);
+                });
+            }
+
+            // 根据标签筛选
+            if (tagQuery) {
+                const searchTags = tagQuery.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+                if (searchTags.length > 0) {
+                    filtered = filtered.filter(testCase => {
+                        const caseTags = (testCase.tags || []).map(t => t.toLowerCase());
+                        // 只要测试用例包含任何一个搜索标签即匹配
+                        return searchTags.some(searchTag =>
+                            caseTags.some(caseTag => caseTag.includes(searchTag))
+                        );
+                    });
+                }
+            }
+
+            renderCases(filtered);
+        }
+
+        // 清除搜索
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            filterTestCases();
+        }
+
+        // 清除标签筛选
+        function clearTagFilter() {
+            document.getElementById('tag-filter-input').value = '';
+            filterTestCases();
+        }
+
+        // 重置所有筛选
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('tag-filter-input').value = '';
+            document.getElementById('clear-search-btn').style.display = 'none';
+            document.getElementById('clear-tag-btn').style.display = 'none';
+            renderCases();
+        }
+
+        // ==================== 批量删除用例 ====================
 
         // 批量删除用例
         function deleteSelectedCases() {

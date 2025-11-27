@@ -17,12 +17,17 @@
       "local",
       "same-machine"
     ],
-    "status": "online",
-    "lastHeartbeat": 1764235978625,
+    "status": "busy",
+    "lastHeartbeat": 1764236794363,
     "registeredAt": 1764233661012,
-    "currentTasks": [],
+    "currentTasks": [
+      "f52a679e-5775-49d5-8fc1-48dd54a712b3",
+      "50d4c3fa-5a7d-4b2c-933c-cbf33b8c2cae",
+      "26846b4e-6c96-4702-9757-46fc84fcf973"
+    ],
     "maxConcurrency": 10,
-    "cpuUsage": 3.76917023664336,
-    "memoryUsage": 99.50485229492188
+    "cpuUsage": 82.01114890281626,
+    "memoryUsage": 98.97775650024414,
+    "currentTask": "f52a679e-5775-49d5-8fc1-48dd54a712b3"
   }
 ]
