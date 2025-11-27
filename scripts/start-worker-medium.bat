@@ -1,32 +1,33 @@
 @echo off
-REM 中配 Worker 启动脚本 (Windows)
-REM 适用于: 中等性能机器，执行常规测试
+chcp 65001 >nul
+REM Medium Performance Worker Startup Script (Windows)
+REM For: Medium performance machines, regular testing
 
-REM Master 服务器地址（修改为实际地址）
+REM Master server address (modify to actual address)
 if "%MASTER_URL%"=="" set MASTER_URL=http://localhost:3000
 
-REM Worker 配置
-set WORKER_NAME=中配测试机-1
+REM Worker configuration
+set WORKER_NAME=Medium-Worker-1
 set PERFORMANCE_TIER=medium
-set WORKER_DESCRIPTION=中等性能工作站 - Windows
+set WORKER_DESCRIPTION=Medium Performance Workstation - Windows
 set WORKER_TAGS=medium-performance,testing,windows
 set WORKER_PORT=0
 
 echo =========================================
-echo   启动中配 Worker 节点
+echo   Starting Medium Worker Node
 echo =========================================
 echo Master URL:     %MASTER_URL%
 echo Worker Name:    %WORKER_NAME%
-echo Performance:    ⚡ %PERFORMANCE_TIER%
+echo Performance:    %PERFORMANCE_TIER%
 echo Description:    %WORKER_DESCRIPTION%
 echo Tags:           %WORKER_TAGS%
 echo =========================================
 echo.
 
-echo 启动 Worker 客户端...
+echo Starting Worker client...
 echo.
 
-REM 启动 Worker
+REM Start Worker
 npx tsx server/worker-client.ts
 
 pause
