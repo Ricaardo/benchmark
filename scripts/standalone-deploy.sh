@@ -306,6 +306,8 @@ configure_worker() {
     echo "  3) low    - 低配 (2-4核, 4-8GB)"
     echo "  4) custom - 自定义"
     echo ""
+    echo -e "${BLUE}💡 提示: 部署后可在 Web 界面随时修改此配置${NC}"
+    echo ""
 
     while true; do
         read -p "请选择 [1-4]: " perf_choice
@@ -449,6 +451,10 @@ EOF
         echo -e "   本机: ${BLUE}http://localhost:${service_port}${NC}"
         echo -e "   局域网: ${BLUE}http://${local_ip}:${service_port}${NC}"
         echo ""
+        echo -e "${CYAN}🖥️  节点管理:${NC}"
+        echo -e "   访问 ${BLUE}http://localhost:${service_port}/workers.html${NC}"
+        echo -e "   可在 Web 界面编辑节点配置（性能等级、描述等）"
+        echo ""
         echo -e "${CYAN}🎮 管理命令:${NC}"
         if [ "$USE_PM2" = true ]; then
             echo -e "   查看状态: ${YELLOW}pm2 status${NC}"
@@ -519,6 +525,11 @@ start_worker() {
     echo -e "${CYAN}🔧 Worker 信息:${NC}"
     echo -e "   名称: ${BLUE}$worker_name${NC}"
     echo -e "   性能等级: ${BLUE}$perf_tier${NC}"
+    echo ""
+    echo -e "${CYAN}💡 提示:${NC}"
+    echo -e "   可在 Master Web 界面修改节点配置"
+    echo -e "   访问: ${BLUE}${MASTER_URL}/workers.html${NC}"
+    echo -e "   即使 Worker 重启，配置也会保留"
     echo -e "   连接到: ${BLUE}$master_url${NC}"
     echo ""
     echo -e "${CYAN}🎮 管理命令:${NC}"

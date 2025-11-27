@@ -7,21 +7,26 @@
 export MASTER_URL="${MASTER_URL:-http://localhost:3000}"
 
 # Worker 配置
-export WORKER_NAME="高配测试机-1"
+# 注意：不设置 WORKER_NAME，让系统使用 WORKER_DESCRIPTION 作为节点名称
 export PERFORMANCE_TIER="high"
-export WORKER_DESCRIPTION="高性能工作站 - $(uname -m) CPU, $(sysctl -n hw.memsize 2>/dev/null || free -h | awk '/^Mem:/ {print $2}') RAM"
+export WORKER_DESCRIPTION="高配 $(uname -m) - $(uname -s)"
 export WORKER_TAGS="high-performance,production"
 export WORKER_PORT="0"
+
+# 如果需要自定义名称，可以取消注释下面这行：
+# export WORKER_NAME="我的自定义名称"
 
 echo "========================================="
 echo "  启动高配 Worker 节点"
 echo "========================================="
 echo "Master URL:     $MASTER_URL"
-echo "Worker Name:    $WORKER_NAME"
+echo "Node Name:      ${WORKER_NAME:-$WORKER_DESCRIPTION}"
 echo "Performance:    🔥 $PERFORMANCE_TIER"
 echo "Description:    $WORKER_DESCRIPTION"
 echo "Tags:           $WORKER_TAGS"
 echo "========================================="
+echo ""
+echo "💡 提示: 节点名称将显示为 \"$WORKER_DESCRIPTION\""
 echo ""
 
 # 检查 Master 服务器连通性

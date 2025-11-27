@@ -242,19 +242,49 @@
             font-size: 16px;
         }
 
-        .edit-btn {
-            background: #1890ff;
-            color: white;
+        .worker-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
             border: none;
-            padding: 4px 8px;
             border-radius: 4px;
             font-size: 12px;
             cursor: pointer;
             transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
         }
 
-        .edit-btn:hover {
+        .action-btn.edit {
+            background: #1890ff;
+            color: white;
+        }
+
+        .action-btn.edit:hover {
             background: #40a9ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+        }
+
+        .action-btn.delete {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #ff7875;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
         }
 
         .modal-overlay {
@@ -323,21 +353,27 @@
         }
 
         .btn {
-            padding: 8px 16px;
-            border-radius: 4px;
+            padding: 10px 20px;
+            border-radius: 6px;
             font-size: 14px;
+            font-weight: 500;
             cursor: pointer;
             border: none;
             transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .btn-cancel {
             background: #f0f0f0;
             color: #666;
+            border: 1px solid #d9d9d9;
         }
 
         .btn-cancel:hover {
             background: #e0e0e0;
+            border-color: #b3b3b3;
         }
 
         .btn-save {
@@ -347,6 +383,12 @@
 
         .btn-save:hover {
             background: #40a9ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .performance-badge {
@@ -411,13 +453,90 @@
         .refresh-btn.spinning {
             animation: spin 1s linear infinite;
         }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #f5f5f5;
+            border-color: #1890ff;
+            color: #1890ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+            transform: translateX(-2px);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-size: 16px;
+        }
+
+        header {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            margin-bottom: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .quick-action-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quick-action-btn:hover {
+            background: white;
+            border-color: #1890ff;
+            color: #1890ff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <a href="/" class="back-btn">返回主页</a>
+
         <header>
-            <h1>🖥️ 节点管理</h1>
-            <p class="subtitle">实时监控所有 Worker 节点状态</p>
+            <div class="header-left">
+                <h1>🖥️ 节点管理</h1>
+                <p class="subtitle">实时监控所有 Worker 节点状态</p>
+            </div>
+            <div class="header-right">
+                <button class="quick-action-btn" onclick="loadWorkers()" title="刷新数据">
+                    <span>🔄</span>
+                    <span>刷新</span>
+                </button>
+            </div>
         </header>
 
         <div class="stats-grid" id="statsGrid">
@@ -440,8 +559,6 @@
         </div>
 
         <div class="workers-grid" id="workersGrid"></div>
-
-        <button class="refresh-btn" id="refreshBtn" title="刷新">↻</button>
     </div>
 
     <!-- 编辑 Worker 模态框 -->
@@ -544,8 +661,17 @@
                             ${worker.name}
                             ${worker.performanceTier ? `<span class="performance-badge ${worker.performanceTier}">${getPerformanceTierName(worker.performanceTier)}</span>` : ''}
                         </div>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <button class="edit-btn" onclick="openEditModal('${worker.id}')">✏️ 编辑</button>
+                        <div class="worker-actions">
+                            <button class="action-btn edit" onclick="openEditModal('${worker.id}')" title="编辑节点配置">
+                                <span>✏️</span>
+                                <span>编辑</span>
+                            </button>
+                            ${worker.status === 'offline' ? `
+                                <button class="action-btn delete" onclick="deleteWorker('${worker.id}', '${worker.name}')" title="删除离线节点">
+                                    <span>🗑️</span>
+                                    <span>删除</span>
+                                </button>
+                            ` : ''}
                             <span class="worker-status ${worker.status}">${getStatusText(worker.status)}</span>
                         </div>
                     </div>
@@ -653,15 +779,6 @@
                 loadWorkers();
             }, 30000); // 30秒刷新一次
         }
-
-        // 手动刷新
-        document.getElementById('refreshBtn').addEventListener('click', async function() {
-            this.classList.add('spinning');
-            await loadWorkers();
-            setTimeout(() => {
-                this.classList.remove('spinning');
-            }, 1000);
-        });
 
         // 辅助函数
         function getStatusText(status) {
@@ -783,6 +900,35 @@
                 console.error('Error updating worker:', error);
                 console.error('Request details:', { workerId, updates });
                 alert('更新失败: ' + error.message);
+            }
+        }
+
+        // 删除 Worker 节点
+        async function deleteWorker(workerId, workerName) {
+            if (!confirm(`确定要删除离线节点 "${workerName}" 吗？\n\n此操作不可撤销。`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/workers/${workerId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                console.log('Worker deleted:', workerId);
+
+                // 重新加载数据
+                await loadWorkers();
+
+                alert('节点删除成功！');
+            } catch (error) {
+                console.error('Error deleting worker:', error);
+                alert('删除失败: ' + error.message);
             }
         }
 

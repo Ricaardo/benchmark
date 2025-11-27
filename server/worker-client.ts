@@ -850,11 +850,22 @@ export default config;`;
 // 如果直接运行此文件，启动 Worker
 if (import.meta.url === `file://${process.argv[1]}`) {
     const masterUrl = process.env.MASTER_URL || 'http://localhost:3000';
-    const workerName = process.env.WORKER_NAME || `Worker-${os.hostname()}`;
     const workerPort = parseInt(process.env.WORKER_PORT || '0');
     const tags = (process.env.WORKER_TAGS || '').split(',').filter(t => t);
     const performanceTier = (process.env.PERFORMANCE_TIER || '') as 'high' | 'medium' | 'low' | 'custom' | '';
     const description = process.env.WORKER_DESCRIPTION || '';
+
+    // 智能命名策略：
+    // 1. 如果设置了 WORKER_NAME，使用它
+    // 2. 如果设置了 WORKER_DESCRIPTION，使用描述作为名称（更有意义）
+    // 3. 否则使用默认：Worker-主机名
+    let workerName = process.env.WORKER_NAME;
+    if (!workerName && description) {
+        workerName = description;
+    }
+    if (!workerName) {
+        workerName = `Worker-${os.hostname()}`;
+    }
 
     const worker = new WorkerClient(
         masterUrl,

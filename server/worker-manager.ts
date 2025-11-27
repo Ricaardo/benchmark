@@ -117,12 +117,23 @@ export class WorkerManager {
             if (!existingWorker.currentTasks) {
                 existingWorker.currentTasks = existingWorker.currentTask ? [existingWorker.currentTask] : [];
             }
-            if (registration.performanceTier) {
+
+            // 配置优先级策略：
+            // 1. 如果已有配置（可能是用户在前端手动设置的），则保留不覆盖
+            // 2. 如果没有配置，则使用启动参数
+            // 3. 特殊情况：如果启动参数与现有不同，说明可能是有意修改启动脚本，则更新
+            //    但为了安全起见，我们选择保留已有配置，避免意外覆盖
+
+            // 只在首次注册或配置为空时，才使用启动参数
+            if (!existingWorker.performanceTier && registration.performanceTier) {
                 existingWorker.performanceTier = registration.performanceTier;
+                console.log(`  ↳ Performance tier set from startup: ${registration.performanceTier}`);
             }
-            if (registration.description) {
+            if (!existingWorker.description && registration.description) {
                 existingWorker.description = registration.description;
+                console.log(`  ↳ Description set from startup: ${registration.description}`);
             }
+
             await this.saveWorkers();
             this.notifyStatusChange(existingWorker);
             return stableId;

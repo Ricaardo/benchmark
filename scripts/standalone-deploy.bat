@@ -433,6 +433,10 @@ echo %CYAN%📡 访问地址:%NC%
 echo    本机: %BLUE%http://localhost:%service_port%%NC%
 echo    局域网: %BLUE%http://%local_ip%:%service_port%%NC%
 echo.
+echo %CYAN%🖥️  节点管理:%NC%
+echo    访问 %BLUE%http://localhost:%service_port%/workers.html%NC%
+echo    可在 Web 界面编辑节点配置（性能等级、描述等）
+echo.
 echo %CYAN%🎮 管理命令:%NC%
 if "%USE_PM2%"=="true" (
     echo    查看状态: %YELLOW%pm2 status%NC%
@@ -520,6 +524,11 @@ echo %CYAN%🔧 Worker 信息:%NC%
 echo    名称: %BLUE%!worker_name!%NC%
 echo    性能等级: %BLUE%!perf_tier!%NC%
 echo    连接到: %BLUE%!master_url!%NC%
+echo.
+echo %CYAN%💡 提示:%NC%
+echo    可在 Master Web 界面修改节点配置
+echo    访问: %BLUE%!master_url!/workers.html%NC%
+echo    即使 Worker 重启，配置也会保留
 echo.
 echo %CYAN%🎮 管理命令:%NC%
 if "%USE_PM2%"=="true" (

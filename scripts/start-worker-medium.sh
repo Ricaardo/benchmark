@@ -7,21 +7,27 @@
 export MASTER_URL="${MASTER_URL:-http://10.23.182.34:3000}"
 
 # Worker 配置
-export WORKER_NAME="中配测试机-1"
+# 注意：不设置 WORKER_NAME，让系统使用 WORKER_DESCRIPTION 作为节点名称
+# 这样节点名称会更有意义，如 "M4Pro macOS" 而不是 "中配测试机-1"
 export PERFORMANCE_TIER="medium"
-export WORKER_DESCRIPTION="中等性能工作站 - $(uname -m) CPU, $(sysctl -n hw.memsize 2>/dev/null || free -h | awk '/^Mem:/ {print $2}') RAM"
+export WORKER_DESCRIPTION="中配 $(uname -m) - $(uname -s)"
 export WORKER_TAGS="medium-performance,testing"
 export WORKER_PORT="0"
+
+# 如果需要自定义名称，可以取消注释下面这行：
+# export WORKER_NAME="我的自定义名称"
 
 echo "========================================="
 echo "  启动中配 Worker 节点"
 echo "========================================="
 echo "Master URL:     $MASTER_URL"
-echo "Worker Name:    $WORKER_NAME"
+echo "Node Name:      ${WORKER_NAME:-$WORKER_DESCRIPTION}"
 echo "Performance:    ⚡ $PERFORMANCE_TIER"
 echo "Description:    $WORKER_DESCRIPTION"
 echo "Tags:           $WORKER_TAGS"
 echo "========================================="
+echo ""
+echo "💡 提示: 节点名称将显示为 \"$WORKER_DESCRIPTION\""
 echo ""
 
 # 检查 Master 服务器连通性

@@ -1,34 +1,5 @@
 [
   {
-    "id": "worker-73a8b1a5-972a-63c2-1c50-63d9f97da4c5",
-    "name": "中配测试机-1",
-    "host": "10.23.182.34",
-    "port": 0,
-    "platform": "darwin",
-    "arch": "arm64",
-    "cpuCount": 10,
-    "memory": 16,
-    "performanceTier": "medium",
-    "description": "中等性能工作站 - arm64 CPU, 17179869184 RAM",
-    "capabilities": [
-      "chromium"
-    ],
-    "tags": [
-      "medium-performance",
-      "testing"
-    ],
-    "status": "offline",
-    "lastHeartbeat": 1764144772594,
-    "registeredAt": 1764144652559,
-    "currentTasks": [
-      "a3781db2-b054-4d9d-86e2-4bf9acd66839"
-    ],
-    "maxConcurrency": 10,
-    "cpuUsage": 62.014553150385375,
-    "memoryUsage": 99.11603927612305,
-    "currentTask": "a3781db2-b054-4d9d-86e2-4bf9acd66839"
-  },
-  {
     "id": "worker-cf42f0f2-46fd-b402-66e3-ec3c8fd88feb",
     "name": "Worker-X.local",
     "host": "10.23.182.34",
@@ -38,7 +9,7 @@
     "cpuCount": 10,
     "memory": 16,
     "performanceTier": "medium",
-    "description": "本机 Worker - macOS",
+    "description": "M4Pro macOS",
     "capabilities": [
       "chromium"
     ],
@@ -47,11 +18,11 @@
       "same-machine"
     ],
     "status": "online",
-    "lastHeartbeat": 1764234231049,
+    "lastHeartbeat": 1764235978625,
     "registeredAt": 1764233661012,
     "currentTasks": [],
     "maxConcurrency": 10,
-    "cpuUsage": 68.95405094175675,
-    "memoryUsage": 99.50742721557617
+    "cpuUsage": 3.76917023664336,
+    "memoryUsage": 99.50485229492188
   }
 ]
