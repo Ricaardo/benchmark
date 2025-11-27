@@ -1,0 +1,85 @@
+{
+  "master": {
+    "host": "192.168.1.100",
+    "port": 22,
+    "user": "deploy",
+    "deploy_path": "/opt/benchmark",
+    "node_env": "production",
+    "service_port": 3000
+  },
+  "workers": [
+    {
+      "name": "高配测试机-1",
+      "host": "192.168.1.101",
+      "port": 22,
+      "user": "deploy",
+      "deploy_path": "/opt/benchmark",
+      "performance_tier": "high",
+      "description": "高性能工作站",
+      "tags": "high-performance,production",
+      "os": "linux"
+    },
+    {
+      "name": "中配测试机-1",
+      "host": "192.168.1.102",
+      "port": 22,
+      "user": "deploy",
+      "deploy_path": "/opt/benchmark",
+      "performance_tier": "medium",
+      "description": "中等性能机器",
+      "tags": "medium-performance,testing",
+      "os": "linux"
+    },
+    {
+      "name": "中配测试机-2",
+      "host": "192.168.1.103",
+      "port": 22,
+      "user": "deploy",
+      "deploy_path": "/opt/benchmark",
+      "performance_tier": "medium",
+      "description": "中等性能机器",
+      "tags": "medium-performance,testing",
+      "os": "macos"
+    },
+    {
+      "name": "低配测试机-1",
+      "host": "192.168.1.104",
+      "port": 22,
+      "user": "deploy",
+      "deploy_path": "/opt/benchmark",
+      "performance_tier": "low",
+      "description": "低性能机器",
+      "tags": "low-performance,compatibility",
+      "os": "linux"
+    }
+  ],
+  "ssh": {
+    "key_file": "~/.ssh/id_rsa",
+    "connection_timeout": 10,
+    "strict_host_key_checking": false
+  },
+  "deployment": {
+    "git_repo": "https://github.com/your-org/benchmark.git",
+    "git_branch": "main",
+    "use_git": false,
+    "sync_method": "rsync",
+    "exclude_patterns": [
+      "node_modules",
+      ".git",
+      "data",
+      "benchmark_report",
+      "logs",
+      "*.log"
+    ]
+  },
+  "node": {
+    "min_version": "18.0.0",
+    "auto_install": false,
+    "install_command": "curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs"
+  },
+  "pm2": {
+    "enabled": true,
+    "auto_install": true,
+    "startup": true
+  }
+}
