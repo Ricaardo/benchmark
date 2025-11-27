@@ -1545,7 +1545,18 @@
                 }
             }
 
-            // 日志现在在新窗口显示，不需要更新内联日志
+            // 更新内联日志显示（实时更新）
+            let logText = '';
+            if (Array.isArray(task.logs)) {
+                // logs数组格式（分布式任务）
+                logText = task.logs.join('\n');
+            } else if (typeof task.output === 'string') {
+                // output字符串格式（本地任务）
+                logText = task.output;
+            }
+            if (logText) {
+                updateTaskLog(task.id, logText);
+            }
 
             updateStats();
             updateQueueDisplay();
@@ -3507,15 +3518,29 @@ console.log('B站弹幕开关完成');`
                     </div>
                 ` : '';
 
-                // 日志查看按钮（仅运行中的任务显示）
-                const logButton = task.status === 'running' ? `
-                    <button class="btn-secondary btn-small" onclick="openTaskLogWindow('${task.id}')" style="margin-left: 5px;">
-                        📋 查看日志
+                // 日志折叠按钮（运行中或已完成的任务显示）
+                const logButton = (task.status === 'running' || task.status === 'completed' || task.status === 'error') ? `
+                    <button class="btn-secondary btn-small" onclick="toggleTaskLog('${task.id}')" id="log-toggle-${task.id}" style="margin-left: 5px;">
+                        📋 隐藏日志
                     </button>
                 ` : '';
 
-                // 不再需要内联日志输出区域，改为在新窗口显示
-                const logOutput = '';
+                // 获取日志内容
+                let logText = '';
+                if (Array.isArray(task.logs)) {
+                    // logs数组格式（分布式任务）
+                    logText = task.logs.join('\n');
+                } else if (typeof task.output === 'string') {
+                    // output字符串格式（本地任务）
+                    logText = task.output;
+                }
+
+                // 内联日志输出区域（默认展开）
+                const logOutput = (task.status === 'running' || task.status === 'completed' || task.status === 'error') ? `
+                    <div id="task-log-${task.id}" style="display: block; margin-top: 10px; background: #f8f9fa; border: 1px solid #e2e8f0; border-radius: 4px; padding: 12px; max-height: 300px; overflow-y: auto;">
+                        <pre style="margin: 0; font-family: 'Monaco', 'Courier New', monospace; font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; color: #1f2937;">${escapeHtml(logText) || '<span style="color: #9ca3af;">暂无日志输出...</span>'}</pre>
+                    </div>
+                ` : '';
 
                 return `
                     <div style="padding: 10px; margin-bottom: 8px; background: ${bgColor}; border-radius: 6px;">
@@ -3690,6 +3715,35 @@ console.log('B站弹幕开关完成');`
             `);
 
             logWindow.document.close();
+        }
+
+        // 切换日志显示/隐藏
+        function toggleTaskLog(taskId) {
+            const logElement = document.getElementById(`task-log-${taskId}`);
+            const toggleButton = document.getElementById(`log-toggle-${taskId}`);
+
+            if (!logElement || !toggleButton) return;
+
+            if (logElement.style.display === 'none') {
+                logElement.style.display = 'block';
+                toggleButton.textContent = '📋 隐藏日志';
+            } else {
+                logElement.style.display = 'none';
+                toggleButton.textContent = '📋 显示日志';
+            }
+        }
+
+        // 更新任务日志（实时更新）
+        function updateTaskLog(taskId, logText) {
+            const logElement = document.getElementById(`task-log-${taskId}`);
+            if (!logElement) return;
+
+            const preElement = logElement.querySelector('pre');
+            if (preElement) {
+                preElement.innerHTML = escapeHtml(logText) || '<span style="color: #9ca3af;">暂无日志输出...</span>';
+                // 自动滚动到底部
+                logElement.scrollTop = logElement.scrollHeight;
+            }
         }
 
         // 新增：停止任务

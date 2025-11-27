@@ -26,7 +26,7 @@
     "cors": "^2.8.5",
     "ws": "^8.16.0",
     "lz-string": "^1.5.0",
-    "@bilibili-player/benchmark": "^2.1.2"
+    "@bilibili-player/benchmark": "latest"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
