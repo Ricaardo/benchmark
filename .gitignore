@@ -6,3 +6,14 @@ benchmark.dynamic.json
 benchmark_report/
 api-keys.json
 webhook-config.json
+
+# Deployment configuration (contains sensitive server info)
+.deploy-local.json
+
+# PM2 files
+.pm2/
+
+# Process ID files
+.master.pid
+.worker.pid
+.worker-local.pid

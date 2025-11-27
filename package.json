@@ -19,7 +19,8 @@
     "docker:remove": "docker rm benchmark-web",
     "compose:up": "docker-compose up -d",
     "compose:down": "docker-compose down",
-    "compose:logs": "docker-compose logs -f"
+    "compose:logs": "docker-compose logs -f",
+    "deploy": "./scripts/standalone-deploy.sh"
   },
   "dependencies": {
     "express": "^4.18.2",

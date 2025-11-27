@@ -47,14 +47,45 @@ npm run serve
 
 ### 分布式部署
 
-#### 1. 启动主服务器（Master）
+#### 🚀 一键自动化部署（推荐）
+
+每台机器独立运行部署脚本，无需 SSH 配置。
+
+**在每台机器上分别运行：**
+
+```bash
+# Linux/macOS
+./scripts/standalone-deploy.sh
+
+# Windows
+scripts\standalone-deploy.bat
+```
+
+**部署选项：**
+1. **Master 节点** - 主控服务器 + Web UI
+2. **Worker 节点** - 测试执行节点
+3. **Master + Worker** - 同机部署（适合单机环境）
+
+脚本会自动：
+- ✅ 检测 Node.js 环境
+- ✅ 安装依赖和构建
+- ✅ 配置连接信息
+- ✅ 启动服务（支持 PM2）
+
+**详细指南：** [STANDALONE_DEPLOY.md](STANDALONE_DEPLOY.md)
+
+---
+
+#### 手动部署
+
+**1. 启动主服务器（Master）**
 
 ```bash
 # 在主服务器上运行
 npm start
 ```
 
-#### 2. 启动 Worker 节点
+**2. 启动 Worker 节点**
 
 根据机器性能选择对应的启动脚本：
 
