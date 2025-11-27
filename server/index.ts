@@ -149,6 +149,7 @@ interface TestRecord {
     remarks?: string; // 备注：测试目的、版本等信息
     reportFile?: string; // 本地报告文件名
     errorMessage?: string; // 错误信息（失败时）
+    logFile?: string; // 日志文件名
 }
 
 let testRecords: TestRecord[] = [];
@@ -636,6 +637,25 @@ async function startTask(taskId: string) {
                     }
                 }
 
+                // 保存日志文件
+                let logFileName: string | undefined;
+                if (task.output && task.output.trim()) {
+                    try {
+                        const logsDir = path.join(__dirname, '../data/logs');
+                        // 确保日志目录存在
+                        await fs.mkdir(logsDir, { recursive: true });
+
+                        const timestamp = new Date().getTime();
+                        logFileName = `task_${task.id}_${timestamp}.log`;
+                        const logFilePath = path.join(logsDir, logFileName);
+
+                        await fs.writeFile(logFilePath, task.output, 'utf-8');
+                        console.log(`[TestRecords] 💾 已保存日志文件: ${logFileName}`);
+                    } catch (error) {
+                        console.error('[TestRecords] 保存日志文件失败:', error);
+                    }
+                }
+
                 const record: TestRecord = {
                     id: task.id,
                     testCaseId: task.testCaseId, // 关联测试用例ID
@@ -651,7 +671,8 @@ async function startTask(taskId: string) {
                     exitCode: code ?? undefined,
                     remarks: task.remarks, // 从任务中获取备注
                     reportFile: (task as any).reportFile, // 报告文件名（无论成功失败都有）
-                    errorMessage: errorMessage // 错误信息（仅失败时）
+                    errorMessage: errorMessage, // 错误信息（仅失败时）
+                    logFile: logFileName // 日志文件名
                 };
                 await addTestRecord(record);
                 console.log(`[TestRecords] 📝 已保存测试记录: ${task.name} ${errorMessage ? '(含错误信息)' : ''}`);
@@ -2494,6 +2515,126 @@ app.get('/api/test-records/:id/report', async (req, res) => {
     } catch (error) {
         console.error('Failed to get report:', error);
         res.status(500).json({ error: 'Failed to get report' });
+    }
+});
+
+// 下载测试记录的日志文件
+app.get('/api/test-records/:id/download-log', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = testRecords.find(r => r.id === id);
+
+        if (!record) {
+            return res.status(404).json({ error: 'Test record not found' });
+        }
+
+        if (!record.logFile) {
+            return res.status(404).json({
+                error: 'Log file not found',
+                message: 'No log file associated with this test record'
+            });
+        }
+
+        // 构建日志文件路径（优先从data/logs读取，兼容老数据从根目录读取）
+        let logFilePath = path.join(__dirname, '../data/logs', record.logFile);
+
+        // 检查文件是否存在
+        try {
+            await fs.access(logFilePath);
+        } catch {
+            // 如果data/logs下不存在，尝试从根目录的logs读取（兼容旧版本）
+            logFilePath = path.join(__dirname, '../logs', record.logFile);
+            try {
+                await fs.access(logFilePath);
+            } catch {
+                return res.status(404).json({
+                    error: 'Log file not found',
+                    message: 'Log file does not exist on disk'
+                });
+            }
+        }
+
+        // 读取日志文件
+        const logContent = await fs.readFile(logFilePath, 'utf-8');
+
+        // 设置响应头，触发下载
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${record.logFile}"`);
+        res.send(logContent);
+
+    } catch (error) {
+        console.error('Failed to download log:', error);
+        res.status(500).json({
+            error: 'Failed to download log',
+            message: (error as Error).message
+        });
+    }
+});
+
+// 获取测试记录的日志内容（用于预览）
+app.get('/api/test-records/:id/logs', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const record = testRecords.find(r => r.id === id);
+
+        if (!record) {
+            return res.status(404).json({ error: 'Test record not found' });
+        }
+
+        if (!record.logFile) {
+            return res.json({
+                logs: [],
+                source: 'none',
+                message: 'No logs available for this test record'
+            });
+        }
+
+        // 构建日志文件路径（优先从data/logs读取，兼容老数据）
+        let logFilePath = path.join(__dirname, '../data/logs', record.logFile);
+        let source = 'data/logs';
+
+        // 检查文件是否存在
+        try {
+            await fs.access(logFilePath);
+        } catch {
+            // 如果data/logs下不存在，尝试从根目录的logs读取
+            logFilePath = path.join(__dirname, '../logs', record.logFile);
+            source = 'logs';
+            try {
+                await fs.access(logFilePath);
+            } catch {
+                return res.json({
+                    logs: [],
+                    source: 'none',
+                    message: 'Log file not found'
+                });
+            }
+        }
+
+        try {
+            const logContent = await fs.readFile(logFilePath, 'utf-8');
+            const logs = logContent.split('\n').filter(line => line.trim());
+
+            res.json({
+                logs,
+                source,
+                logFile: record.logFile,
+                status: record.status
+            });
+        } catch (error) {
+            return res.json({
+                logs: [],
+                source: 'none',
+                message: 'Failed to read log file'
+            });
+        }
+
+    } catch (error) {
+        console.error('Failed to get logs:', error);
+        res.status(500).json({
+            error: 'Failed to get logs',
+            message: (error as Error).message
+        });
     }
 });
 

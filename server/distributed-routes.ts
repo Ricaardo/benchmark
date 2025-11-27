@@ -4,9 +4,15 @@
  */
 
 import express from 'express';
+import path from 'path';
+import fs from 'fs/promises';
+import { fileURLToPath } from 'url';
 import { WorkerManager } from './worker-manager.js';
 import { DistributedTaskManager } from './distributed-task-manager.js';
 import * as TestCaseStorage from './testcase-storage.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export function createDistributedRoutes(
     workerManager: WorkerManager,
@@ -363,6 +369,131 @@ export function createDistributedRoutes(
             tasks: stats,
             workers: workerStats
         });
+    });
+
+    /**
+     * 下载任务日志文件
+     * GET /api/distributed-tasks/:taskId/download-log
+     */
+    router.get('/distributed-tasks/:taskId/download-log', async (req, res) => {
+        try {
+            const { taskId } = req.params;
+
+            // 读取测试记录
+            const testRecordsFile = path.join(__dirname, '../data/test-records.json');
+            let testRecords: any[] = [];
+
+            try {
+                const data = await fs.readFile(testRecordsFile, 'utf-8');
+                testRecords = JSON.parse(data);
+            } catch (error) {
+                return res.status(404).json({ error: 'Test records not found' });
+            }
+
+            // 查找对应的测试记录
+            const record = testRecords.find(r => r.id === taskId);
+            if (!record || !record.logFile) {
+                return res.status(404).json({
+                    error: 'Log file not found',
+                    message: 'No log file associated with this task'
+                });
+            }
+
+            // 构建日志文件路径
+            const logFilePath = path.join(__dirname, '../data/logs', record.logFile);
+
+            // 检查文件是否存在
+            try {
+                await fs.access(logFilePath);
+            } catch (error) {
+                return res.status(404).json({
+                    error: 'Log file not found',
+                    message: 'Log file does not exist on disk'
+                });
+            }
+
+            // 读取日志文件
+            const logContent = await fs.readFile(logFilePath, 'utf-8');
+
+            // 设置响应头，触发下载
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            res.setHeader('Content-Disposition', `attachment; filename="${record.logFile}"`);
+            res.send(logContent);
+
+        } catch (error) {
+            console.error('Failed to download log:', error);
+            res.status(500).json({
+                error: 'Failed to download log',
+                message: (error as Error).message
+            });
+        }
+    });
+
+    /**
+     * 获取任务日志内容（用于预览）
+     * GET /api/distributed-tasks/:taskId/logs
+     */
+    router.get('/distributed-tasks/:taskId/logs', async (req, res) => {
+        try {
+            const { taskId } = req.params;
+
+            // 先尝试从内存中获取（正在运行的任务）
+            const task = taskManager.getTask(taskId);
+            if (task && task.logs && task.logs.length > 0) {
+                return res.json({
+                    logs: task.logs,
+                    source: 'memory',
+                    taskStatus: task.status
+                });
+            }
+
+            // 如果内存中没有，从文件读取（已完成的任务）
+            const testRecordsFile = path.join(__dirname, '../data/test-records.json');
+            let testRecords: any[] = [];
+
+            try {
+                const data = await fs.readFile(testRecordsFile, 'utf-8');
+                testRecords = JSON.parse(data);
+            } catch (error) {
+                return res.status(404).json({ error: 'Test records not found' });
+            }
+
+            const record = testRecords.find(r => r.id === taskId);
+            if (!record || !record.logFile) {
+                return res.json({
+                    logs: [],
+                    source: 'none',
+                    message: 'No logs available'
+                });
+            }
+
+            const logFilePath = path.join(__dirname, '../data/logs', record.logFile);
+
+            try {
+                const logContent = await fs.readFile(logFilePath, 'utf-8');
+                const logs = logContent.split('\n').filter(line => line.trim());
+
+                res.json({
+                    logs,
+                    source: 'file',
+                    logFile: record.logFile,
+                    taskStatus: record.status
+                });
+            } catch (error) {
+                return res.json({
+                    logs: [],
+                    source: 'none',
+                    message: 'Log file not found'
+                });
+            }
+
+        } catch (error) {
+            console.error('Failed to get logs:', error);
+            res.status(500).json({
+                error: 'Failed to get logs',
+                message: (error as Error).message
+            });
+        }
     });
 
     return router;

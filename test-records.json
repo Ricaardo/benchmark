@@ -1,5 +1,43 @@
 [
   {
+    "id": "task_1764217759441_63c452vi6",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T04:29:19.441Z",
+    "endTime": "2025-11-27T04:30:44.057Z",
+    "duration": 84616,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T12-29-20-Runtime-Local.json",
+    "logFile": "task_task_1764217759441_63c452vi6_1764217845074.log"
+  },
+  {
+    "id": "task_demo_12345",
+    "testCaseId": "demo",
+    "name": "演示：日志下载功能测试",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T12:00:00.000Z",
+    "endTime": "2025-11-27T12:01:00.000Z",
+    "duration": 60000,
+    "exitCode": 0,
+    "reportFile": "demo-report.json",
+    "logFile": "task_demo_test.log"
+  },
+  {
+    "id": "task_1764215955776_wp3nbofqh",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T03:59:15.776Z",
+    "endTime": "2025-11-27T04:00:40.166Z",
+    "duration": 84390,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T11-59-16-Runtime-Local.json"
+  },
+  {
     "id": "task_1764214979164_43kj2aseo",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",

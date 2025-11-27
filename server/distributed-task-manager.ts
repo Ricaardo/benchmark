@@ -36,12 +36,14 @@ interface TestRecord {
     remarks?: string;
     reportFile?: string;
     errorMessage?: string;
+    logFile?: string;  // 日志文件路径
 }
 
 export class DistributedTaskManager {
     private tasks: Map<string, DistributedTask> = new Map();
     private tasksFile: string;
     private testRecordsFile: string;
+    private logsDir: string;
     private workerManager: WorkerManager;
     private taskUpdateCallbacks: Array<(task: DistributedTask) => void> = [];
     private workerMessageSender: ((workerId: string, message: WSMessage) => void) | null = null;
@@ -53,6 +55,21 @@ export class DistributedTaskManager {
         this.workerManager = workerManager;
         this.tasksFile = path.join(dataDir, 'distributed-tasks.json');
         this.testRecordsFile = path.join(dataDir, 'test-records.json');
+        this.logsDir = path.join(dataDir, 'logs');
+
+        // 确保日志目录存在
+        this.ensureLogsDir();
+    }
+
+    /**
+     * 确保日志目录存在
+     */
+    private async ensureLogsDir(): Promise<void> {
+        try {
+            await fs.mkdir(this.logsDir, { recursive: true });
+        } catch (error) {
+            console.error('Failed to create logs directory:', error);
+        }
     }
 
     /**
@@ -282,10 +299,43 @@ export class DistributedTaskManager {
     }
 
     /**
+     * 保存任务日志到文件
+     */
+    private async saveTaskLogsToFile(task: DistributedTask): Promise<string | undefined> {
+        try {
+            // 确保日志目录存在
+            await this.ensureLogsDir();
+
+            if (!task.logs || task.logs.length === 0) {
+                return undefined;
+            }
+
+            // 生成日志文件名: task_<taskId>_<timestamp>.log
+            const timestamp = new Date().getTime();
+            const logFileName = `task_${task.id}_${timestamp}.log`;
+            const logFilePath = path.join(this.logsDir, logFileName);
+
+            // 将日志数组写入文件
+            const logContent = task.logs.join('\n');
+            await fs.writeFile(logFilePath, logContent, 'utf-8');
+
+            console.log(`💾 Saved task logs to: ${logFileName}`);
+
+            return logFileName;
+        } catch (error) {
+            console.error('Failed to save task logs:', error);
+            return undefined;
+        }
+    }
+
+    /**
      * 创建测试记录
      */
     private async createTestRecord(task: DistributedTask, result: TaskExecutionResult): Promise<void> {
         try {
+            // 保存日志到文件
+            const logFileName = await this.saveTaskLogsToFile(task);
+
             // 读取现有测试记录
             let testRecords: TestRecord[] = [];
             try {
@@ -314,7 +364,8 @@ export class DistributedTaskManager {
                 perfcatChartUrl: result.perfcatUrl ? `${result.perfcatUrl}&viewType=chart` : undefined,
                 exitCode: result.exitCode,
                 reportFile: result.reportPath,
-                errorMessage: result.error
+                errorMessage: result.error,
+                logFile: logFileName  // 保存日志文件名
             };
 
             // 添加到记录列表

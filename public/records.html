@@ -233,11 +233,22 @@
         .action-btns {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .btn-small {
             padding: 6px 12px;
             font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-download {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #38a169;
         }
 
         .empty-state {
@@ -492,6 +503,155 @@
         .toast.error {
             border-left: 4px solid #f56565;
         }
+
+        /* 日志预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #718096;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .log-preview {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e2e8f0;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-preview::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-preview::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        .log-preview::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+
+        .log-preview::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+
+        .log-line {
+            margin: 2px 0;
+        }
+
+        .log-info {
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #4a5568;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .log-error {
+            text-align: center;
+            padding: 40px;
+            color: #e53e3e;
+        }
     </style>
 </head>
 <body>
@@ -561,6 +721,7 @@
                             <th>开始时间</th>
                             <th>耗时</th>
                             <th>Perfcat链接</th>
+                            <th>日志</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -580,6 +741,19 @@
                 </svg>
                 <h3>暂无测试记录</h3>
                 <p>完成测试后，记录将显示在这里</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 日志预览模态框 -->
+    <div id="logModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 测试日志</h3>
+                <button class="modal-close" onclick="closeLogModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="logModalBody">
+                <div class="log-loading">加载日志中...</div>
             </div>
         </div>
     </div>
@@ -701,12 +875,25 @@
                 }
                 tr.appendChild(perfcatTd);
 
+                // 日志
+                const logTd = document.createElement('td');
+                const hasLog = record.logFile;
+                if (hasLog) {
+                    logTd.innerHTML = `
+                        <div class="action-btns">
+                            <button onclick="previewLog('${record.id}')" class="btn btn-secondary btn-small" title="预览日志">👁️ 预览</button>
+                            <button onclick="downloadLog('${record.id}')" class="btn btn-download btn-small" title="下载日志">📥 下载</button>
+                        </div>
+                    `;
+                } else {
+                    logTd.innerHTML = '<span style="color: #a0aec0; font-size: 12px;">无日志</span>';
+                }
+                tr.appendChild(logTd);
+
                 // 操作
                 const actionTd = document.createElement('td');
                 actionTd.innerHTML = `
-                    <div class="action-btns">
-                        <button onclick="deleteRecord('${record.id}')" class="btn btn-danger btn-small">删除</button>
-                    </div>
+                    <button onclick="deleteRecord('${record.id}')" class="btn btn-danger btn-small">删除</button>
                 `;
                 tr.appendChild(actionTd);
 
@@ -719,7 +906,7 @@
                     chartTr.id = `chart-row-${record.id}`;
 
                     const chartTd = document.createElement('td');
-                    chartTd.colSpan = 9;
+                    chartTd.colSpan = 10;
                     chartTd.className = 'chart-cell';
 
                     // 如果有报告文件，显示加载提示（无论成功失败都尝试加载）
@@ -1033,6 +1220,101 @@
             } catch (error) {
                 console.error('Failed to clear records:', error);
                 showToast('清空失败', 'error');
+            }
+        }
+
+        // 预览日志
+        async function previewLog(recordId) {
+            const modal = document.getElementById('logModal');
+            const modalBody = document.getElementById('logModalBody');
+
+            // 显示模态框和加载状态
+            modal.classList.add('show');
+            modalBody.innerHTML = '<div class="log-loading">加载日志中...</div>';
+
+            try {
+                // 获取测试记录信息
+                const recordResponse = await fetch(`/api/test-records/${recordId}`);
+                if (!recordResponse.ok) {
+                    throw new Error('获取测试记录失败');
+                }
+                const record = await recordResponse.json();
+
+                // 获取日志内容
+                const logsResponse = await fetch(`/api/test-records/${recordId}/logs`);
+                if (!logsResponse.ok) {
+                    throw new Error('获取日志失败');
+                }
+                const logsData = await logsResponse.json();
+
+                // 渲染日志内容
+                if (logsData.logs && logsData.logs.length > 0) {
+                    const logLines = logsData.logs.map(line =>
+                        `<div class="log-line">${escapeHtml(line)}</div>`
+                    ).join('');
+
+                    modalBody.innerHTML = `
+                        <div class="log-info">
+                            <div>
+                                <strong>${escapeHtml(record.name)}</strong>
+                                <span style="margin-left: 12px; color: #718096;">共 ${logsData.logs.length} 行</span>
+                            </div>
+                            <button onclick="downloadLog('${recordId}')" class="btn btn-download btn-small">
+                                📥 下载完整日志
+                            </button>
+                        </div>
+                        <div class="log-preview">${logLines}</div>
+                    `;
+                } else {
+                    modalBody.innerHTML = `
+                        <div class="log-error">
+                            😔 ${logsData.message || '没有可用的日志'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Failed to preview log:', error);
+                modalBody.innerHTML = `
+                    <div class="log-error">
+                        ❌ 加载日志失败<br>
+                        <span style="font-size: 12px;">${error.message}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // 关闭日志模态框
+        function closeLogModal() {
+            const modal = document.getElementById('logModal');
+            modal.classList.remove('show');
+        }
+
+        // 点击模态框背景关闭
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('logModal');
+            if (event.target === modal) {
+                closeLogModal();
+            }
+        });
+
+        // ESC键关闭模态框
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeLogModal();
+            }
+        });
+
+        // 下载日志文件
+        async function downloadLog(recordId) {
+            try {
+                // 直接使用浏览器下载
+                const downloadUrl = `/api/test-records/${recordId}/download-log`;
+                window.location.href = downloadUrl;
+
+                showToast('开始下载日志...', 'success');
+            } catch (error) {
+                console.error('Failed to download log:', error);
+                showToast('下载日志失败', 'error');
             }
         }
 
