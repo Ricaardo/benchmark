@@ -1,0 +1,483 @@
+#!/usr/bin/env node
+
+/**
+ * ################################################################################
+ * 🚀 Benchmark 统一部署脚本
+ * 功能: 跨平台一键部署（Windows/Linux/macOS）
+ * 支持: 调试/单机/分布式/本地/生产等所有部署场景
+ * ################################################################################
+ */
+
+const { execSync, spawn } = require('child_process');
+const fs = require('fs');
+const path = require('path');
+const readline = require('readline');
+
+// ==================== 颜色定义 ====================
+const colors = {
+  reset: '\x1b[0m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m',
+  magenta: '\x1b[35m'
+};
+
+// Windows 平台禁用颜色
+if (process.platform === 'win32' && !process.env.FORCE_COLOR) {
+  Object.keys(colors).forEach(key => colors[key] = '');
+}
+
+// ==================== 工具函数 ====================
+function print(msg, color = 'reset') {
+  console.log(`${colors[color]}${msg}${colors.reset}`);
+}
+
+function printHeader(msg) {
+  console.log('');
+  print('════════════════════════════════════════', 'cyan');
+  print(msg, 'cyan');
+  print('════════════════════════════════════════', 'cyan');
+  console.log('');
+}
+
+function printSuccess(msg) {
+  print(`✅ ${msg}`, 'green');
+}
+
+function printError(msg) {
+  print(`❌ ${msg}`, 'red');
+}
+
+function printWarning(msg) {
+  print(`⚠️  ${msg}`, 'yellow');
+}
+
+function printInfo(msg) {
+  print(`ℹ️  ${msg}`, 'blue');
+}
+
+function printStep(msg) {
+  print(`➤ ${msg}`, 'cyan');
+}
+
+function printBanner() {
+  console.clear();
+  console.log('');
+  print('╔════════════════════════════════════════════════════════╗', 'cyan');
+  print('║                                                        ║', 'cyan');
+  print('║     🚀 Benchmark 统一部署脚本                          ║', 'cyan');
+  print('║                                                        ║', 'cyan');
+  print('╚════════════════════════════════════════════════════════╝', 'cyan');
+  console.log('');
+}
+
+// 创建readline接口
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+function question(query) {
+  return new Promise(resolve => rl.question(query, resolve));
+}
+
+// ==================== 环境检测 ====================
+function detectOS() {
+  const platform = process.platform;
+  const osMap = {
+    'win32': 'Windows',
+    'darwin': 'macOS',
+    'linux': 'Linux'
+  };
+  return osMap[platform] || 'Unknown';
+}
+
+function checkNode() {
+  printStep('检查 Node.js 环境...');
+
+  const nodeVersion = process.version.substring(1); // 移除 'v'
+  const majorVersion = parseInt(nodeVersion.split('.')[0]);
+
+  if (majorVersion < 18) {
+    printError(`Node.js 版本过低: v${nodeVersion} (需要 >= v18.0.0)`);
+    process.exit(1);
+  }
+
+  printSuccess(`Node.js v${nodeVersion}`);
+
+  try {
+    const npmVersion = execSync('npm -v', { encoding: 'utf-8' }).trim();
+    printSuccess(`npm v${npmVersion}`);
+  } catch (e) {
+    printError('npm 未安装');
+    process.exit(1);
+  }
+}
+
+async function checkPort(port = 3000) {
+  printStep(`检查端口 ${port} 是否可用...`);
+
+  const net = require('net');
+  return new Promise((resolve) => {
+    const tester = net.createServer()
+      .once('error', async (err) => {
+        if (err.code === 'EADDRINUSE') {
+          printWarning(`端口 ${port} 已被占用`);
+          console.log('');
+          console.log('请选择操作:');
+          console.log('  1) 终止占用端口的进程');
+          console.log('  2) 取消部署');
+          console.log('');
+
+          const choice = await question('请输入选项 [1/2]: ');
+
+          if (choice === '1') {
+            printStep('终止占用进程...');
+            try {
+              if (process.platform === 'win32') {
+                execSync(`for /f "tokens=5" %a in ('netstat -ano ^| findstr :${port}') do taskkill /F /PID %a`, { shell: 'cmd' });
+              } else {
+                execSync(`lsof -ti:${port} | xargs kill -9`);
+              }
+              printSuccess('端口已释放');
+              resolve(true);
+            } catch (e) {
+              printWarning('释放端口失败，但将继续部署');
+              resolve(true);
+            }
+          } else {
+            printInfo('部署已取消');
+            process.exit(0);
+          }
+        } else {
+          resolve(true);
+        }
+      })
+      .once('listening', () => {
+        tester.close();
+        printSuccess(`端口 ${port} 可用`);
+        resolve(true);
+      })
+      .listen(port);
+  });
+}
+
+// ==================== 部署模式选择 ====================
+async function selectDeployMode() {
+  printHeader('选择部署模式');
+
+  console.log('请选择部署模式:');
+  console.log('');
+  console.log('  1) 🔧 调试模式 (开发调试)');
+  console.log('  2) 💻 单机模式 (Master + Worker 同机)');
+  console.log('  3) 🌐 分布式 - Master (主控服务器)');
+  console.log('  4) ⚡ 分布式 - Worker (执行节点)');
+  console.log('  5) 🚀 生产模式 (使用 PM2)');
+  console.log('  6) 🐳 Docker 模式');
+  console.log('  7) 🛑 停止所有服务');
+  console.log('  8) 取消');
+  console.log('');
+
+  const choice = await question('请输入选项 [1-8]: ');
+
+  switch (choice) {
+    case '1': return 'debug';
+    case '2': return 'standalone';
+    case '3': return 'master';
+    case '4': return 'worker';
+    case '5': return 'production';
+    case '6': return 'docker';
+    case '7': return 'stop';
+    case '8':
+      printInfo('已取消');
+      process.exit(0);
+    default:
+      printError('无效选项');
+      return selectDeployMode();
+  }
+}
+
+// ==================== 依赖安装 ====================
+function installDependencies() {
+  printHeader('安装依赖');
+
+  if (!fs.existsSync('node_modules')) {
+    printStep('安装 npm 依赖...');
+    execSync('npm install', { stdio: 'inherit' });
+    printSuccess('依赖安装完成');
+  } else {
+    printInfo('依赖已安装');
+  }
+}
+
+function buildProject() {
+  printHeader('构建项目');
+
+  printStep('编译 TypeScript...');
+  execSync('npm run build', { stdio: 'inherit' });
+  printSuccess('构建完成');
+}
+
+// ==================== 启动服务 ====================
+async function startDebugMode() {
+  printHeader('启动调试模式');
+
+  const port = (await question('Web 服务端口 [默认: 3000]: ')) || '3000';
+
+  printInfo('调试模式将在前台运行,按 Ctrl+C 停止');
+  console.log('');
+
+  const env = { ...process.env, PORT: port };
+  spawn('npm', ['run', 'dev'], { stdio: 'inherit', env, shell: true });
+}
+
+async function startStandaloneMode() {
+  printHeader('启动单机模式');
+
+  const port = (await question('Web 服务端口 [默认: 3000]: ')) || '3000';
+
+  printInfo('单机模式: Master 和 Worker 将在本机运行');
+  console.log('');
+
+  // 启动 Master
+  printStep('启动 Master...');
+  const masterEnv = { ...process.env, PORT: port };
+  const master = spawn('npm', ['start'], {
+    stdio: 'inherit',
+    env: masterEnv,
+    shell: true,
+    detached: true
+  });
+
+  // 等待 Master 启动
+  await new Promise(resolve => setTimeout(resolve, 5000));
+
+  // 启动 Worker
+  printStep('启动 Worker...');
+  const workerEnv = {
+    ...process.env,
+    MASTER_URL: `http://localhost:${port}`,
+    WORKER_NAME: `Worker-${require('os').hostname()}`,
+    PERFORMANCE_TIER: 'medium'
+  };
+
+  const worker = spawn('npx', ['tsx', 'server/worker-client.ts'], {
+    stdio: 'inherit',
+    env: workerEnv,
+    shell: true,
+    detached: true
+  });
+
+  console.log('');
+  printSuccess('单机模式启动成功！');
+  print(`📡 访问地址: http://localhost:${port}`, 'cyan');
+}
+
+async function startMasterMode() {
+  printHeader('启动 Master 模式');
+
+  // 调用现有的 standalone-deploy 脚本
+  const scriptExt = process.platform === 'win32' ? 'bat' : 'sh';
+  const scriptPath = path.join(__dirname, 'scripts', `standalone-deploy.${scriptExt}`);
+
+  if (fs.existsSync(scriptPath)) {
+    if (process.platform !== 'win32') {
+      execSync(`chmod +x "${scriptPath}"`);
+    }
+
+    const cmd = process.platform === 'win32' ? scriptPath : `bash "${scriptPath}"`;
+    spawn(cmd, [], { stdio: 'inherit', shell: true });
+  } else {
+    printError('未找到部署脚本');
+  }
+}
+
+async function startWorkerMode() {
+  printHeader('启动 Worker 模式');
+
+  const masterUrl = await question('Master URL (例如: http://192.168.1.100:3000): ');
+  const workerName = await question(`Worker 名称 [默认: Worker-${require('os').hostname()}]: `) || `Worker-${require('os').hostname()}`;
+
+  console.log('');
+  console.log('性能等级:');
+  console.log('  1) high   - 高配 (16核+, 32GB+)');
+  console.log('  2) medium - 中配 (4-8核, 8-16GB)');
+  console.log('  3) low    - 低配 (2-4核, 4-8GB)');
+  console.log('');
+
+  const perfChoice = await question('请选择 [1-3]: ');
+  const perfMap = { '1': 'high', '2': 'medium', '3': 'low' };
+  const perfTier = perfMap[perfChoice] || 'medium';
+
+  const env = {
+    ...process.env,
+    MASTER_URL: masterUrl,
+    WORKER_NAME: workerName,
+    PERFORMANCE_TIER: perfTier
+  };
+
+  printStep('启动 Worker...');
+  spawn('npx', ['tsx', 'server/worker-client.ts'], {
+    stdio: 'inherit',
+    env,
+    shell: true
+  });
+}
+
+async function startProductionMode() {
+  printHeader('生产模式 (PM2)');
+
+  // 检查 PM2
+  try {
+    execSync('pm2 -v', { stdio: 'ignore' });
+  } catch (e) {
+    printWarning('PM2 未安装');
+    const install = await question('是否安装 PM2? [y/n]: ');
+    if (install.toLowerCase() === 'y') {
+      printStep('安装 PM2...');
+      execSync('npm install -g pm2', { stdio: 'inherit' });
+    } else {
+      printInfo('已取消');
+      return;
+    }
+  }
+
+  printStep('使用 PM2 启动...');
+  execSync('npm run pm2:start', { stdio: 'inherit' });
+  printSuccess('服务已启动');
+
+  console.log('');
+  print('管理命令:', 'cyan');
+  print('  pm2 status       - 查看状态', 'yellow');
+  print('  pm2 logs         - 查看日志', 'yellow');
+  print('  pm2 restart all  - 重启服务', 'yellow');
+  print('  pm2 stop all     - 停止服务', 'yellow');
+}
+
+async function startDockerMode() {
+  printHeader('Docker 模式');
+
+  try {
+    execSync('docker -v', { stdio: 'ignore' });
+  } catch (e) {
+    printError('Docker 未安装');
+    return;
+  }
+
+  console.log('请选择:');
+  console.log('  1) 使用 Docker');
+  console.log('  2) 使用 Docker Compose');
+  console.log('');
+
+  const choice = await question('请选择 [1/2]: ');
+
+  if (choice === '1') {
+    printStep('构建 Docker 镜像...');
+    execSync('npm run docker:build', { stdio: 'inherit' });
+    printStep('启动容器...');
+    execSync('npm run docker:run', { stdio: 'inherit' });
+  } else if (choice === '2') {
+    printStep('使用 Docker Compose 启动...');
+    execSync('npm run compose:up', { stdio: 'inherit' });
+  }
+
+  printSuccess('Docker 容器已启动');
+}
+
+async function stopAllServices() {
+  printHeader('停止所有服务');
+
+  printStep('停止 PM2 服务...');
+  try {
+    execSync('pm2 stop all', { stdio: 'inherit' });
+    printSuccess('PM2 服务已停止');
+  } catch (e) {
+    printWarning('未找到 PM2 服务');
+  }
+
+  printStep('停止 Docker 容器...');
+  try {
+    execSync('npm run compose:down', { stdio: 'ignore' });
+    execSync('npm run docker:stop', { stdio: 'ignore' });
+    printSuccess('Docker 容器已停止');
+  } catch (e) {
+    printWarning('未找到 Docker 容器');
+  }
+
+  printStep('停止端口 3000 的进程...');
+  try {
+    if (process.platform === 'win32') {
+      execSync('for /f "tokens=5" %a in (\'netstat -ano ^| findstr :3000\') do taskkill /F /PID %a', { shell: 'cmd', stdio: 'ignore' });
+    } else {
+      execSync('lsof -ti:3000 | xargs kill -9', { stdio: 'ignore' });
+    }
+    printSuccess('端口进程已停止');
+  } catch (e) {
+    printWarning('未找到运行中的进程');
+  }
+
+  printSuccess('所有服务已停止');
+}
+
+// ==================== 主流程 ====================
+async function main() {
+  try {
+    printBanner();
+
+    // 环境检测
+    printHeader('环境检测');
+    const osName = detectOS();
+    printInfo(`操作系统: ${osName}`);
+    checkNode();
+    await checkPort();
+
+    // 选择部署模式
+    const mode = await selectDeployMode();
+
+    // 根据模式执行
+    if (mode === 'stop') {
+      await stopAllServices();
+      rl.close();
+      return;
+    }
+
+    // 安装依赖和构建(调试模式除外)
+    if (mode !== 'debug') {
+      installDependencies();
+      buildProject();
+    }
+
+    // 启动对应模式
+    switch (mode) {
+      case 'debug':
+        await startDebugMode();
+        break;
+      case 'standalone':
+        await startStandaloneMode();
+        break;
+      case 'master':
+        await startMasterMode();
+        break;
+      case 'worker':
+        await startWorkerMode();
+        break;
+      case 'production':
+        await startProductionMode();
+        break;
+      case 'docker':
+        await startDockerMode();
+        break;
+    }
+
+    rl.close();
+  } catch (error) {
+    printError(`错误: ${error.message}`);
+    rl.close();
+    process.exit(1);
+  }
+}
+
+// 执行主流程
+main();

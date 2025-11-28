@@ -32,10 +32,6 @@ class BatchDispatcher {
         batchControls.style.cssText = 'display: flex; gap: 10px; align-items: center; margin-left: 20px;';
 
         batchControls.innerHTML = `
-            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                <input type="checkbox" id="select-all-cases" style="cursor: pointer;">
-                <span>全选</span>
-            </label>
             <button class="btn btn-primary" id="batch-dispatch-btn" style="display: none;">
                 <span>批量分发</span>
                 <span id="batch-count"></span>
@@ -45,10 +41,7 @@ class BatchDispatcher {
 
         toolbar.appendChild(batchControls);
 
-        // 绑定事件
-        document.getElementById('select-all-cases').addEventListener('change', (e) => {
-            this.toggleSelectAll(e.target.checked);
-        });
+        // 绑定事件（全选复选框已移除）
 
         document.getElementById('batch-dispatch-btn').addEventListener('click', () => {
             this.showBatchDispatchModal();
@@ -134,7 +127,6 @@ class BatchDispatcher {
     updateBatchButton() {
         const btn = document.getElementById('batch-dispatch-btn');
         const count = document.getElementById('batch-count');
-        const selectAll = document.getElementById('select-all-cases');
 
         if (this.selectedCases.size > 0) {
             btn.style.display = 'block';
@@ -143,13 +135,7 @@ class BatchDispatcher {
             btn.style.display = 'none';
         }
 
-        // 更新全选状态
-        const checkboxes = document.querySelectorAll('.case-checkbox');
-        const allChecked = checkboxes.length > 0 &&
-                          Array.from(checkboxes).every(cb => cb.checked);
-        if (selectAll) {
-            selectAll.checked = allChecked;
-        }
+        // 全选复选框已移除，不再更新全选状态
     }
 
     /**

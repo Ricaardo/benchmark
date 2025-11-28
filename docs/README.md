@@ -1,84 +1,61 @@
-# 文档目录
+# 📚 Benchmark 文档中心
 
-本目录包含平台的详细技术文档。
+欢迎来到 Benchmark 性能测试系统的文档中心。
 
-## 文档结构
+## 🚀 快速开始
 
-### 核心文档（根目录）
+- [README.md](../README.md) - 项目介绍和快速上手
+- [CHANGELOG.md](../CHANGELOG.md) - 版本更新日志
 
-- [README.md](../README.md) - 项目概述和快速开始
-- [DEPLOYMENT.md](../DEPLOYMENT.md) - 完整部署指南
-- [USAGE.md](../USAGE.md) - 详细使用说明
+## 📖 文档分类
 
-### 分布式系统
+### 🎯 部署文档 (deployment/)
 
-- [DISTRIBUTED_DEPLOYMENT.md](../DISTRIBUTED_DEPLOYMENT.md) - 分布式部署方案
-- [DISTRIBUTED_ARCHITECTURE.md](../DISTRIBUTED_ARCHITECTURE.md) - 分布式架构设计
-- [WORKER_SELECTION_STRATEGY.md](../WORKER_SELECTION_STRATEGY.md) - Worker 选择策略
+完整的部署指南，涵盖各种部署场景：
 
-### 功能指南
+- [DEPLOYMENT.md](deployment/DEPLOYMENT.md) - 基础部署指南
+- [STANDALONE_DEPLOY.md](deployment/STANDALONE_DEPLOY.md) - 单机一键部署
+- [DISTRIBUTED_DEPLOYMENT.md](deployment/DISTRIBUTED_DEPLOYMENT.md) - 分布式部署
+- [DISTRIBUTED_ARCHITECTURE.md](deployment/DISTRIBUTED_ARCHITECTURE.md) - 分布式架构详解
+- [WORKER_CONCURRENCY.md](deployment/WORKER_CONCURRENCY.md) - Worker 并发配置
+- [WORKER_SELECTION_STRATEGY.md](deployment/WORKER_SELECTION_STRATEGY.md) - Worker 选择策略
+- [WORKER_TROUBLESHOOTING.md](deployment/WORKER_TROUBLESHOOTING.md) - Worker 故障排查
 
-- [USAGE_GUIDE.md](../USAGE_GUIDE.md) - Per-URL 配置指南
-- [TEST_RECORDS_GUIDE.md](../TEST_RECORDS_GUIDE.md) - 测试记录管理
-- [PRESET_SYSTEM_GUIDE.md](../PRESET_SYSTEM_GUIDE.md) - 预设系统使用
-- [CONFIG_PRESETS_GUIDE.md](../CONFIG_PRESETS_GUIDE.md) - 配置预设指南
-- [BILIBILI_LIVE_PRESETS.md](../BILIBILI_LIVE_PRESETS.md) - B站直播测试预设
+### 📘 使用指南 (guides/)
 
-### Perfcat 集成
+功能使用和配置指南：
 
-- [PERFCAT_INTEGRATION.md](../PERFCAT_INTEGRATION.md) - Perfcat 集成说明
-- [PERFCAT_SETUP_GUIDE.md](../PERFCAT_SETUP_GUIDE.md) - Perfcat 配置教程
-- [DATA_VISUALIZATION.md](../DATA_VISUALIZATION.md) - 数据可视化
+- [USAGE_GUIDE.md](guides/USAGE_GUIDE.md) - 完整使用指南
+- [CONFIG_PRESETS_GUIDE.md](guides/CONFIG_PRESETS_GUIDE.md) - 配置预设指南
+- [PRESET_SYSTEM_GUIDE.md](guides/PRESET_SYSTEM_GUIDE.md) - 预设系统详解
+- [BILIBILI_LIVE_PRESETS.md](guides/BILIBILI_LIVE_PRESETS.md) - B站直播预设配置
+- [TROUBLESHOOTING.md](guides/TROUBLESHOOTING.md) - 常见问题排查
 
-### 其他
+### 📑 技术参考 (reference/)
 
-- [TROUBLESHOOTING.md](../TROUBLESHOOTING.md) - 故障排查
-- [CHANGELOG.md](../CHANGELOG.md) - 更新日志
+技术集成和高级功能参考：
 
-## 技术参考（本目录）
+- [PERFCAT_INTEGRATION.md](reference/PERFCAT_INTEGRATION.md) - PerfCat 性能分析集成
+- [PERFCAT_SETUP_GUIDE.md](reference/PERFCAT_SETUP_GUIDE.md) - PerfCat 配置指南
+- [TEST_RECORDS_GUIDE.md](reference/TEST_RECORDS_GUIDE.md) - 测试记录系统
+- [DATA_VISUALIZATION.md](reference/DATA_VISUALIZATION.md) - 数据可视化
+- [SEARCH_FEATURE.md](reference/SEARCH_FEATURE.md) - 搜索功能
 
-### introduction.mdx
-平台介绍和概述
+### 🔧 SDK 和 API 参考
 
-### benchmark-sdk-reference/
-Benchmark SDK 技术参考
+- [benchmark-sdk-reference/](benchmark-sdk-reference/) - Benchmark SDK 完整参考
+- [config-reference/](config-reference/) - 配置参数参考
+- [perfcat-reference/](perfcat-reference/) - PerfCat API 参考
 
-### config-reference/
-配置参数详细说明
+## 🆕 最新更新
 
-### perfcat-reference/
-Perfcat 集成技术参考
+- [SELECT_ALL_FIX.md](SELECT_ALL_FIX.md) - 全选功能修复说明
 
-## 快速导航
+## 💡 贡献文档
 
-### 我想...
+欢迎为文档做出贡献！请确保：
 
-**开始使用**
-→ [README.md](../README.md) → [USAGE.md](../USAGE.md)
-
-**部署到生产环境**
-→ [DEPLOYMENT.md](../DEPLOYMENT.md)
-
-**配置分布式测试**
-→ [DISTRIBUTED_DEPLOYMENT.md](../DISTRIBUTED_DEPLOYMENT.md)
-
-**批量运行测试**
-→ [USAGE.md - 批量测试](../USAGE.md#批量测试)
-
-**集成 Perfcat**
-→ [PERFCAT_SETUP_GUIDE.md](../PERFCAT_SETUP_GUIDE.md)
-
-**查看测试历史**
-→ [TEST_RECORDS_GUIDE.md](../TEST_RECORDS_GUIDE.md)
-
-**排查问题**
-→ [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
-
-## 文档贡献
-
-欢迎改进文档！提交 PR 时请确保：
-
-1. 使用清晰的标题和结构
-2. 提供代码示例
-3. 更新相关的交叉引用
-4. 检查链接有效性
+1. 文档清晰易懂
+2. 包含实际示例
+3. 保持格式一致
+4. 更新此索引文件

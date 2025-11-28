@@ -24,26 +24,58 @@
 - **Cookie 管理** - 自动 Cookie 验证和用户信息展示
 - **自定义 Hooks** - 支持页面加载前后自定义脚本
 
-## 快速开始
+## 🚀 快速开始
 
-### 安装依赖
+### 一键部署 (推荐)
+
+使用统一部署脚本,支持 Windows/Linux/macOS:
+
+```bash
+node deploy
+```
+
+脚本会引导你选择部署模式:
+
+- 🔧 调试模式 (开发调试)
+- 💻 单机模式 (Master + Worker 同机)
+- 🌐 分布式 - Master (主控服务器)
+- ⚡ 分布式 - Worker (执行节点)
+- 🚀 生产模式 (使用 PM2)
+- 🐳 Docker 模式
+
+### 本地开发
 
 ```bash
 npm install
+npm run dev
 ```
 
-### 本地运行
+访问 `http://localhost:3000` 即可使用。
+
+### 其他部署方式
 
 ```bash
-# 开发模式（端口 3000）
-npm start
+# 同机部署 (Master + Worker)
+npm run deploy:both           # 专用脚本,推荐!
+npm run deploy:standalone     # 或使用统一脚本
 
-# 生产模式
-npm run build
-npm run serve
+# 仅部署 Master
+npm run deploy:master
+
+# 仅部署 Worker
+npm run deploy:worker
+
+# 生产环境 (PM2)
+npm run pm2:start
+
+# Docker 部署
+npm run compose:up
 ```
 
-访问: http://localhost:3000
+📖 详细部署说明:
+- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - 完整部署指南
+- [SAME_MACHINE_DEPLOY.md](SAME_MACHINE_DEPLOY.md) - 同机部署指南 ⭐
+- [WINDOWS_COMPATIBILITY.md](WINDOWS_COMPATIBILITY.md) - Windows 兼容性说明 🪟
 
 ### 分布式部署
 
@@ -124,26 +156,39 @@ export WORKER_TAGS="linux,testing"
 npx tsx server/worker-client.ts
 ```
 
-## 文档
+## 📚 文档
 
-| 文档 | 说明 |
-|------|------|
-| [README.md](README.md) | 主文档（当前） |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | 部署指南 - 生产环境部署方案 |
-| [USAGE.md](USAGE.md) | 使用指南 - 功能详解和最佳实践 |
-| [DISTRIBUTED_DEPLOYMENT.md](DISTRIBUTED_DEPLOYMENT.md) | 分布式部署 - 三机部署方案 |
-| [DISTRIBUTED_ARCHITECTURE.md](DISTRIBUTED_ARCHITECTURE.md) | 分布式架构 - 技术设计文档 |
-| [WORKER_SELECTION_STRATEGY.md](WORKER_SELECTION_STRATEGY.md) | Worker 选择策略 |
-| [PERFCAT_INTEGRATION.md](PERFCAT_INTEGRATION.md) | Perfcat 集成指南 |
-| [PERFCAT_SETUP_GUIDE.md](PERFCAT_SETUP_GUIDE.md) | Perfcat 设置教程 |
-| [TEST_RECORDS_GUIDE.md](TEST_RECORDS_GUIDE.md) | 测试记录使用指南 |
-| [USAGE_GUIDE.md](USAGE_GUIDE.md) | Per-URL 配置指南 |
-| [PRESET_SYSTEM_GUIDE.md](PRESET_SYSTEM_GUIDE.md) | 预设系统使用指南 |
-| [CONFIG_PRESETS_GUIDE.md](CONFIG_PRESETS_GUIDE.md) | 配置预设指南 |
-| [BILIBILI_LIVE_PRESETS.md](BILIBILI_LIVE_PRESETS.md) | B站直播测试预设 |
-| [DATA_VISUALIZATION.md](DATA_VISUALIZATION.md) | 数据可视化说明 |
-| [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 故障排查 |
-| [CHANGELOG.md](CHANGELOG.md) | 更新日志 |
+### 📖 核心文档
+
+- [快速开始](QUICK_START.md) - 30秒快速部署指南
+- [部署指南](DEPLOYMENT_GUIDE.md) - 完整的部署说明
+- [同机部署](SAME_MACHINE_DEPLOY.md) - Master + Worker 同机部署详解
+- [Windows 兼容性](WINDOWS_COMPATIBILITY.md) - Windows 完整支持说明
+- [项目优化总结](PROJECT_OPTIMIZATION.md) - 部署统一与文档整理总结
+- [清理总结](CLEANUP_SUMMARY.md) - 文档整理与代码清理总结
+- [变更日志](CHANGELOG.md) - 版本更新记录
+
+### 📁 文档中心
+
+所有文档已整理到 [docs/](docs/) 文件夹:
+
+- **部署文档** ([docs/deployment/](docs/deployment/))
+  - 基础部署、单机部署、分布式部署
+  - Worker 配置、并发策略、故障排查
+
+- **使用指南** ([docs/guides/](docs/guides/))
+  - 完整使用指南、配置预设指南
+  - B站直播预设、故障排查
+
+- **技术参考** ([docs/reference/](docs/reference/))
+  - PerfCat 集成、测试记录系统
+  - 数据可视化、搜索功能
+
+📚 快速导航:
+- [docs/00-INDEX.md](docs/00-INDEX.md) - 📋 完整文档索引（按场景查找）⭐
+- [docs/README.md](docs/README.md) - 📖 文档分类目录
+
+🪟 **Windows 用户**: 查看 [WINDOWS_COMPATIBILITY.md](WINDOWS_COMPATIBILITY.md) 了解完整的 Windows 支持
 
 ## 项目结构
 

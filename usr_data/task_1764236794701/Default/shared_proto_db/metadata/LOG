@@ -1,2 +1,3 @@
-2025/11/27-17:46:38.112 1409bc6 Creating DB /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/shared_proto_db/metadata since it was missing.
-2025/11/27-17:46:38.126 1409bc6 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/shared_proto_db/metadata/MANIFEST-000001
+2025/11/27-17:53:52.516 140e976 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/shared_proto_db/metadata/MANIFEST-000001
+2025/11/27-17:53:52.516 140e976 Recovering log #3
+2025/11/27-17:53:52.516 140e976 Reusing old log /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/shared_proto_db/metadata/000003.log 

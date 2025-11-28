@@ -1,2 +1,9 @@
-2025/11/27-17:46:37.657 1409c76 Creating DB /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/Local Storage/leveldb since it was missing.
-2025/11/27-17:46:37.664 1409c76 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/Local Storage/leveldb/MANIFEST-000001
+2025/11/27-17:53:52.347 140e9b6 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/Local Storage/leveldb/MANIFEST-000001
+2025/11/27-17:53:52.350 140e9b6 Recovering log #12
+2025/11/27-17:53:52.350 140e9b6 Level-0 table #15: started
+2025/11/27-17:53:52.356 140e9b6 Level-0 table #15: 16298 bytes OK
+2025/11/27-17:53:52.356 140e9b6 Recovering log #14
+2025/11/27-17:53:52.356 140e9b6 Reusing old log /Users/bilibili/benchmark/usr_data/task_1764236794701/Default/Local Storage/leveldb/000014.log 
+2025/11/27-17:53:52.362 140e9b6 Delete type=0 #12
+2025/11/27-17:53:59.824 140e9b6 Level-0 table #17: started
+2025/11/27-17:53:59.829 140e9b6 Level-0 table #17: 16292 bytes OK

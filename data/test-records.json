@@ -1,5 +1,68 @@
 [
   {
+    "id": "50d4c3fa-5a7d-4b2c-933c-cbf33b8c2cae",
+    "testCaseId": "testcase_1763959806689_k1ul6o0x",
+    "name": "初始化对比测试",
+    "runner": "Initialization",
+    "status": "completed",
+    "startTime": "2025-11-27T09:46:34.654Z",
+    "endTime": "2025-11-27T09:54:11.065Z",
+    "duration": 456411,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-46-35-Initialization-Local.json"
+  },
+  {
+    "id": "0321dd47-094e-4fa9-add6-d1084950d90d",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T09:51:19.444Z",
+    "endTime": "2025-11-27T09:53:03.331Z",
+    "duration": 103887,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-46-35-Runtime-Local.json",
+    "logFile": "task_0321dd47-094e-4fa9-add6-d1084950d90d_1764237183337.log"
+  },
+  {
+    "id": "26846b4e-6c96-4702-9757-46fc84fcf973",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T09:46:34.655Z",
+    "endTime": "2025-11-27T09:53:01.092Z",
+    "duration": 386437,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-46-35-Runtime-Local.json",
+    "logFile": "task_26846b4e-6c96-4702-9757-46fc84fcf973_1764237181107.log"
+  },
+  {
+    "id": "8cfb199f-5367-4ea8-bf79-97ec0773c3aa",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-11-27T09:51:22.527Z",
+    "endTime": "2025-11-27T09:52:48.277Z",
+    "duration": 85750,
+    "exitCode": 0,
+    "reportFile": "2025-11-27T17-51-23-Runtime-Local.json",
+    "logFile": "task_8cfb199f-5367-4ea8-bf79-97ec0773c3aa_1764237168288.log"
+  },
+  {
+    "id": "f52a679e-5775-49d5-8fc1-48dd54a712b3",
+    "testCaseId": "testcase_1763961938343_c9oskuf9",
+    "name": "内存泄露对比测试",
+    "runner": "MemoryLeak",
+    "status": "error",
+    "startTime": "2025-11-27T09:46:34.652Z",
+    "endTime": "2025-11-27T09:50:57.307Z",
+    "duration": 262655,
+    "exitCode": 1,
+    "errorMessage": "Task failed with exit code 1"
+  },
+  {
     "id": "5688b4af-ed4b-4c53-ad1a-c95e86a8417d",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",
