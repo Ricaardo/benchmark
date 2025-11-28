@@ -5,8 +5,12 @@
  * 自动检测操作系统并调用对应的脚本
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+import { execSync } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const platform = process.platform;
 const scriptDir = __dirname;

@@ -166,6 +166,7 @@ npx tsx server/worker-client.ts
 - [Windows 兼容性](WINDOWS_COMPATIBILITY.md) - Windows 完整支持说明
 - [项目优化总结](PROJECT_OPTIMIZATION.md) - 部署统一与文档整理总结
 - [清理总结](CLEANUP_SUMMARY.md) - 文档整理与代码清理总结
+- [ES 模块迁移](ES_MODULE_MIGRATION.md) - ES 模块系统迁移说明
 - [变更日志](CHANGELOG.md) - 版本更新记录
 
 ### 📁 文档中心

@@ -8,10 +8,16 @@
  * ################################################################################
  */
 
-const { execSync, spawn } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+import { execSync, spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import readline from 'readline';
+import { fileURLToPath } from 'url';
+import os from 'os';
+
+// ES module 中的 __dirname 替代
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ==================== 颜色定义 ====================
 const colors = {
@@ -119,9 +125,9 @@ function checkNode() {
 async function checkPort(port = 3000) {
   printStep(`检查端口 ${port} 是否可用...`);
 
-  const net = require('net');
+  const net = await import('net');
   return new Promise((resolve) => {
-    const tester = net.createServer()
+    const tester = net.default.createServer()
       .once('error', async (err) => {
         if (err.code === 'EADDRINUSE') {
           printWarning(`端口 ${port} 已被占用`);
@@ -259,7 +265,7 @@ async function startStandaloneMode() {
   const workerEnv = {
     ...process.env,
     MASTER_URL: `http://localhost:${port}`,
-    WORKER_NAME: `Worker-${require('os').hostname()}`,
+    WORKER_NAME: `Worker-${os.hostname()}`,
     PERFORMANCE_TIER: 'medium'
   };
 
@@ -298,7 +304,7 @@ async function startWorkerMode() {
   printHeader('启动 Worker 模式');
 
   const masterUrl = await question('Master URL (例如: http://192.168.1.100:3000): ');
-  const workerName = await question(`Worker 名称 [默认: Worker-${require('os').hostname()}]: `) || `Worker-${require('os').hostname()}`;
+  const workerName = await question(`Worker 名称 [默认: Worker-${os.hostname()}]: `) || `Worker-${os.hostname()}`;
 
   console.log('');
   console.log('性能等级:');

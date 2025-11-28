@@ -14,7 +14,7 @@
     "deploy:standalone": "node deploy",
     "deploy:master": "node scripts/deploy-master.js",
     "deploy:worker": "node scripts/deploy-worker.js",
-    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
     "pm2:stop": "pm2 stop benchmark-web",
     "pm2:restart": "pm2 restart benchmark-web",
     "pm2:logs": "pm2 logs benchmark-web",
