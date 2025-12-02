@@ -15,6 +15,16 @@ body {
     padding: 20px;
 }
 
+/* 重置所有按钮的默认边框 */
+button {
+    border: none;
+    outline: none;
+}
+
+button:focus {
+    outline: none;
+}
+
 /* ========== 导航栏 ========== */
 .navbar {
     background: #ffffff !important;
@@ -75,13 +85,13 @@ body {
 .card {
     background: #ffffff;
     border: 1px solid #e5e7eb;
-    box-shadow: none;
-    border-radius: 12px;  /* 更明显的圆角 */
-    transition: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    transition: box-shadow 0.2s ease;
 }
 
 .card:hover {
-    box-shadow: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* 卡片标题 */
@@ -97,10 +107,10 @@ body {
 /* ========== 按钮样式 ========== */
 .btn {
     font-weight: 500;
-    transition: background-color 0.15s ease;
-    border: none !important;  /* 去除所有按钮黑边框 */
-    outline: none !important;
-    border-radius: 8px;  /* 圆角按钮 */
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+    border-radius: 8px;
     padding: 8px 16px;
     display: inline-flex;
     align-items: center;
@@ -108,11 +118,19 @@ body {
     gap: 6px;
     text-align: center;
     white-space: nowrap;
+    cursor: pointer;
+    font-size: 0.95rem;
 }
 
 .btn:focus {
-    box-shadow: none !important;
-    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    outline: none;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
 }
 
 .btn-sm {
@@ -131,33 +149,36 @@ body {
 .btn-primary {
     background: #3b82f6;
     color: white;
-    border: none !important;
 }
 
-.btn-primary:hover {
+.btn-primary:hover:not(:disabled) {
     background: #2563eb;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    transform: translateY(-1px);
 }
 
 /* 成功按钮 */
 .btn-success {
     background: #10b981;
     color: white;
-    border: none !important;
 }
 
-.btn-success:hover {
+.btn-success:hover:not(:disabled) {
     background: #059669;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    transform: translateY(-1px);
 }
 
 /* 危险按钮 */
 .btn-danger {
     background: #ef4444;
     color: white;
-    border: none !important;
 }
 
-.btn-danger:hover {
+.btn-danger:hover:not(:disabled) {
     background: #dc2626;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    transform: translateY(-1px);
 }
 
 /* 次要按钮 */
@@ -167,9 +188,10 @@ body {
     border: 1px solid #d1d5db !important;
 }
 
-.btn-secondary:hover {
+.btn-secondary:hover:not(:disabled) {
     background: #e5e7eb;
     color: #111827;
+    border-color: #9ca3af !important;
 }
 
 /* ========== 统计卡片 ========== */

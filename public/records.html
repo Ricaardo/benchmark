@@ -13,6 +13,8 @@
     <link rel="stylesheet" href="/css/navigation.css">
     <link rel="stylesheet" href="/css/animations.css">
     <link rel="stylesheet" href="/css/enhanced-ui.css">
+    <link rel="stylesheet" href="/css/common-components.css">
+    <link rel="stylesheet" href="/css/button-fixes.css">
     <link rel="stylesheet" href="/css/records.css">
 
 </head>
@@ -987,69 +989,28 @@
                 };
             });
 
-            // 构建汇总表格
-            let summaryTableHtml = `
-                <div style="margin-bottom: 32px;">
-                    <h4 style="color: #2d3748; margin-bottom: 16px;">📊 性能指标汇总对比</h4>
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>指标</th>
-            `;
-
-            // 添加URL列
-            if (allMetricsStats.length > 0) {
-                allMetricsStats[0].urlStats.forEach(stat => {
-                    summaryTableHtml += `<th class="stats-url-name">${escapeHtml(stat.description)}</th>`;
-                });
-
-                // 如果有多个URL，添加差距列
-                if (allMetricsStats[0].urlStats.length > 1) {
-                    summaryTableHtml += `<th>相对差距</th>`;
-                }
-            }
-
-            summaryTableHtml += `
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            // 为每个指标添加一行数据
-            allMetricsStats.forEach(({ metric, urlStats }) => {
-                summaryTableHtml += `
-                    <tr>
-                        <td><strong>${metric.label}</strong></td>
-                `;
-
-                // 添加每个URL的均值
-                urlStats.forEach(stat => {
-                    summaryTableHtml += `<td>${stat.avg.toFixed(metric.id === 'cls' ? 4 : 1)}${metric.unit}</td>`;
-                });
-
-                // 如果有多个URL，添加第二个URL相对于第一个URL的差距
-                if (urlStats.length > 1) {
-                    const diff = ((urlStats[1].avg - urlStats[0].avg) / urlStats[0].avg * 100);
-                    const diffFormatted = diff.toFixed(1);
-                    const diffSymbol = diff > 0 ? '+' : '';
-                    const diffClass = diff > 0 ? 'stats-diff-positive' : (diff < 0 ? 'stats-diff-negative' : 'stats-diff-neutral');
-
-                    summaryTableHtml += `<td class="${diffClass}">${diffSymbol}${diffFormatted}%</td>`;
-                }
-
-                summaryTableHtml += `</tr>`;
-            });
-
-            summaryTableHtml += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            // 将汇总表格插入到"性能指标对比"标题之前
-            const trendsSection = container.querySelector('div[style*="margin-top: 32px"]');
+            // 将多页面比较表插入到"性能指标对比"标题之前
+            const trendsSection = container.querySelector('.charts-section');
+            console.log('[Initialization] trendsSection found:', trendsSection);
             if (trendsSection) {
-                trendsSection.insertAdjacentHTML('beforebegin', summaryTableHtml);
+
+                // 添加多页面均值比较表
+                // 检查是否已经插入过比较表（防止重复）
+                const existingComparisonTable = container.querySelector('.multi-page-comparison-table');
+                if (!existingComparisonTable) {
+                    console.log('[Initialization] Checking comparison table function:', typeof createInitializationComparisonTable);
+                    console.log('[Initialization] successfulResults:', successfulResults);
+                    if (typeof createInitializationComparisonTable === 'function') {
+                        const comparisonTableHtml = createInitializationComparisonTable(successfulResults, metrics);
+                        console.log('[Initialization] Generated comparison table HTML length:', comparisonTableHtml.length);
+                        trendsSection.insertAdjacentHTML('beforebegin', comparisonTableHtml);
+                        console.log('[Initialization] Comparison table inserted');
+                    } else {
+                        console.warn('[Initialization] createInitializationComparisonTable function not found');
+                    }
+                } else {
+                    console.log('[Initialization] Comparison table already exists, skipping insertion');
+                }
             }
 
             // 渲染每个指标的对比图表（只处理成功的URL）
@@ -1358,14 +1319,14 @@
 
             // 定义所有指标
             const metrics = [
-                { id: 'cpu-total', key: 'cpu:total', label: 'CPU Total', unit: '%', multiplier: 100 },
-                { id: 'cpu-thread', key: 'cpu:thread', label: 'CPU Thread', unit: '%', multiplier: 100 },
-                { id: 'heap', key: 'heap', label: 'Heap', unit: 'MB', multiplier: 1/1024/1024 },
-                { id: 'dom-nodes', key: 'DOM Nodes', label: 'DOM Nodes', unit: '', multiplier: 1 },
-                { id: 'listeners', key: 'JSEventListeners', label: 'JS Event Listeners', unit: '', multiplier: 1 },
-                { id: 'cpu-script', key: 'cpu:script', label: 'CPU Script', unit: '%', multiplier: 100 },
-                { id: 'cpu-style', key: 'cpu:style', label: 'CPU Style', unit: '%', multiplier: 100 },
-                { id: 'cpu-layout', key: 'cpu:layout', label: 'CPU Layout', unit: '%', multiplier: 100 }
+                { id: 'cpu-total', key: 'cpu:total', label: 'CPU Total', unit: '%', multiplier: 100, decimals: 1 },
+                { id: 'cpu-thread', key: 'cpu:thread', label: 'CPU Thread', unit: '%', multiplier: 100, decimals: 1 },
+                { id: 'heap', key: 'heap', label: 'Heap', unit: 'MB', multiplier: 1/1024/1024, decimals: 1 },
+                { id: 'dom-nodes', key: 'DOM Nodes', label: 'DOM Nodes', unit: '', multiplier: 1, decimals: 0 },
+                { id: 'listeners', key: 'JSEventListeners', label: 'JS Event Listeners', unit: '', multiplier: 1, decimals: 0 },
+                { id: 'cpu-script', key: 'cpu:script', label: 'CPU Script', unit: '%', multiplier: 100, decimals: 1 },
+                { id: 'cpu-style', key: 'cpu:style', label: 'CPU Style', unit: '%', multiplier: 100, decimals: 1 },
+                { id: 'cpu-layout', key: 'cpu:layout', label: 'CPU Layout', unit: '%', multiplier: 100, decimals: 1 }
             ];
 
             // 计算所有指标的统计数据
@@ -1389,69 +1350,38 @@
                 };
             });
 
-            // 构建汇总表格
-            let summaryTableHtml = `
-                <div style="margin-bottom: 32px;">
-                    <h4 style="color: #2d3748; margin-bottom: 16px;">📊 性能指标汇总对比</h4>
-                    <table class="stats-table">
-                        <thead>
-                            <tr>
-                                <th>指标</th>
-            `;
-
-            // 添加URL列
-            if (allMetricsStats.length > 0) {
-                allMetricsStats[0].urlStats.forEach(stat => {
-                    summaryTableHtml += `<th class="stats-url-name">${escapeHtml(stat.description)}</th>`;
-                });
-
-                // 如果有多个URL，添加差距列
-                if (allMetricsStats[0].urlStats.length > 1) {
-                    summaryTableHtml += `<th>相对差距</th>`;
-                }
-            }
-
-            summaryTableHtml += `
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            // 为每个指标添加一行数据
-            allMetricsStats.forEach(({ metric, urlStats }) => {
-                summaryTableHtml += `
-                    <tr>
-                        <td><strong>${metric.label}</strong></td>
-                `;
-
-                // 添加每个URL的均值
-                urlStats.forEach(stat => {
-                    summaryTableHtml += `<td>${stat.avg.toFixed(2)}${metric.unit}</td>`;
-                });
-
-                // 如果有多个URL，添加第二个URL相对于第一个URL的差距
-                if (urlStats.length > 1) {
-                    const diff = ((urlStats[1].avg - urlStats[0].avg) / urlStats[0].avg * 100);
-                    const diffFormatted = diff.toFixed(1);
-                    const diffSymbol = diff > 0 ? '+' : '';
-                    const diffClass = diff > 0 ? 'stats-diff-positive' : (diff < 0 ? 'stats-diff-negative' : 'stats-diff-neutral');
-
-                    summaryTableHtml += `<td class="${diffClass}">${diffSymbol}${diffFormatted}%</td>`;
-                }
-
-                summaryTableHtml += `</tr>`;
-            });
-
-            summaryTableHtml += `
-                        </tbody>
-                    </table>
-                </div>
-            `;
-
-            // 将汇总表格插入到"性能指标趋势图"标题之前
-            const trendsSection = container.querySelector('div[style*="margin-top: 32px"]');
+            // 将多页面比较表插入到"性能指标趋势图"标题之前
+            const trendsSection = container.querySelector('.charts-section');
+            console.log('[Runtime] trendsSection found:', trendsSection);
             if (trendsSection) {
-                trendsSection.insertAdjacentHTML('beforebegin', summaryTableHtml);
+
+                // 添加多页面均值比较表（Runtime）
+                // 检查是否已经插入过比较表（防止重复）
+                const existingComparisonTable = container.querySelector('.multi-page-comparison-table');
+                if (!existingComparisonTable) {
+                    console.log('[Runtime] Checking comparison table function:', typeof createRuntimeComparisonTable);
+                    console.log('[Runtime] urlPrefixes:', urlPrefixes);
+                    if (typeof createRuntimeComparisonTable === 'function') {
+                        // 准备Runtime数据格式供比较表使用
+                        const runtimeResults = urlPrefixes.map((urlInfo, urlIndex) => ({
+                            description: urlInfo.description,
+                            data: allMetricsStats.reduce((acc, { metric, urlStats }) => {
+                                acc[metric.id] = urlStats[urlIndex].avg;
+                                return acc;
+                            }, {})
+                        }));
+
+                        console.log('[Runtime] runtimeResults:', runtimeResults);
+                        const comparisonTableHtml = createRuntimeComparisonTable(runtimeResults, metrics);
+                        console.log('[Runtime] Generated comparison table HTML length:', comparisonTableHtml.length);
+                        trendsSection.insertAdjacentHTML('beforebegin', comparisonTableHtml);
+                        console.log('[Runtime] Comparison table inserted');
+                    } else {
+                        console.warn('[Runtime] createRuntimeComparisonTable function not found');
+                    }
+                } else {
+                    console.log('[Runtime] Comparison table already exists, skipping insertion');
+                }
             }
 
             // 渲染各个指标的图表
@@ -1649,5 +1579,9 @@
             }
         });
     </script>
+    <!-- UI工具库 -->
+    <script src="/js/optimize-records.js"></script>
+    <script src="/js/multi-page-comparison.js"></script>
+    <script src="/js/ui-utils.js"></script>
 </body>
 </html>

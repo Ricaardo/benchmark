@@ -27,7 +27,10 @@
       "Bash(pm2 logs:*)",
       "Bash(pm2 delete:*)",
       "Bash(PORT=3001 npm start)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(for file in workers.html records.html debug.html api.html)",
+      "Bash(do sed -i '' 's|<link rel=\"\"stylesheet\"\" href=\"\"/css/enhanced-ui.css\"\">|<link rel=\"\"stylesheet\"\" href=\"\"/css/enhanced-ui.css\"\">\\n    <link rel=\"\"stylesheet\"\" href=\"\"/css/common-components.css\"\">|' \"$file\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

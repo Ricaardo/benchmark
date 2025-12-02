@@ -145,16 +145,7 @@
     "urlsWithDesc": [
       {
         "url": "https://www.bilibili.com",
-        "description": "首页（默认配置）",
-        "config": {
-          "networkConditions": {
-            "offline": true,
-            "downloadThroughput": 0,
-            "uploadThroughput": 0,
-            "latency": 0,
-            "connectionType": "none"
-          }
-        }
+        "description": "首页（默认配置）"
       },
       {
         "url": "https://www.bilibili.com/video/BV1xx411c7mD",
@@ -176,6 +167,7 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764655609726_l1hhnvu5p",
       "task_1764237499005_q0f1b2i82",
       "task_1764217759441_63c452vi6",
       "task_1764215955776_wp3nbofqh",
@@ -206,6 +198,6 @@
       "task_1763723957301_5yvgw1kcn"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-11-25T04:29:29.857Z"
+    "updatedAt": "2025-12-02T06:06:45.944Z"
   }
 ]

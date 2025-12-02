@@ -1,0 +1,66 @@
+/**
+ * 按钮边框修复
+ * 确保所有按钮都没有黑色边框
+ */
+
+/* 全局按钮重置 - 移除浏览器默认边框 */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+.btn,
+[class*="btn-"] {
+    border: none !important;
+    outline: none !important;
+}
+
+/* 确保focus状态不显示黑边框 */
+button:focus,
+input[type="button"]:focus,
+input[type="submit"]:focus,
+input[type="reset"]:focus,
+.btn:focus,
+[class*="btn-"]:focus {
+    outline: none !important;
+    border: none !important;
+}
+
+/* 次要按钮例外 - 需要灰色边框 */
+.btn-secondary {
+    border: 1px solid #d1d5db !important;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    border: 1px solid #9ca3af !important;
+}
+
+.btn-secondary:focus {
+    border: 1px solid #d1d5db !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 确保主按钮、成功按钮、危险按钮绝对没有边框 */
+.btn-primary,
+.btn-success,
+.btn-danger {
+    border: none !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-success:hover,
+.btn-success:focus,
+.btn-danger:hover,
+.btn-danger:focus {
+    border: none !important;
+}
+
+/* 移除所有可能的系统默认边框 */
+* button,
+* input[type="button"],
+* input[type="submit"],
+* .btn {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}

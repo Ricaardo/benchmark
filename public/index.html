@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/css/navigation.css">
     <link rel="stylesheet" href="/css/animations.css">
     <link rel="stylesheet" href="/css/enhanced-ui.css">
+    <link rel="stylesheet" href="/css/common-components.css">
+    <link rel="stylesheet" href="/css/button-fixes.css">
     <link rel="stylesheet" href="/worker-selector.css">
 
 </head>
@@ -3307,10 +3309,19 @@ console.log('B站弹幕开关完成');`
                         function copyLogs() {
                             const logText = document.getElementById('log-content').textContent;
                             navigator.clipboard.writeText(logText).then(() => {
-                                alert('日志已复制到剪贴板');
+                                // 创建简单的提示
+                                const tip = document.createElement('div');
+                                tip.textContent = '✓ 日志已复制到剪贴板';
+                                tip.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
+                                document.body.appendChild(tip);
+                                setTimeout(() => tip.remove(), 2000);
                             }).catch(err => {
                                 console.error('复制失败:', err);
-                                alert('复制失败，请手动选择并复制');
+                                const tip = document.createElement('div');
+                                tip.textContent = '✕ 复制失败，请手动选择并复制';
+                                tip.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #ef4444; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9999;';
+                                document.body.appendChild(tip);
+                                setTimeout(() => tip.remove(), 3000);
                             });
                         }
                     </scr` + `ipt>
@@ -4302,5 +4313,7 @@ console.log('B站弹幕开关完成');`
             }
         });
     </script>
+    <!-- UI工具库 -->
+    <script src="/js/ui-utils.js"></script>
 </body>
 </html>

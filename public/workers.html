@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/css/navigation.css">
     <link rel="stylesheet" href="/css/animations.css">
     <link rel="stylesheet" href="/css/enhanced-ui.css">
+    <link rel="stylesheet" href="/css/common-components.css">
+    <link rel="stylesheet" href="/css/button-fixes.css">
 </head>
 <body>
     <div class="container">
@@ -74,41 +76,45 @@
     </div>
 
     <!-- 编辑 Worker 模态框 -->
-    <div id="editModal" class="modal-overlay" onclick="closeEditModal(event)">
-        <div class="modal" onclick="event.stopPropagation()">
-            <div class="modal-header">编辑节点配置</div>
+    <div id="editModal" class="modal-overlay" onclick="closeEditModal(event)" style="display: none;">
+        <div class="modal" onclick="event.stopPropagation()" style="max-width: 500px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 1.125rem;">✏️ 编辑节点配置</h3>
+                <button type="button" class="btn-icon-close" onclick="closeEditModal()" style="background: none; border: none; font-size: 24px; color: #9ca3af; cursor: pointer; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 6px; transition: all 0.15s ease;" onmouseover="this.style.background='#f3f4f6'; this.style.color='#374151';" onmouseout="this.style.background='none'; this.style.color='#9ca3af';">×</button>
+            </div>
             <form id="editForm" onsubmit="saveWorkerEdit(event)">
                 <input type="hidden" id="editWorkerId">
 
-                <div class="form-group">
-                    <label class="form-label">节点名称</label>
-                    <input type="text" id="editWorkerName" class="form-input" readonly style="background: #f5f5f5;">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">节点名称</label>
+                    <input type="text" id="editWorkerName" class="form-input" readonly style="background: #f3f4f6; cursor: not-allowed; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%;">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">性能等级</label>
-                    <select id="editPerformanceTier" class="form-select" required>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">性能等级</label>
+                    <select id="editPerformanceTier" class="form-select" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%; font-size: 0.95rem;">
                         <option value="">未设置</option>
-                        <option value="high">🔥 高配节点 (High Performance)</option>
-                        <option value="medium">⚡ 中配节点 (Medium Performance)</option>
-                        <option value="low">💡 低配节点 (Low Performance)</option>
-                        <option value="custom">🔧 自定义节点 (Custom)</option>
+                        <option value="high">🔥 高配</option>
+                        <option value="medium">⚡ 中配</option>
+                        <option value="low">💡 低配</option>
+                        <option value="custom">🔧 自定义</option>
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">机器描述</label>
-                    <input type="text" id="editDescription" class="form-input" placeholder="例如: MacBook Pro M1, 32GB RAM">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">机器描述</label>
+                    <input type="text" id="editDescription" class="form-input" placeholder="例如: MacBook Pro M1, 32GB RAM" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%;">
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">最大并发数</label>
-                    <input type="number" id="editMaxConcurrency" class="form-input" min="1" max="32" placeholder="默认为 CPU 核心数">
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">最大并发数 <span style="color: #9ca3af; font-weight: 400; font-size: 0.875rem;">(1-32)</span></label>
+                    <input type="number" id="editMaxConcurrency" class="form-input" min="1" max="32" placeholder="默认为 CPU 核心数" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%;">
+                    <small style="display: block; margin-top: 6px; color: #6b7280; font-size: 0.875rem;">留空则使用CPU核心数作为默认值</small>
                 </div>
 
-                <div class="form-buttons">
-                    <button type="button" class="btn btn-cancel" onclick="closeEditModal()">取消</button>
-                    <button type="submit" class="btn btn-save">保存</button>
+                <div class="form-buttons" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">💾 保存</button>
                 </div>
             </form>
         </div>
@@ -360,13 +366,17 @@
             document.getElementById('editDescription').value = worker.description || '';
             document.getElementById('editMaxConcurrency').value = worker.maxConcurrency || '';
 
-            document.getElementById('editModal').classList.add('show');
+            const modal = document.getElementById('editModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         // 关闭编辑模态框
         function closeEditModal(event) {
-            if (event && event.target !== event.currentTarget) return;
-            document.getElementById('editModal').classList.remove('show');
+            if (event && event.target !== event.currentTarget && event.type !== 'click') return;
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 200);
         }
 
         // 保存 Worker 编辑
@@ -374,32 +384,34 @@
             event.preventDefault();
 
             const workerId = document.getElementById('editWorkerId').value;
+            const maxConcurrencyValue = document.getElementById('editMaxConcurrency').value;
+
+            // 验证最大并发数
+            if (maxConcurrencyValue && (parseInt(maxConcurrencyValue) < 1 || parseInt(maxConcurrencyValue) > 32)) {
+                Toast.error('最大并发数必须在1到32之间');
+                return;
+            }
+
             const updates = {
                 performanceTier: document.getElementById('editPerformanceTier').value || undefined,
                 description: document.getElementById('editDescription').value || undefined,
-                maxConcurrency: parseInt(document.getElementById('editMaxConcurrency').value) || undefined
+                maxConcurrency: parseInt(maxConcurrencyValue) || undefined
             };
 
             try {
-                console.log('Sending update request:', { workerId, updates });
-
                 const response = await fetch(`/api/workers/${workerId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updates)
                 });
 
-                console.log('Response status:', response.status);
-
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
-                    console.error('Error response:', errorData);
                     const errorMessage = errorData.message || errorData.error || `HTTP ${response.status}`;
                     throw new Error(errorMessage);
                 }
 
                 const result = await response.json();
-                console.log('Worker updated successfully:', result);
 
                 // 关闭模态框
                 closeEditModal();
@@ -407,19 +419,25 @@
                 // 重新加载数据
                 await loadWorkers();
 
-                alert('节点配置更新成功！');
+                Toast.success('节点配置更新成功！');
             } catch (error) {
                 console.error('Error updating worker:', error);
-                console.error('Request details:', { workerId, updates });
-                alert('更新失败: ' + error.message);
+                Toast.error('更新失败: ' + error.message);
             }
         }
 
         // 删除 Worker 节点
         async function deleteWorker(workerId, workerName) {
-            if (!confirm(`确定要删除离线节点 "${workerName}" 吗？\n\n此操作不可撤销。`)) {
-                return;
-            }
+            const confirmed = await Confirm.show({
+                title: '删除离线节点',
+                message: `确定要删除离线节点 "${workerName}" 吗？此操作不可撤销。`,
+                type: 'danger',
+                confirmText: '删除',
+                cancelText: '取消',
+                dangerousAction: true
+            });
+
+            if (!confirmed) return;
 
             try {
                 const response = await fetch(`/api/workers/${workerId}`, {
@@ -432,15 +450,13 @@
                     throw new Error(errorMessage);
                 }
 
-                console.log('Worker deleted:', workerId);
-
                 // 重新加载数据
                 await loadWorkers();
 
-                alert('节点删除成功！');
+                Toast.success('节点删除成功！');
             } catch (error) {
                 console.error('Error deleting worker:', error);
-                alert('删除失败: ' + error.message);
+                Toast.error('删除失败: ' + error.message);
             }
         }
 
@@ -472,5 +488,7 @@
             }
         });
     </script>
+    <!-- UI工具库 -->
+    <script src="/js/ui-utils.js"></script>
 </body>
 </html>

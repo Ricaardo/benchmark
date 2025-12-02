@@ -15,20 +15,29 @@
 
 /* 展开/折叠图标 */
 .expand-icon {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    line-height: 16px;
-    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
     user-select: none;
-    transition: transform 0.2s ease;
+    transition: all 0.2s ease;
     color: var(--color-gray-600, #4b5563);
-    font-size: 12px;
+    font-size: 14px;
+    border-radius: 6px;
+    background: var(--color-gray-50, #f9fafb);
+}
+
+.expand-icon:hover {
+    background: var(--color-gray-200, #e5e7eb);
+    color: var(--color-gray-800, #1f2937);
 }
 
 .expand-icon.expanded {
     transform: rotate(90deg);
+    background: var(--color-primary-50, #eff6ff);
+    color: var(--color-primary-600, #2563eb);
 }
 
 /* ========== 图表展开行 ========== */
