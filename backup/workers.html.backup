@@ -4,52 +4,540 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>节点管理 - Benchmark Web Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- 统一设计系统 -->
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/navigation.css">
-    <link rel="stylesheet" href="/css/animations.css">
-    <link rel="stylesheet" href="/css/enhanced-ui.css">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-value.online { color: #52c41a; }
+        .stat-value.busy { color: #faad14; }
+        .stat-value.offline { color: #ff4d4f; }
+
+        .workers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .worker-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+            transition: all 0.3s;
+        }
+
+        .worker-card:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+
+        .worker-card.online {
+            border-left: 4px solid #52c41a;
+        }
+
+        .worker-card.busy {
+            border-left: 4px solid #faad14;
+        }
+
+        .worker-card.offline {
+            border-left: 4px solid #ff4d4f;
+            opacity: 0.7;
+        }
+
+        .worker-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .worker-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .worker-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .worker-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .worker-status.busy {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .worker-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .worker-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .info-item .icon {
+            width: 16px;
+            text-align: center;
+        }
+
+        .worker-metrics {
+            display: flex;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .metric {
+            flex: 1;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #52c41a, #73d13d);
+            transition: width 0.3s;
+        }
+
+        .progress-fill.warning {
+            background: linear-gradient(90deg, #faad14, #ffc53d);
+        }
+
+        .progress-fill.danger {
+            background: linear-gradient(90deg, #ff4d4f, #ff7875);
+        }
+
+        .worker-task {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f5f7fa;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .task-label {
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .task-name {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+
+        .empty-text {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .worker-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 500;
+        }
+
+        .action-btn.edit {
+            background: #1890ff;
+            color: white;
+        }
+
+        .action-btn.edit:hover {
+            background: #40a9ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+        }
+
+        .action-btn.delete {
+            background: #ff4d4f;
+            color: white;
+        }
+
+        .action-btn.delete:hover {
+            background: #ff7875;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(255, 77, 79, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 6px;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: #1890ff;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
+            border: 1px solid #d9d9d9;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e0e0;
+            border-color: #b3b3b3;
+        }
+
+        .btn-save {
+            background: #1890ff;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #40a9ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .performance-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .performance-badge.high {
+            background: #fff1f0;
+            color: #cf1322;
+        }
+
+        .performance-badge.medium {
+            background: #fffbe6;
+            color: #d48806;
+        }
+
+        .performance-badge.low {
+            background: #e6f7ff;
+            color: #0050b3;
+        }
+
+        .performance-badge.custom {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .refresh-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 56px;
+            height: 56px;
+            background: #1890ff;
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(24,144,255,0.4);
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #40a9ff;
+            transform: scale(1.1);
+        }
+
+        .refresh-btn:active {
+            transform: scale(0.95);
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn.spinning {
+            animation: spin 1s linear infinite;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .back-btn:hover {
+            background: #f5f5f5;
+            border-color: #1890ff;
+            color: #1890ff;
+            box-shadow: 0 2px 8px rgba(24, 144, 255, 0.15);
+            transform: translateX(-2px);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-size: 16px;
+        }
+
+        header {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            margin-bottom: 4px;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .quick-action-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .quick-action-btn:hover {
+            background: white;
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- 全局导航栏 -->
-        <nav class="navbar animate-fade-in-down" id="main-navbar">
-            <a href="/" class="navbar-brand">
-                <span class="navbar-logo">🚀</span>
-                <div>
-                    <h1 class="navbar-title">Benchmark Web Runner</h1>
-                    <p class="navbar-subtitle">用例驱动的性能测试平台</p>
-                </div>
-            </a>
+        <a href="/" class="back-btn">返回主页</a>
 
-            <button class="navbar-toggle" id="navbar-toggle" onclick="toggleMobileMenu()">
-                <span class="navbar-toggle-bar"></span>
-                <span class="navbar-toggle-bar"></span>
-                <span class="navbar-toggle-bar"></span>
-            </button>
-
-            <div class="navbar-menu" id="navbar-menu">
-                <a href="/" class="navbar-item">
-                    <span>📋</span> 用例管理
-                </a>
-                <a href="/records.html" class="navbar-item">
-                    <span>📊</span> 测试记录
-                </a>
-                <a href="/workers.html" class="navbar-item active">
-                    <span>🖥️</span> 节点管理
-                </a>
-                <a href="/api.html" class="navbar-item">
-                    <span>🔑</span> API管理
-                </a>
+        <header>
+            <div class="header-left">
+                <h1>🖥️ 节点管理</h1>
+                <p class="subtitle">实时监控所有 Worker 节点状态</p>
             </div>
-
-            <div class="navbar-actions">
-                <button class="btn btn-primary btn-sm" onclick="loadWorkers()">
-                    <span>🔄</span> 刷新
+            <div class="header-right">
+                <button class="quick-action-btn" onclick="loadWorkers()" title="刷新数据">
+                    <span>🔄</span>
+                    <span>刷新</span>
                 </button>
             </div>
-        </nav>
+        </header>
 
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
@@ -167,19 +655,19 @@
             }
 
             grid.innerHTML = workers.map(worker => `
-                <div class="card ${worker.status}">
+                <div class="worker-card ${worker.status}">
                     <div class="worker-header">
                         <div class="worker-name">
                             ${worker.name}
-                            ${worker.performanceTier ? `<span class="badge ${worker.performanceTier}">${getPerformanceTierName(worker.performanceTier)}</span>` : ''}
+                            ${worker.performanceTier ? `<span class="performance-badge ${worker.performanceTier}">${getPerformanceTierName(worker.performanceTier)}</span>` : ''}
                         </div>
                         <div class="worker-actions">
-                            <button class="btn btn-primary btn-sm" onclick="openEditModal('${worker.id}')" title="编辑节点配置">
+                            <button class="action-btn edit" onclick="openEditModal('${worker.id}')" title="编辑节点配置">
                                 <span>✏️</span>
                                 <span>编辑</span>
                             </button>
                             ${worker.status === 'offline' ? `
-                                <button class="btn btn-danger btn-sm" onclick="deleteWorker('${worker.id}', '${worker.name}')" title="删除离线节点">
+                                <button class="action-btn delete" onclick="deleteWorker('${worker.id}', '${worker.name}')" title="删除离线节点">
                                     <span>🗑️</span>
                                     <span>删除</span>
                                 </button>
@@ -446,31 +934,6 @@
 
         // 启动
         init();
-    </script>
-
-    <!-- 导航栏交互脚本 -->
-    <script>
-        // 移动端菜单切换
-        function toggleMobileMenu() {
-            const toggle = document.getElementById('navbar-toggle');
-            const menu = document.getElementById('navbar-menu');
-            if (toggle && menu) {
-                toggle.classList.toggle('active');
-                menu.classList.toggle('show');
-            }
-        }
-
-        // 导航栏滚动效果
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('main-navbar');
-            if (navbar) {
-                if (window.scrollY > 20) {
-                    navbar.classList.add('navbar-scrolled');
-                } else {
-                    navbar.classList.remove('navbar-scrolled');
-                }
-            }
-        });
     </script>
 </body>
 </html>

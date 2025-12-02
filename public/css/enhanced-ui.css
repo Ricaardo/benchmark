@@ -1,0 +1,652 @@
+/**
+ * 朴素简洁UI样式
+ * 白底设计，无花哨效果，专注内容
+ */
+
+/* ========== 全局样式 ========== */
+
+/* 纯白背景 */
+body {
+    background: #ffffff;
+    padding: 0;
+}
+
+.container {
+    padding: 20px;
+}
+
+/* ========== 导航栏 ========== */
+.navbar {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: none;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* 防止导航栏切换时闪动 */
+.navbar-scrolled {
+    box-shadow: none;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.navbar-title {
+    color: #111827;
+    font-weight: 600;
+}
+
+.navbar-subtitle {
+    color: #6b7280;
+    font-size: 0.875rem;
+}
+
+/* 导航菜单项 */
+.navbar-item {
+    font-weight: 500;
+    color: #4b5563;
+    transition: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.navbar-item:hover {
+    color: #111827;
+    background: #f3f4f6;
+}
+
+.navbar-item.active {
+    color: #111827;
+    background: #e5e7eb;
+    font-weight: 600;
+}
+
+/* 导航栏操作区 */
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ========== 卡片样式 ========== */
+.card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+    border-radius: 12px;  /* 更明显的圆角 */
+    transition: none;
+}
+
+.card:hover {
+    box-shadow: none;
+}
+
+/* 卡片标题 */
+.card h2,
+.card h3 {
+    color: #111827;
+    font-weight: 600;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 12px;
+    margin-bottom: 20px;
+}
+
+/* ========== 按钮样式 ========== */
+.btn {
+    font-weight: 500;
+    transition: background-color 0.15s ease;
+    border: none !important;  /* 去除所有按钮黑边框 */
+    outline: none !important;
+    border-radius: 8px;  /* 圆角按钮 */
+    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.btn:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.875rem;
+    border-radius: 6px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.125rem;
+    border-radius: 10px;
+}
+
+/* 主按钮 */
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    border: none !important;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+/* 成功按钮 */
+.btn-success {
+    background: #10b981;
+    color: white;
+    border: none !important;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* 危险按钮 */
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none !important;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+/* 次要按钮 */
+.btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db !important;
+}
+
+.btn-secondary:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+/* ========== 统计卡片 ========== */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-item {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;  /* 统一圆角 */
+    padding: 20px;
+    transition: none;
+}
+
+.stat-item:hover {
+    box-shadow: none;
+}
+
+.stat-value {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-weight: 400;
+    margin-top: 8px;
+    font-size: 0.875rem;
+}
+
+/* ========== 表格样式 ========== */
+.table {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: none;
+    border-radius: 12px;
+    overflow: hidden;  /* 确保圆角生效 */
+}
+
+.table thead {
+    background: #f9fafb;
+}
+
+.table th {
+    font-weight: 600;
+    color: #374151;
+    text-transform: none;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.table tbody tr {
+    transition: background-color 0.1s ease;
+}
+
+.table tbody tr:hover {
+    background: #f9fafb;
+}
+
+/* ========== 徽章样式 ========== */
+.badge {
+    font-weight: 500;
+    border-radius: 6px;  /* 稍微增加圆角 */
+    padding: 4px 10px;
+    font-size: 0.875rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.badge-primary {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-success {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.badge-danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge-warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* ========== 模态框 ========== */
+.modal {
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;  /* 更大的圆角 */
+    max-height: 90vh;  /* 限制最大高度为视口的90% */
+    overflow-y: auto;  /* 允许垂直滚动 */
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    flex-shrink: 0;  /* 防止头部被压缩 */
+    position: sticky;
+    top: 0;
+    background: #ffffff;
+    z-index: 10;
+}
+
+.modal-header h3 {
+    color: #111827;
+    font-weight: 600;
+}
+
+/* 模态框表单操作按钮 */
+.modal .form-actions {
+    flex-shrink: 0;  /* 防止底部按钮被压缩 */
+    position: sticky;
+    bottom: 0;
+    background: #ffffff;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 16px;
+    margin-top: 24px;
+    z-index: 10;
+}
+
+/* ========== 表单输入 ========== */
+.form-input,
+.form-select,
+.form-textarea {
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    transition: border-color 0.15s ease;
+    border-radius: 8px;  /* 输入框圆角 */
+    padding: 8px 12px;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+    border-color: #3b82f6;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ========== Toast 通知 ========== */
+.toast {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    padding: 12px 16px;
+}
+
+.toast.success {
+    background: #10b981;
+    color: white;
+    border: none;
+}
+
+.toast.error {
+    background: #ef4444;
+    color: white;
+    border: none;
+}
+
+/* ========== 输出面板 ========== */
+.output-panel {
+    background: #1f2937;
+    border: 1px solid #374151;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+/* ========== 进度条 ========== */
+.progress {
+    background: #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: #3b82f6;
+    border-radius: 8px;
+}
+
+/* ========== 滚动条 ========== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f3f4f6;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* ========== 禁用所有动画 ========== */
+.animate-fade-in-up,
+.animate-fade-in-down,
+.animate-slide-in-left,
+.animate-slide-in-right,
+.animate-bounce,
+.animate-pulse,
+.animate-shake,
+.animate-spin {
+    animation: none !important;
+}
+
+/* ========== 工具栏 ========== */
+.toolbar {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.toolbar-left,
+.toolbar-right {
+    gap: 8px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.toolbar-left {
+    flex: 1;
+}
+
+.toolbar-right {
+    flex-shrink: 0;
+}
+
+/* ========== 过滤器 ========== */
+.filters {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+/* ========== 空状态 ========== */
+.empty-state {
+    color: #6b7280;
+}
+
+/* ========== 移除所有不必要的效果 ========== */
+* {
+    -webkit-tap-highlight-color: transparent;
+}
+
+button:focus,
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+}
+
+/* 统一边框颜色 */
+hr {
+    border-color: #e5e7eb;
+}
+
+/* ========== 响应式 ========== */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .stat-value {
+        font-size: 1.875rem;
+    }
+
+    .navbar {
+        position: sticky;
+        top: 0;
+    }
+}
+
+/* ========== 确保导航栏不闪动 ========== */
+.navbar {
+    will-change: auto;
+    transform: none;
+}
+
+.navbar * {
+    will-change: auto;
+}
+
+/* ========== 移除所有过渡效果造成的闪动 ========== */
+.navbar,
+.navbar-item,
+.navbar-menu {
+    transition: none !important;
+}
+
+/* ========== 表单标签 ========== */
+.form-label {
+    color: #374151;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+/* ========== 面包屑 ========== */
+.breadcrumb {
+    color: #6b7280;
+}
+
+.breadcrumb-item {
+    color: #6b7280;
+}
+
+.breadcrumb-item.active {
+    color: #111827;
+}
+
+/* ========== 分页 ========== */
+.pagination {
+    gap: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.page-btn {
+    background: #ffffff;
+    border: 1px solid #d1d5db !important;
+    color: #374151;
+    border-radius: 6px;
+    padding: 6px 12px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af !important;
+}
+
+.page-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6 !important;
+}
+
+.page-btn:disabled {
+    background: #f9fafb;
+    color: #d1d5db;
+}
+
+/* ========== 下拉菜单 ========== */
+.dropdown-menu {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.dropdown-item {
+    color: #374151;
+    padding: 8px 12px;
+}
+
+.dropdown-item:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+/* ========== 标签页 ========== */
+.tabs {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tab-item {
+    color: #6b7280;
+    border: none;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-item:hover {
+    color: #111827;
+    border-bottom-color: #d1d5db;
+}
+
+.tab-item.active {
+    color: #111827;
+    border-bottom-color: #3b82f6;
+    font-weight: 600;
+}
+
+/* ========== 加载状态 ========== */
+.loading {
+    color: #6b7280;
+}
+
+.spinner {
+    border: 2px solid #e5e7eb;
+    border-top-color: #3b82f6;
+}
+
+/* ========== 按钮组 ========== */
+.btn-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.btn-group .btn {
+    border-radius: 0;
+    margin: 0;
+}
+
+.btn-group .btn:first-child {
+    border-top-left-radius: 8px;
+    border-bottom-left-radius: 8px;
+}
+
+.btn-group .btn:last-child {
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.btn-group .btn:not(:last-child) {
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ========== 按钮工具栏（水平排列）========== */
+.btn-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ========== API端点卡片样式优化 ========== */
+.api-endpoint {
+    margin: 15px 0;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    border-left: 4px solid;
+}
+
+/* ========== 网格布局按钮 ========== */
+.grid-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+}

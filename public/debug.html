@@ -1,72 +1,187 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>Debug Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API调试 - Benchmark Web Runner</title>
+
+    <!-- 统一设计系统 -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/animations.css">
+    <link rel="stylesheet" href="/css/enhanced-ui.css">
 </head>
 <body>
-    <h1>测试用例管理调试页面</h1>
-    
-    <h2>1. 测试API连接</h2>
-    <button onclick="testAPI()">测试API</button>
-    <div id="api-result"></div>
-    
-    <h2>2. 测试按钮渲染</h2>
-    <div id="test-buttons"></div>
-    
-    <h2>3. 控制台日志</h2>
-    <div id="console-log" style="background: #f0f0f0; padding: 10px; font-family: monospace; max-height: 300px; overflow: auto;"></div>
-    
+    <div class="container">
+        <!-- 全局导航栏 -->
+        <nav class="navbar animate-fade-in-down" id="main-navbar">
+            <a href="/" class="navbar-brand">
+                <span class="navbar-logo">🚀</span>
+                <div>
+                    <h1 class="navbar-title">Benchmark Web Runner</h1>
+                    <p class="navbar-subtitle">用例驱动的性能测试平台</p>
+                </div>
+            </a>
+
+            <button class="navbar-toggle" id="navbar-toggle" onclick="toggleMobileMenu()">
+                <span class="navbar-toggle-bar"></span>
+                <span class="navbar-toggle-bar"></span>
+                <span class="navbar-toggle-bar"></span>
+            </button>
+
+            <div class="navbar-menu" id="navbar-menu">
+                <a href="/" class="navbar-item">
+                    <span>📋</span> 用例管理
+                </a>
+                <a href="/records.html" class="navbar-item">
+                    <span>📊</span> 测试记录
+                </a>
+                <a href="/workers.html" class="navbar-item">
+                    <span>🖥️</span> 节点管理
+                </a>
+                <a href="/debug.html" class="navbar-item active">
+                    <span>🔍</span> API调试
+                </a>
+            </div>
+        </nav>
+
+        <!-- 调试页面内容 -->
+        <div class="card animate-fade-in-up">
+            <h2>🔍 测试用例管理调试页面</h2>
+
+            <!-- API连接测试 -->
+            <div class="card" style="margin-top: 20px;">
+                <h3>1. 测试API连接</h3>
+                <button class="btn btn-primary" onclick="testAPI()">🧪 测试API</button>
+                <div id="api-result" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- 按钮渲染测试 -->
+            <div class="card" style="margin-top: 20px;">
+                <h3>2. 测试按钮渲染</h3>
+                <div id="test-buttons"></div>
+            </div>
+
+            <!-- 控制台日志 -->
+            <div class="card" style="margin-top: 20px;">
+                <h3>3. 控制台日志</h3>
+                <div class="output-panel" id="console-log" style="min-height: 200px; max-height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const logDiv = document.getElementById('console-log');
+
         function log(msg) {
             const time = new Date().toLocaleTimeString();
-            logDiv.innerHTML += `[${time}] ${msg}<br>`;
+            const logLine = document.createElement('div');
+            logLine.textContent = `[${time}] ${msg}`;
+            logDiv.appendChild(logLine);
+            logDiv.scrollTop = logDiv.scrollHeight;
             console.log(msg);
         }
-        
+
         async function testAPI() {
             log('开始测试API...');
             try {
                 const response = await fetch('/api/testcases');
                 const data = await response.json();
                 log(`✓ API响应成功，获取到 ${data.testCases.length} 个测试用例`);
-                document.getElementById('api-result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-                
+
+                const resultDiv = document.getElementById('api-result');
+                resultDiv.innerHTML = `
+                    <div class="card" style="background: var(--color-gray-50); margin-top: 10px;">
+                        <pre style="margin: 0; white-space: pre-wrap; word-wrap: break-word; font-family: 'Monaco', monospace; font-size: 0.9em;">${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+
                 // 渲染测试按钮
                 renderTestButtons(data.testCases);
             } catch (error) {
                 log(`✗ API调用失败: ${error.message}`);
+                const resultDiv = document.getElementById('api-result');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-error" style="background: var(--color-danger-100); color: var(--color-danger-700); padding: 15px; border-radius: 8px; margin-top: 10px;">
+                        <strong>错误:</strong> ${error.message}
+                    </div>
+                `;
             }
         }
-        
+
         function renderTestButtons(testCases) {
             log('开始渲染按钮...');
             const container = document.getElementById('test-buttons');
-            
+
+            if (testCases.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无测试用例</p>';
+                return;
+            }
+
             const html = testCases.map(tc => {
                 log(`渲染测试用例: ${tc.name} (ID: ${tc.id})`);
                 return `
-                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ccc;">
-                        <strong>${tc.name}</strong> (ID: ${tc.id})
-                        <br>
-                        <button onclick="testClick('${tc.id}', '${tc.name}')">点击测试</button>
+                    <div class="card" style="margin: 10px 0; padding: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>${tc.name}</strong>
+                                <br>
+                                <small class="text-muted">ID: ${tc.id}</small>
+                            </div>
+                            <button class="btn btn-success btn-sm" onclick="testClick('${tc.id}', '${tc.name}')">
+                                ✓ 点击测试
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
-            
+
             container.innerHTML = html;
             log(`✓ 已渲染 ${testCases.length} 个测试按钮`);
         }
-        
+
         function testClick(id, name) {
             log(`✓ 按钮点击成功! ID: ${id}, 名称: ${name}`);
-            alert(`点击成功!\nID: ${id}\n名称: ${name}`);
+            showToast(`点击成功!\nID: ${id}\n名称: ${name}`, 'success');
         }
-        
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; padding: 15px 20px; background: var(--color-success-500); color: white; border-radius: 8px; box-shadow: var(--shadow-lg); animation: slideIn 0.3s;';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // 导航栏交互
+        function toggleMobileMenu() {
+            const toggle = document.getElementById('navbar-toggle');
+            const menu = document.getElementById('navbar-menu');
+            if (toggle && menu) {
+                toggle.classList.toggle('active');
+                menu.classList.toggle('show');
+            }
+        }
+
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('main-navbar');
+            if (navbar) {
+                if (window.scrollY > 20) {
+                    navbar.classList.add('navbar-scrolled');
+                } else {
+                    navbar.classList.remove('navbar-scrolled');
+                }
+            }
+        });
+
         // 页面加载时自动测试
         window.onload = () => {
-            log('页面加载完成，自动测试API...');
+            log('📝 页面加载完成，自动测试API...');
             testAPI();
         };
     </script>

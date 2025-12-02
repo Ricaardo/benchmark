@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Benchmark Web Runner - 用例驱动的性能测试平台">
+    <title>页面标题 - Benchmark Web Runner</title>
+
+    <!-- 统一设计系统 -->
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/navigation.css">
+    <link rel="stylesheet" href="/css/animations.css">
+
+    <!-- 可选: Worker选择器 -->
+    <link rel="stylesheet" href="/worker-selector.css">
+</head>
+<body>
+    <!-- ========== 全局顶部导航栏 ========== -->
+    <div class="container">
+        <nav class="navbar" id="main-navbar">
+            <!-- 品牌区 -->
+            <a href="/" class="navbar-brand">
+                <span class="navbar-logo">🚀</span>
+                <div>
+                    <h1 class="navbar-title">Benchmark Web Runner</h1>
+                    <p class="navbar-subtitle">用例驱动的性能测试平台</p>
+                </div>
+            </a>
+
+            <!-- 移动端菜单切换 -->
+            <button class="navbar-toggle" id="navbar-toggle" onclick="toggleMobileMenu()">
+                <span class="navbar-toggle-bar"></span>
+                <span class="navbar-toggle-bar"></span>
+                <span class="navbar-toggle-bar"></span>
+            </button>
+
+            <!-- 导航菜单 -->
+            <div class="navbar-menu" id="navbar-menu">
+                <a href="/" class="navbar-item active">
+                    <span>📋</span>
+                    <span>用例管理</span>
+                </a>
+                <a href="/records.html" class="navbar-item">
+                    <span>📊</span>
+                    <span>测试记录</span>
+                </a>
+                <a href="/workers.html" class="navbar-item">
+                    <span>🖥️</span>
+                    <span>节点管理</span>
+                    <span class="navbar-item-badge">3</span>
+                </a>
+                <a href="/api.html" class="navbar-item">
+                    <span>🔑</span>
+                    <span>API管理</span>
+                </a>
+            </div>
+
+            <!-- 导航操作区 -->
+            <div class="navbar-actions">
+                <button class="btn btn-secondary btn-sm" onclick="showGlobalSettings()">
+                    <span>⚙️</span>
+                    <span class="hidden md:inline">全局设置</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- ========== 面包屑导航 (可选) ========== -->
+        <nav class="breadcrumb">
+            <a href="/" class="breadcrumb-item">
+                <span class="breadcrumb-icon">🏠</span>
+                <span>首页</span>
+            </a>
+            <span class="breadcrumb-separator">›</span>
+            <span class="breadcrumb-item active">当前页面</span>
+        </nav>
+
+        <!-- ========== 页面头部 ========== -->
+        <div class="header animate-fade-in-up">
+            <div>
+                <h1>📋 页面标题</h1>
+                <p class="subtitle">页面描述和说明</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-primary">
+                    <span>➕</span>
+                    <span>主要操作</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========== 统计卡片 (可选) ========== -->
+        <div class="stats-grid animate-fade-in-up animate-delay-100">
+            <div class="stat-card">
+                <div class="stat-label">统计项1</div>
+                <div class="stat-value">24</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">统计项2</div>
+                <div class="stat-value text-warning">3</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">统计项3</div>
+                <div class="stat-value text-success">18</div>
+            </div>
+        </div>
+
+        <!-- ========== 标签页导航 (可选) ========== -->
+        <div class="tabs animate-fade-in-up animate-delay-200">
+            <div class="tabs-nav">
+                <div class="tabs-nav-item active" onclick="switchTab('tab1')">
+                    <span class="tabs-nav-item-icon">📊</span>
+                    <span>标签页1</span>
+                </div>
+                <div class="tabs-nav-item" onclick="switchTab('tab2')">
+                    <span class="tabs-nav-item-icon">📈</span>
+                    <span>标签页2</span>
+                </div>
+                <div class="tabs-nav-item" onclick="switchTab('tab3')">
+                    <span class="tabs-nav-item-icon">⚙️</span>
+                    <span>标签页3</span>
+                </div>
+            </div>
+
+            <div class="tabs-content">
+                <div class="tabs-pane active" id="tab1">
+                    <!-- 标签页1内容 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">📋 内容卡片</h2>
+                            <button class="btn btn-primary btn-sm">操作</button>
+                        </div>
+                        <div class="card-body">
+                            <p>这是标签页1的内容...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs-pane" id="tab2">
+                    <!-- 标签页2内容 -->
+                    <div class="card">
+                        <h2 class="card-title">标签页2</h2>
+                        <div class="card-body">
+                            <p>这是标签页2的内容...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tabs-pane" id="tab3">
+                    <!-- 标签页3内容 -->
+                    <div class="card">
+                        <h2 class="card-title">标签页3</h2>
+                        <div class="card-body">
+                            <p>这是标签页3的内容...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 主要内容区域 ========== -->
+        <div class="card animate-fade-in-up animate-delay-300">
+            <div class="card-header">
+                <h2 class="card-title">🎯 主要内容</h2>
+                <div class="flex gap-2">
+                    <button class="btn btn-success btn-sm">✅ 成功</button>
+                    <button class="btn btn-danger btn-sm">❌ 危险</button>
+                    <button class="btn btn-secondary btn-sm">⚙️ 次要</button>
+                </div>
+            </div>
+
+            <!-- 工具栏 -->
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <button class="btn btn-primary">➕ 添加</button>
+                    <button class="btn btn-success">⚡ 批量操作</button>
+                    <button class="btn btn-danger btn-sm">🗑️ 删除选中</button>
+                </div>
+                <div class="toolbar-right">
+                    <button class="btn btn-secondary btn-sm">📤 导出</button>
+                    <button class="btn btn-secondary btn-sm">📥 导入</button>
+                </div>
+            </div>
+
+            <!-- 搜索和筛选 -->
+            <div class="search-toolbar">
+                <input
+                    type="text"
+                    placeholder="🔍 搜索..."
+                    style="flex: 1; padding: var(--spacing-2) var(--spacing-3); border: 1px solid var(--color-gray-300); border-radius: var(--radius-base);"
+                >
+                <select style="padding: var(--spacing-2) var(--spacing-3); border: 1px solid var(--color-gray-300); border-radius: var(--radius-base);">
+                    <option value="">全部状态</option>
+                    <option value="running">运行中</option>
+                    <option value="completed">已完成</option>
+                </select>
+                <button class="btn btn-secondary btn-sm">🔄 重置</button>
+            </div>
+
+            <!-- 表格示例 -->
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox"></th>
+                            <th>名称</th>
+                            <th>状态</th>
+                            <th>类型</th>
+                            <th>时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>测试项目1</td>
+                            <td><span class="badge badge-running">运行中</span></td>
+                            <td><span class="badge badge-runtime">Runtime</span></td>
+                            <td>2025-11-28 15:30</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td>测试项目2</td>
+                            <td><span class="badge badge-completed">已完成</span></td>
+                            <td><span class="badge badge-initialization">Initialization</span></td>
+                            <td>2025-11-28 14:20</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn btn-sm btn-primary">编辑</button>
+                                    <button class="btn btn-sm btn-danger">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 分页 -->
+            <div class="pagination">
+                <button class="page-btn" disabled>‹</button>
+                <button class="page-btn active">1</button>
+                <button class="page-btn">2</button>
+                <button class="page-btn">3</button>
+                <span class="page-info">共 10 页</span>
+                <button class="page-btn">›</button>
+            </div>
+        </div>
+
+        <!-- ========== 网格布局示例 ========== -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 animate-fade-in-up animate-delay-400">
+            <div class="card card-compact hover-lift">
+                <h3 class="card-title">卡片1</h3>
+                <p>这是一个带hover效果的卡片</p>
+            </div>
+            <div class="card card-compact hover-lift">
+                <h3 class="card-title">卡片2</h3>
+                <p>鼠标悬停会有浮起效果</p>
+            </div>
+            <div class="card card-compact hover-lift">
+                <h3 class="card-title">卡片3</h3>
+                <p>所有卡片风格统一</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== Toast 通知容器 ========== -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- ========== 模态框示例 ========== -->
+    <div class="modal" id="example-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>模态框标题</h2>
+                <button class="modal-close" onclick="closeModal('example-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label form-label-required">输入框</label>
+                    <input type="text" class="form-input" placeholder="请输入...">
+                    <small class="form-hint">这是一个提示信息</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">选择框</label>
+                    <select class="form-select">
+                        <option value="">请选择...</option>
+                        <option value="1">选项1</option>
+                        <option value="2">选项2</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-checkbox">
+                        <input type="checkbox">
+                        <span>我同意相关条款</span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-secondary" onclick="closeModal('example-modal')">取消</button>
+                <button class="btn btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== JavaScript ========== -->
+    <script>
+        // ==================== 导航栏功能 ====================
+
+        // 移动端菜单切换
+        function toggleMobileMenu() {
+            const toggle = document.getElementById('navbar-toggle');
+            const menu = document.getElementById('navbar-menu');
+            toggle.classList.toggle('active');
+            menu.classList.toggle('show');
+        }
+
+        // 导航栏滚动效果
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('main-navbar');
+            if (window.scrollY > 20) {
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+
+        // ==================== 标签页切换 ====================
+
+        function switchTab(tabId) {
+            // 移除所有active类
+            document.querySelectorAll('.tabs-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.tabs-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+
+            // 添加active类
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // ==================== 模态框功能 ====================
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // 点击背景关闭模态框
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal(this.id);
+                }
+            });
+        });
+
+        // ==================== Toast 通知 ====================
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+
+            const icons = {
+                success: '✓',
+                error: '✕',
+                warning: '⚠',
+                info: 'ℹ'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type} animate-slide-in-right`;
+            toast.innerHTML = `
+                <div style="font-size: var(--text-xl); flex-shrink: 0;">${icons[type] || icons.info}</div>
+                <div style="flex: 1;">
+                    <div style="font-weight: var(--font-semibold); margin-bottom: 2px;">${message}</div>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: currentColor; cursor: pointer; font-size: var(--text-lg); padding: 0;">✕</button>
+            `;
+
+            container.appendChild(toast);
+
+            // 3秒后自动消失
+            setTimeout(() => {
+                toast.classList.add('animate-slide-out-right');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ==================== 全局设置 ====================
+
+        function showGlobalSettings() {
+            showToast('打开全局设置...', 'info');
+            // 这里可以打开设置模态框
+        }
+
+        // ==================== 示例:加载完成后显示通知 ====================
+
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                showToast('页面加载完成!', 'success');
+            }, 500);
+        });
+
+        // ==================== 下拉菜单功能 ====================
+
+        document.querySelectorAll('.dropdown').forEach(dropdown => {
+            const toggle = dropdown.querySelector('.dropdown-toggle');
+            const menu = dropdown.querySelector('.dropdown-menu');
+
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.classList.toggle('show');
+            });
+
+            // 点击外部关闭
+            document.addEventListener('click', () => {
+                menu.classList.remove('show');
+            });
+        });
+
+        // ==================== 表格全选功能 ====================
+
+        const selectAllCheckbox = document.querySelector('table thead input[type="checkbox"]');
+        const rowCheckboxes = document.querySelectorAll('table tbody input[type="checkbox"]');
+
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                rowCheckboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+        }
+
+        // ==================== 响应式提示 ====================
+
+        function checkViewport() {
+            const isMobile = window.innerWidth < 768;
+            console.log(`当前视口: ${isMobile ? '移动端' : '桌面端'}`);
+        }
+
+        window.addEventListener('resize', checkViewport);
+        checkViewport();
+    </script>
+</body>
+</html>

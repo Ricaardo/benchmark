@@ -4,60 +4,667 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>测试记录 - Benchmark Web Runner</title>
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <!-- 统一设计系统 -->
-    <link rel="stylesheet" href="/css/main.css">
-    <link rel="stylesheet" href="/css/navigation.css">
-    <link rel="stylesheet" href="/css/animations.css">
-    <link rel="stylesheet" href="/css/enhanced-ui.css">
-    <link rel="stylesheet" href="/css/records.css">
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        select:focus, input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="text"]::placeholder {
+            color: #a0aec0;
+            font-size: 13px;
+        }
+
+        .records-table-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .records-table th,
+        .records-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .records-table th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .records-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .status-error {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .runner-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            background: #e6fffa;
+            color: #234e52;
+        }
+
+        .runner-initialization {
+            background: #fef5e7;
+            color: #7c2d12;
+        }
+
+        .runner-runtime {
+            background: #e0e7ff;
+            color: #3730a3;
+        }
+
+        .runner-memoryleak {
+            background: #fce7f3;
+            color: #831843;
+        }
+
+        .perfcat-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .perfcat-link:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .perfcat-link.chart {
+            background: #48bb78;
+        }
+
+        .perfcat-link.chart:hover {
+            background: #38a169;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-download {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #38a169;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            min-width: 36px;
+            height: 36px;
+            padding: 0 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #4a5568;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            border-color: #667eea;
+            color: #667eea;
+            background: #f7fafc;
+        }
+
+        .page-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            background: #f7fafc;
+        }
+
+        .page-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .page-btn.active:hover {
+            background: #5568d3;
+            border-color: #5568d3;
+        }
+
+        .page-info {
+            color: #718096;
+            font-size: 14px;
+            padding: 0 8px;
+        }
+
+        .duration {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            color: #4a5568;
+        }
+
+        .date-time {
+            font-size: 13px;
+            color: #718096;
+        }
+
+        /* 展开行样式 */
+        .expandable-row {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .expandable-row:hover {
+            background: #f7fafc;
+        }
+
+        .expand-icon {
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            transition: transform 0.3s;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(90deg);
+        }
+
+        .chart-row {
+            display: none;
+            background: #f7fafc;
+        }
+
+        .chart-row.visible {
+            display: table-row;
+        }
+
+        .chart-cell {
+            padding: 24px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+            margin-top: 16px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .metric-label {
+            font-size: 11px;
+            color: #718096;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .metric-unit {
+            font-size: 12px;
+            color: #a0aec0;
+            margin-left: 2px;
+        }
+
+        .loading-chart {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+
+        .stats-table th,
+        .stats-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .stats-table th {
+            background: #f7fafc;
+            color: #4a5568;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-table td {
+            color: #2d3748;
+        }
+
+        .stats-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .stats-diff-positive {
+            color: #e53e3e;
+            font-weight: 500;
+        }
+
+        .stats-diff-negative {
+            color: #38a169;
+            font-weight: 500;
+        }
+
+        .stats-diff-neutral {
+            color: #718096;
+        }
+
+        .stats-url-name {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid #48bb78;
+        }
+
+        .toast.error {
+            border-left: 4px solid #f56565;
+        }
+
+        /* 日志预览模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            color: #2d3748;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #718096;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f7fafc;
+            color: #2d3748;
+        }
+
+        .modal-body {
+            padding: 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .log-preview {
+            background: #1a202c;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #e2e8f0;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .log-preview::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .log-preview::-webkit-scrollbar-track {
+            background: #2d3748;
+            border-radius: 4px;
+        }
+
+        .log-preview::-webkit-scrollbar-thumb {
+            background: #4a5568;
+            border-radius: 4px;
+        }
+
+        .log-preview::-webkit-scrollbar-thumb:hover {
+            background: #718096;
+        }
+
+        .log-line {
+            margin: 2px 0;
+        }
+
+        .log-info {
+            padding: 12px;
+            background: #f7fafc;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #4a5568;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .log-loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .log-error {
+            text-align: center;
+            padding: 40px;
+            color: #e53e3e;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- 全局导航栏 -->
-        <nav class="navbar animate-fade-in-down" id="main-navbar">
-            <a href="/" class="navbar-brand">
-                <span class="navbar-logo">🚀</span>
-                <div>
-                    <h1 class="navbar-title">Benchmark Web Runner</h1>
-                    <p class="navbar-subtitle">用例驱动的性能测试平台</p>
-                </div>
-            </a>
-
-            <button class="navbar-toggle" id="navbar-toggle" onclick="toggleMobileMenu()">
-                <span class="navbar-toggle-bar"></span>
-                <span class="navbar-toggle-bar"></span>
-                <span class="navbar-toggle-bar"></span>
-            </button>
-
-            <div class="navbar-menu" id="navbar-menu">
-                <a href="/" class="navbar-item">
-                    <span>📋</span> 用例管理
-                </a>
-                <a href="/records.html" class="navbar-item active">
-                    <span>📊</span> 测试记录
-                </a>
-                <a href="/workers.html" class="navbar-item">
-                    <span>🖥️</span> 节点管理
-                </a>
-                <a href="/api.html" class="navbar-item">
-                    <span>🔑</span> API管理
-                </a>
+        <!-- Header -->
+        <div class="header">
+            <h1>📝 测试记录</h1>
+            <div class="header-actions">
+                <a href="/" class="btn btn-secondary">← 返回首页</a>
+                <button onclick="refreshRecords()" class="btn btn-primary">🔄 刷新</button>
+                <button onclick="clearAllRecords()" class="btn btn-danger">🗑️ 清空记录</button>
             </div>
-
-            <div class="navbar-actions">
-                <button class="btn btn-primary btn-sm" onclick="refreshRecords()">
-                    <span>🔄</span> 刷新
-                </button>
-                <button class="btn btn-danger btn-sm" onclick="clearAllRecords()">
-                    <span>🗑️</span> 清空记录
-                </button>
-            </div>
-        </nav>
+        </div>
 
         <!-- Filters -->
         <div class="filters">
@@ -103,7 +710,7 @@
         <div class="records-table-container">
             <div id="loading" class="loading">加载中...</div>
             <div id="records-content" style="display: none;">
-                <table class="table" id="records-table">
+                <table class="records-table" id="records-table">
                     <thead>
                         <tr>
                             <th style="width: 40px;"></th>
@@ -237,12 +844,12 @@
                 // Runner
                 const runnerTd = document.createElement('td');
                 const runnerClass = record.runner.toLowerCase();
-                runnerTd.innerHTML = `<span class="badge runner-${runnerClass}">${record.runner}</span>`;
+                runnerTd.innerHTML = `<span class="runner-badge runner-${runnerClass}">${record.runner}</span>`;
                 tr.appendChild(runnerTd);
 
                 // 状态
                 const statusTd = document.createElement('td');
-                statusTd.innerHTML = `<span class="badge status-${record.status}">${record.status === 'completed' ? '✅ 成功' : '❌ 失败'}</span>`;
+                statusTd.innerHTML = `<span class="status-badge status-${record.status}">${record.status === 'completed' ? '✅ 成功' : '❌ 失败'}</span>`;
                 tr.appendChild(statusTd);
 
                 // 开始时间
@@ -272,24 +879,12 @@
                 const logTd = document.createElement('td');
                 const hasLog = record.logFile;
                 if (hasLog) {
-                    const actionBtns = document.createElement('div');
-                    actionBtns.className = 'action-btns';
-
-                    const previewBtn = document.createElement('button');
-                    previewBtn.className = 'btn btn-secondary btn-sm';
-                    previewBtn.title = '预览日志';
-                    previewBtn.innerHTML = '👁️ 预览';
-                    previewBtn.onclick = () => previewLog(record.id);
-
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.className = 'btn btn-success btn-sm';
-                    downloadBtn.title = '下载日志';
-                    downloadBtn.innerHTML = '📥 下载';
-                    downloadBtn.onclick = () => downloadLog(record.id);
-
-                    actionBtns.appendChild(previewBtn);
-                    actionBtns.appendChild(downloadBtn);
-                    logTd.appendChild(actionBtns);
+                    logTd.innerHTML = `
+                        <div class="action-btns">
+                            <button onclick="previewLog('${record.id}')" class="btn btn-secondary btn-small" title="预览日志">👁️ 预览</button>
+                            <button onclick="downloadLog('${record.id}')" class="btn btn-download btn-small" title="下载日志">📥 下载</button>
+                        </div>
+                    `;
                 } else {
                     logTd.innerHTML = '<span style="color: #a0aec0; font-size: 12px;">无日志</span>';
                 }
@@ -297,11 +892,9 @@
 
                 // 操作
                 const actionTd = document.createElement('td');
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'btn btn-danger btn-sm';
-                deleteBtn.textContent = '删除';
-                deleteBtn.onclick = () => deleteRecord(record.id);
-                actionTd.appendChild(deleteBtn);
+                actionTd.innerHTML = `
+                    <button onclick="deleteRecord('${record.id}')" class="btn btn-danger btn-small">删除</button>
+                `;
                 tr.appendChild(actionTd);
 
                 tbody.appendChild(tr);
@@ -316,15 +909,15 @@
                     chartTd.colSpan = 10;
                     chartTd.className = 'chart-cell';
 
-                    // 如果有报告文件，准备空容器（点击时才加载）
+                    // 如果有报告文件，显示加载提示（无论成功失败都尝试加载）
                     if (record.reportFile) {
                         chartTd.innerHTML = `
                             <div class="chart-container" id="chart-container-${record.id}">
-                                <!-- 图表将在展开时加载 -->
+                                <div class="loading-chart">加载${record.status === 'error' ? '失败详情' : '图表'}中...</div>
                             </div>
                         `;
                     } else if (record.errorMessage || record.status === 'error') {
-                        // 没有报告文件但有错误信息时，直接显示错误信息
+                        // 没有报告文件但有错误信息时，显示错误信息
                         chartTd.innerHTML = `
                             <div class="chart-container" id="chart-container-${record.id}">
                                 <div style="padding: 20px;">
@@ -341,7 +934,7 @@
                     } else {
                         chartTd.innerHTML = `
                             <div class="chart-container" id="chart-container-${record.id}">
-                                <!-- 内容将在展开时加载 -->
+                                <div class="loading-chart">加载图表中...</div>
                             </div>
                         `;
                     }
@@ -370,13 +963,13 @@
                 chartRow.classList.add('visible');
                 expandIcon.classList.add('expanded');
 
-                // 检查是否需要加载图表数据（只加载一次）
-                if (!chartsData.has(recordId)) {
-                    const container = document.getElementById(`chart-container-${recordId}`);
-                    // 如果容器为空或只有注释，则需要加载图表
-                    if (container && container.children.length === 0) {
-                        await loadAndRenderChart(recordId);
-                    }
+                // 检查是否需要加载图表数据
+                const container = document.getElementById(`chart-container-${recordId}`);
+                const loadingChart = container?.querySelector('.loading-chart');
+
+                // 只有成功的测试且还没加载过图表数据时才加载
+                if (loadingChart && !chartsData.has(recordId)) {
+                    await loadAndRenderChart(recordId);
                 }
             }
         }
@@ -660,33 +1253,18 @@
                         `<div class="log-line">${escapeHtml(line)}</div>`
                     ).join('');
 
-                    // 创建日志信息容器
-                    const logInfo = document.createElement('div');
-                    logInfo.className = 'log-info';
-
-                    const infoDiv = document.createElement('div');
-                    infoDiv.innerHTML = `
-                        <strong>${escapeHtml(record.name)}</strong>
-                        <span style="margin-left: 12px; color: #718096;">共 ${logsData.logs.length} 行</span>
+                    modalBody.innerHTML = `
+                        <div class="log-info">
+                            <div>
+                                <strong>${escapeHtml(record.name)}</strong>
+                                <span style="margin-left: 12px; color: #718096;">共 ${logsData.logs.length} 行</span>
+                            </div>
+                            <button onclick="downloadLog('${recordId}')" class="btn btn-download btn-small">
+                                📥 下载完整日志
+                            </button>
+                        </div>
+                        <div class="log-preview">${logLines}</div>
                     `;
-
-                    const downloadBtn = document.createElement('button');
-                    downloadBtn.className = 'btn btn-success btn-sm';
-                    downloadBtn.innerHTML = '📥 下载完整日志';
-                    downloadBtn.onclick = () => downloadLog(recordId);
-
-                    logInfo.appendChild(infoDiv);
-                    logInfo.appendChild(downloadBtn);
-
-                    // 创建日志预览
-                    const logPreview = document.createElement('div');
-                    logPreview.className = 'log-preview';
-                    logPreview.innerHTML = logLines;
-
-                    // 清空并添加内容
-                    modalBody.innerHTML = '';
-                    modalBody.appendChild(logInfo);
-                    modalBody.appendChild(logPreview);
                 } else {
                     modalBody.innerHTML = `
                         <div class="log-error">
@@ -871,52 +1449,52 @@
                 ${failureSummaryHtml}
                 ${metricsHtml}
 
-                <div class="charts-section">
-                    <h4>性能指标对比</h4>
+                <div style="margin-top: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">性能指标对比</h4>
 
                     <!-- FP Chart -->
-                    <div class="chart-card">
-                        <h5>First Paint (FP)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">First Paint (FP)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-fp-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- FCP Chart -->
-                    <div class="chart-card">
-                        <h5>First Contentful Paint (FCP)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">First Contentful Paint (FCP)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-fcp-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- LCP Chart -->
-                    <div class="chart-card">
-                        <h5>Largest Contentful Paint (LCP)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Largest Contentful Paint (LCP)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-lcp-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- TTFB Chart -->
-                    <div class="chart-card">
-                        <h5>Time to First Byte (TTFB)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Time to First Byte (TTFB)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-ttfb-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- SRT Chart -->
-                    <div class="chart-card">
-                        <h5>Server Response Time (SRT)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Server Response Time (SRT)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-srt-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- CLS Chart -->
-                    <div class="chart-card">
-                        <h5>Cumulative Layout Shift (CLS)</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Cumulative Layout Shift (CLS)</h5>
                         <div class="chart-wrapper">
                             <canvas id="init-cls-${recordId}"></canvas>
                         </div>
@@ -1250,76 +1828,76 @@
                 ${failureSummaryHtml}
                 ${metricsHtml}
 
-                <div class="charts-section">
-                    <h4>性能指标趋势图</h4>
+                <div style="margin-top: 32px;">
+                    <h4 style="color: #2d3748; margin-bottom: 16px;">性能指标趋势图</h4>
 
                     <!-- CPU Total -->
-                    <div class="chart-card">
-                        <h5>CPU Total 使用率</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Total 使用率</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-cpu-total-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- CPU Thread -->
-                    <div class="chart-card">
-                        <h5>CPU Thread 使用率</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Thread 使用率</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-cpu-thread-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- Heap Memory -->
-                    <div class="chart-card">
-                        <h5>Heap 内存使用</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">Heap 内存使用</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-heap-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- DOM Nodes -->
-                    <div class="chart-card">
-                        <h5>DOM Nodes</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">DOM Nodes</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-dom-nodes-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- JS Event Listeners -->
-                    <div class="chart-card">
-                        <h5>JS Event Listeners</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">JS Event Listeners</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-listeners-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- CPU Script -->
-                    <div class="chart-card">
-                        <h5>CPU Script 使用率</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Script 使用率</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-cpu-script-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- CPU Style -->
-                    <div class="chart-card">
-                        <h5>CPU Style 使用率</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Style 使用率</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-cpu-style-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- CPU Layout -->
-                    <div class="chart-card">
-                        <h5>CPU Layout 使用率</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">CPU Layout 使用率</h5>
                         <div class="chart-wrapper">
                             <canvas id="runtime-cpu-layout-${recordId}"></canvas>
                         </div>
                     </div>
 
                     <!-- Long Tasks Timeline -->
-                    <div class="chart-card">
-                        <h5>⚠️ Long Tasks 时间线</h5>
+                    <div style="background: white; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+                        <h5 style="color: #4a5568; margin-bottom: 12px;">⚠️ Long Tasks 时间线</h5>
                         <div id="longtask-timeline-${recordId}" style="min-height: 200px;"></div>
                     </div>
                 </div>
@@ -1623,31 +2201,6 @@
         window.onload = () => {
             loadRecords();
         };
-    </script>
-
-    <!-- 导航栏交互脚本 -->
-    <script>
-        // 移动端菜单切换
-        function toggleMobileMenu() {
-            const toggle = document.getElementById('navbar-toggle');
-            const menu = document.getElementById('navbar-menu');
-            if (toggle && menu) {
-                toggle.classList.toggle('active');
-                menu.classList.toggle('show');
-            }
-        }
-
-        // 导航栏滚动效果
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('main-navbar');
-            if (navbar) {
-                if (window.scrollY > 20) {
-                    navbar.classList.add('navbar-scrolled');
-                } else {
-                    navbar.classList.remove('navbar-scrolled');
-                }
-            }
-        });
     </script>
 </body>
 </html>
