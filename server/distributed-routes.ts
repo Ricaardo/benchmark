@@ -163,24 +163,6 @@ export function createDistributedRoutes(
         });
     });
 
-    /**
-     * 获取在线 Worker 列表
-     * GET /api/workers/online
-     */
-    router.get('/workers/status/online', (req, res) => {
-        const workers = workerManager.getOnlineWorkers();
-        res.json({ workers });
-    });
-
-    /**
-     * 获取可用 Worker 列表（在线且不忙）
-     * GET /api/workers/available
-     */
-    router.get('/workers/status/available', (req, res) => {
-        const workers = workerManager.getAvailableWorkers();
-        res.json({ workers });
-    });
-
     // ==================== 分布式任务 API ====================
 
     /**
@@ -394,15 +376,6 @@ export function createDistributedRoutes(
             message: `Cleared ${count} completed tasks`,
             count
         });
-    });
-
-    /**
-     * 获取运行中的任务
-     * GET /api/distributed-tasks/running
-     */
-    router.get('/distributed-tasks/status/running', (req, res) => {
-        const tasks = taskManager.getRunningTasks();
-        res.json({ tasks });
     });
 
     /**

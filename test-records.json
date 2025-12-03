@@ -1,5 +1,57 @@
 [
   {
+    "id": "task_1764735959135_wjzo6lxra",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-03T04:25:59.135Z",
+    "endTime": "2025-12-03T04:28:35.250Z",
+    "duration": 156115,
+    "exitCode": 0,
+    "reportFile": "2025-12-03T12-26-00-Runtime-Local.json",
+    "logFile": "task_task_1764735959135_wjzo6lxra_1764736116286.log"
+  },
+  {
+    "id": "task_1764735505279_wofwiunwf",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-03T04:18:25.279Z",
+    "endTime": "2025-12-03T04:21:01.802Z",
+    "duration": 156523,
+    "exitCode": 0,
+    "reportFile": "2025-12-03T12-18-26-Runtime-Local.json",
+    "logFile": "task_task_1764735505279_wofwiunwf_1764735662829.log"
+  },
+  {
+    "id": "task_1764734772565_uv6lgg19q",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-03T04:06:12.565Z",
+    "endTime": "2025-12-03T04:08:49.190Z",
+    "duration": 156625,
+    "exitCode": 0,
+    "reportFile": "2025-12-03T12-06-13-Runtime-Local.json",
+    "logFile": "task_task_1764734772565_uv6lgg19q_1764734930221.log"
+  },
+  {
+    "id": "task_1764734757629_4xeqn7h3l",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "测试：多URL不同配置",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-03T04:05:57.629Z",
+    "endTime": "2025-12-03T04:08:34.662Z",
+    "duration": 157033,
+    "exitCode": 0,
+    "reportFile": "2025-12-03T12-05-58-Runtime-Local.json",
+    "logFile": "task_task_1764734757629_4xeqn7h3l_1764734915699.log"
+  },
+  {
     "id": "task_1764655609726_l1hhnvu5p",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "测试：多URL不同配置",

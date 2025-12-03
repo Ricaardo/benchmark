@@ -147,23 +147,6 @@
             </div>
         </div>
 
-        <!-- 运行状态 -->
-        <div class="card" id="status-card" style="display:none;">
-            <h2>
-                📊 运行状态
-                <span class="badge" id="current-status">idle</span>
-            </h2>
-            <div>
-                <strong>当前用例：</strong><span id="current-case-name">-</span>
-            </div>
-            <div style="margin-top: 10px;">
-                <strong>进度：</strong><span id="progress-text">0/0</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
-            </div>
-        </div>
-
         <!-- 输出面板 -->
         <div class="card">
             <h2>💻 输出日志</h2>
@@ -1023,9 +1006,6 @@
                 case 'output':
                     appendOutput(data.data);
                     break;
-                case 'progress':
-                    updateProgress(data.current, data.total);
-                    break;
                 case 'tasks':
                     // 新增：处理任务列表更新
                     updateTasksList(data.data);
@@ -1049,6 +1029,9 @@
 
         // 新增：更新单个任务
         function updateSingleTask(task) {
+            const existingTask = backendTasks.get(task.id);
+            const statusChanged = !existingTask || existingTask.status !== task.status;
+
             backendTasks.set(task.id, task);
 
             // 如果有输出，追加到输出区域
@@ -1073,8 +1056,23 @@
                 updateTaskLog(task.id, logText);
             }
 
+            // 如果任务已完成或失败，5秒后自动移除
+            if (task.status === 'completed' || task.status === 'error') {
+                setTimeout(() => {
+                    if (backendTasks.has(task.id)) {
+                        backendTasks.delete(task.id);
+                        updateStats();
+                        updateQueueDisplay();
+                    }
+                }, 5000);
+            }
+
             updateStats();
-            updateQueueDisplay();
+
+            // 只有在状态改变时才重新渲染整个队列，避免日志更新时刷新导致滚动位置丢失
+            if (statusChanged) {
+                updateQueueDisplay();
+            }
         }
 
         // 初始化 Worker 节点选择器
@@ -2842,11 +2840,6 @@ console.log('B站弹幕开关完成');`
             // 构建任务名称
             const taskName = testLabel ? `[${testLabel}] ${testCase.name}` : testCase.name;
 
-            document.getElementById('status-card').style.display = 'block';
-            document.getElementById('current-case-name').textContent = taskName;
-            document.getElementById('current-status').textContent = '运行中';
-            document.getElementById('current-status').className = 'status-badge status-running';
-
             try {
                 // 获取URLs - 支持新格式（带描述）和旧格式
                 let urlsData = [];
@@ -3431,9 +3424,15 @@ console.log('B站弹幕开关完成');`
 
         // 清空队列
         function clearQueue() {
-            if (runningQueue.length === 0) return;
+            // 计算等待中的任务数量（排除正在运行的第一个任务）
+            const waitingCount = currentRunning ? runningQueue.length - 1 : runningQueue.length;
 
-            if (!confirm(`确定要清空队列中的 ${runningQueue.length} 个任务吗？当前正在运行的任务不会被停止。`)) return;
+            if (waitingCount === 0) {
+                showToast('队列中没有等待的任务', 'info');
+                return;
+            }
+
+            if (!confirm(`确定要清空队列中的 ${waitingCount} 个等待任务吗？当前正在运行的任务不会被停止。`)) return;
 
             // 保留第一个（正在运行的）
             if (currentRunning) {
@@ -3584,9 +3583,6 @@ console.log('B站弹幕开关完成');`
 
         // 更新状态
         function updateStatus(status, runner) {
-            document.getElementById('current-status').textContent = getStatusText(status);
-            document.getElementById('current-status').className = `status-badge status-${status}`;
-
             if (status === 'completed' || status === 'error') {
                 if (currentRunning) {
                     const testCase = testCases.find(tc => tc.id == currentRunning);
@@ -3614,11 +3610,6 @@ console.log('B站弹幕开关完成');`
             }
         }
 
-        function updateProgress(current, total) {
-            document.getElementById('progress-text').textContent = `${current}/${total}`;
-            const percent = (current / total) * 100;
-            document.getElementById('progress-fill').style.width = percent + '%';
-        }
 
         // 输出日志
         function appendOutput(text) {

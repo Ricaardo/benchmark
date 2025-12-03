@@ -1179,16 +1179,35 @@
                                     <div class="metric-label">JS Event Listeners</div>
                                     <div class="metric-value">${runtime.JSEventListeners[0]} - ${runtime.JSEventListeners[1]}</div>
                                 </div>
-                                ${longtask ? `
-                                <div class="metric-card" style="border-left-color: #f56565;">
-                                    <div class="metric-label">Long Tasks 数量</div>
-                                    <div class="metric-value">${longtask.count}</div>
+                                ${longtask ? (() => {
+                                    const longtaskEvents = longtask.list ? longtask.list.filter(item => item.name === 'longtask') : [];
+                                    const fcpMarker = longtask.list ? longtask.list.find(item => item.name === 'FCP') : null;
+                                    const phaseThreshold = fcpMarker ? fcpMarker.time : 5000;
+
+                                    const totalCount = longtaskEvents.length || longtask.count;
+                                    const totalDuration = longtaskEvents.length ? longtaskEvents.reduce((sum, task) => sum + (task.duration || 0), 0) : longtask.duration;
+
+                                    const loadingCount = longtaskEvents.filter(task => task.time < phaseThreshold).length;
+                                    const loadingDuration = longtaskEvents.filter(task => task.time < phaseThreshold).reduce((sum, task) => sum + (task.duration || 0), 0);
+
+                                    const runtimeCount = longtaskEvents.filter(task => task.time >= phaseThreshold).length;
+                                    const runtimeDuration = longtaskEvents.filter(task => task.time >= phaseThreshold).reduce((sum, task) => sum + (task.duration || 0), 0);
+
+                                    return `
+                                <div class="metric-card" style="border-left-color: #718096;">
+                                    <div class="metric-label">Long Tasks 总计</div>
+                                    <div class="metric-value">${totalCount} <span class="metric-unit" style="font-size: 0.75rem;">/ ${totalDuration.toFixed(0)}ms</span></div>
                                 </div>
-                                <div class="metric-card" style="border-left-color: #f56565;">
-                                    <div class="metric-label">Long Tasks 总时长</div>
-                                    <div class="metric-value">${longtask.duration.toFixed(0)}<span class="metric-unit">ms</span></div>
+                                <div class="metric-card" style="border-left-color: #3b82f6;">
+                                    <div class="metric-label">🚀 加载阶段</div>
+                                    <div class="metric-value">${loadingCount} <span class="metric-unit" style="font-size: 0.75rem;">/ ${loadingDuration.toFixed(0)}ms</span></div>
                                 </div>
-                                ` : ''}
+                                <div class="metric-card" style="border-left-color: #10b981;">
+                                    <div class="metric-label">⚡ 运行时</div>
+                                    <div class="metric-value">${runtimeCount} <span class="metric-unit" style="font-size: 0.75rem;">/ ${runtimeDuration.toFixed(0)}ms</span></div>
+                                </div>
+                                `;
+                                })() : ''}
                             </div>
                         </div>
                     `;
@@ -1468,11 +1487,49 @@
                     if (longtask && longtask.list && longtask.list.length > 0) {
                         const longtaskEvents = longtask.list.filter(item => item.name === 'longtask');
 
+                        // 找到FCP作为分界点（如果没有FCP，使用5秒）
+                        const fcpMarker = longtask.list.find(item => item.name === 'FCP');
+                        const phaseThreshold = fcpMarker ? fcpMarker.time : 5000;
+
+                        // 分阶段统计
+                        const loadingTasks = longtaskEvents.filter(task => task.time < phaseThreshold);
+                        const runtimeTasks = longtaskEvents.filter(task => task.time >= phaseThreshold);
+
+                        const loadingCount = loadingTasks.length;
+                        const loadingDuration = loadingTasks.reduce((sum, task) => sum + (task.duration || 0), 0);
+                        const runtimeCount = runtimeTasks.length;
+                        const runtimeDuration = runtimeTasks.reduce((sum, task) => sum + (task.duration || 0), 0);
+                        const totalCount = longtaskEvents.length;
+                        const totalDuration = loadingDuration + runtimeDuration;
+
                         longtaskHtml += `
                             <div style="margin-bottom: 24px;">
                                 <h6 style="color: #4a5568; margin-bottom: 12px; font-weight: 600;">${escapeHtml(urlInfo.description)}</h6>
-                                <div style="background: #f7fafc; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
-                                    <strong>统计信息:</strong> 共 ${longtask.count} 个 Long Tasks, 总时长 ${longtask.duration.toFixed(0)}ms
+
+                                <!-- 分阶段统计卡片 -->
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                                    <!-- 总计 -->
+                                    <div style="background: #f7fafc; padding: 12px; border-radius: 6px; border-left: 4px solid #718096;">
+                                        <div style="font-size: 0.75rem; color: #718096; margin-bottom: 4px;">📊 总计</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #2d3748;">${totalCount}</div>
+                                        <div style="font-size: 0.875rem; color: #4a5568; margin-top: 2px;">${totalDuration.toFixed(0)}ms</div>
+                                    </div>
+
+                                    <!-- 加载阶段 -->
+                                    <div style="background: #eff6ff; padding: 12px; border-radius: 6px; border-left: 4px solid #3b82f6;">
+                                        <div style="font-size: 0.75rem; color: #3b82f6; margin-bottom: 4px;">🚀 加载阶段</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #1e40af;">${loadingCount}</div>
+                                        <div style="font-size: 0.875rem; color: #3b82f6; margin-top: 2px;">${loadingDuration.toFixed(0)}ms</div>
+                                        <div style="font-size: 0.7rem; color: #60a5fa; margin-top: 4px;">0 - ${(phaseThreshold/1000).toFixed(1)}s</div>
+                                    </div>
+
+                                    <!-- 运行时阶段 -->
+                                    <div style="background: #f0fdf4; padding: 12px; border-radius: 6px; border-left: 4px solid #10b981;">
+                                        <div style="font-size: 0.75rem; color: #10b981; margin-bottom: 4px;">⚡ 运行时</div>
+                                        <div style="font-size: 1.25rem; font-weight: 700; color: #047857;">${runtimeCount}</div>
+                                        <div style="font-size: 0.875rem; color: #10b981; margin-top: 2px;">${runtimeDuration.toFixed(0)}ms</div>
+                                        <div style="font-size: 0.7rem; color: #34d399; margin-top: 4px;">${(phaseThreshold/1000).toFixed(1)}s - 结束</div>
+                                    </div>
                                 </div>
                         `;
 
@@ -1483,6 +1540,7 @@
                                         <thead>
                                             <tr>
                                                 <th style="width: 60px;">#</th>
+                                                <th style="width: 100px;">阶段</th>
                                                 <th>开始时间</th>
                                                 <th>持续时间</th>
                                                 <th>时间线</th>
@@ -1499,14 +1557,25 @@
                                 const barWidth = (task.duration / maxTime * 100).toFixed(2);
                                 const barLeft = ((task.time || 0) / maxTime * 100).toFixed(2);
 
+                                // 判断阶段
+                                const isLoading = task.time < phaseThreshold;
+                                const phaseBadge = isLoading
+                                    ? '<span style="display: inline-block; padding: 2px 8px; background: #eff6ff; color: #3b82f6; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">🚀 加载</span>'
+                                    : '<span style="display: inline-block; padding: 2px 8px; background: #f0fdf4; color: #10b981; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">⚡ 运行时</span>';
+
+                                const barColor = isLoading
+                                    ? 'linear-gradient(90deg, #60a5fa, #3b82f6)'  // 蓝色渐变
+                                    : 'linear-gradient(90deg, #34d399, #10b981)'; // 绿色渐变
+
                                 longtaskHtml += `
                                     <tr>
                                         <td>${index + 1}</td>
+                                        <td>${phaseBadge}</td>
                                         <td>${startTime}s</td>
-                                        <td><strong style="color: #e53e3e;">${duration}ms</strong></td>
+                                        <td><strong style="color: ${isLoading ? '#3b82f6' : '#10b981'};">${duration}ms</strong></td>
                                         <td style="padding: 8px;">
                                             <div style="position: relative; height: 24px; background: #e2e8f0; border-radius: 4px;">
-                                                <div style="position: absolute; left: ${barLeft}%; width: ${Math.max(barWidth, 1)}%; height: 100%; background: linear-gradient(90deg, #f56565, #e53e3e); border-radius: 4px;"></div>
+                                                <div style="position: absolute; left: ${barLeft}%; width: ${Math.max(barWidth, 1)}%; height: 100%; background: ${barColor}; border-radius: 4px;"></div>
                                             </div>
                                         </td>
                                     </tr>
