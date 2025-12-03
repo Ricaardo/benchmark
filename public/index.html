@@ -79,6 +79,7 @@
                 <div class="toolbar-left">
                     <button class="btn btn-primary" onclick="showAddCaseModal()">➕ 添加用例</button>
                     <button class="btn btn-success" onclick="runSelectedCases()" id="run-selected-btn" disabled>⚡ 并行运行 (<span id="selected-count">0</span>)</button>
+                    <button class="btn-secondary btn-sm" onclick="duplicateSelectedCases()" id="duplicate-selected-btn" disabled style="background: #3182ce; color: white;">📋 复制选中</button>
                     <button class="btn-danger btn-sm" onclick="deleteSelectedCases()" id="delete-selected-btn" disabled>🗑️ 删除选中</button>
                     <button class="btn-secondary btn-sm" onclick="loadPresetCases()">⚡ 加载预设</button>
                 </div>
@@ -506,6 +507,48 @@
             <div class="form-actions">
                 <button class="btn btn-secondary" onclick="closeGlobalConfigModal()">取消</button>
                 <button class="btn btn-success" onclick="saveGlobalConfig()">💾 保存配置</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 测试标记输入弹窗 -->
+    <div class="modal" id="test-label-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">🏷️ 设置测试标记</div>
+
+            <div style="margin-bottom: 20px;">
+                <p style="color: #4a5568; margin-bottom: 15px; line-height: 1.6;">
+                    为本次测试添加标记，以便在结果中区分不同版本或配置。
+                </p>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">测试标记（可选）</label>
+                    <input
+                        type="text"
+                        id="test-label-input"
+                        placeholder="例如：优化前、V2.0、主分支..."
+                        style="width: 100%; padding: 12px; border: 2px solid #cbd5e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s;"
+                        onfocus="this.style.borderColor='#3182ce'"
+                        onblur="this.style.borderColor='#cbd5e0'">
+                </div>
+
+                <div style="background: #f0f9ff; border-left: 4px solid #3182ce; padding: 12px; border-radius: 4px; margin-top: 15px;">
+                    <strong style="color: #1e40af; display: block; margin-bottom: 6px; font-size: 0.9em;">💡 建议标记格式</strong>
+                    <ul style="color: #1e40af; margin: 0; padding-left: 20px; font-size: 0.85em; line-height: 1.8;">
+                        <li>优化前 / 优化后</li>
+                        <li>Baseline / V2.0 / V3.0</li>
+                        <li>主分支 / 功能分支</li>
+                        <li>Chrome / Firefox / Safari</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="cancelTestLabelInput()" style="padding: 10px 20px;">取消</button>
+                <button class="btn btn-secondary" onclick="confirmTestLabelInput(null)" style="padding: 10px 20px; background: #94a3b8;">跳过</button>
+                <button class="btn btn-primary" onclick="confirmTestLabelInput()" style="padding: 10px 24px; background: #3182ce;">
+                    ▶️ 开始测试
+                </button>
             </div>
         </div>
     </div>
@@ -1246,6 +1289,7 @@
                                     <div class="actions">
                                         <button class="btn-success btn-sm" onclick="runCase('${testCase.id}')">▶ 运行</button>
                                         <button class="btn-secondary btn-sm" onclick="editCase('${testCase.id}')">✏️ 编辑</button>
+                                        <button class="btn-secondary btn-sm" onclick="duplicateTestCase('${testCase.id}')" title="复制该用例创建副本" style="background: #3182ce; color: white;">📋 复制</button>
                                         <button class="btn-danger btn-sm" onclick="deleteCase('${testCase.id}')">🗑️ 删除</button>
                                     </div>
                                 </td>
@@ -1297,6 +1341,7 @@
         function updateSelectionUI() {
             document.getElementById('selected-count').textContent = selectedCases.size;
             document.getElementById('run-selected-btn').disabled = selectedCases.size === 0;
+            document.getElementById('duplicate-selected-btn').disabled = selectedCases.size === 0;
             document.getElementById('delete-selected-btn').disabled = selectedCases.size === 0;
         }
 
@@ -1365,7 +1410,42 @@
             renderCases();
         }
 
-        // ==================== 批量删除用例 ====================
+        // ==================== 批量操作用例 ====================
+
+        // 批量复制用例
+        function duplicateSelectedCases() {
+            if (selectedCases.size === 0) return;
+
+            const count = selectedCases.size;
+            let duplicatedCount = 0;
+
+            // 复制所有选中的用例
+            selectedCases.forEach(caseId => {
+                const testCase = testCases.find(tc => tc.id === caseId || tc.id == caseId);
+                if (testCase) {
+                    // 深拷贝测试用例
+                    const newCase = JSON.parse(JSON.stringify(testCase));
+
+                    // 生成新ID
+                    newCase.id = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+                    // 修改名称
+                    newCase.name = testCase.name + ' (副本)';
+
+                    // 添加到列表
+                    testCases.push(newCase);
+                    duplicatedCount++;
+                }
+            });
+
+            // 清空选择
+            selectedCases.clear();
+
+            saveToStorage();
+            renderCases();
+            updateSelectionUI();
+            showToast(`成功复制 ${duplicatedCount} 个用例`, 'success');
+        }
 
         // 批量删除用例
         function deleteSelectedCases() {
@@ -1538,6 +1618,57 @@ console.log('B站弹幕开关完成');`
             document.getElementById('memoryleak-onpagetesting-preset').value = '';
 
             showToast(`已应用预设: ${preset.name}`, 'success');
+        }
+
+        // ==================== 通用复制功能 ====================
+        function copyToClipboard(text, successMessage = '已复制到剪贴板') {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(successMessage, 'success');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                showToast('复制失败，请手动复制', 'error');
+            });
+        }
+
+        // 复制（克隆）URL项
+        function duplicateUrlItem(itemId) {
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) {
+                showToast('未找到URL项', 'error');
+                return;
+            }
+            // 创建副本
+            const newUrl = item.url;
+            const newDescription = item.description ? `${item.description} (副本)` : '';
+            const newConfig = JSON.parse(JSON.stringify(item.config || {})); // 深拷贝配置
+
+            addUrlItem(newUrl, newDescription, newConfig);
+            showToast('已复制URL项', 'success');
+        }
+
+        // 复制（克隆）测试用例
+        function duplicateTestCase(testCaseId) {
+            const testCase = testCases.find(tc => tc.id === testCaseId || tc.id == testCaseId);
+            if (!testCase) {
+                showToast('未找到测试用例', 'error');
+                return;
+            }
+
+            // 深拷贝测试用例
+            const newCase = JSON.parse(JSON.stringify(testCase));
+
+            // 生成新ID
+            newCase.id = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+            // 修改名称
+            newCase.name = testCase.name + ' (副本)';
+
+            // 添加到列表
+            testCases.push(newCase);
+            saveToStorage();
+            renderCases();
+
+            showToast(`已复制用例: ${testCase.name}`, 'success');
         }
 
         // ==================== URL 列表管理 ====================
@@ -1936,238 +2067,198 @@ console.log('B站弹幕开关完成');`
             showToast(`已应用网络预设: ${preset.name}`, 'success');
         }
 
-        // 渲染URL配置面板 - 优化布局，更紧凑易用
+        // 渲染URL配置面板 - 优化布局，模块化组织
         function renderUrlConfigPanel(item) {
             const config = item.config || {};
 
             return `
                 <div style="background: #ffffff; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; margin-top: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0;">
-                        <h4 style="margin: 0; font-size: 0.95em; color: #2d3748; font-weight: 600;">🔧 高级配置</h4>
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0;">
+                        <h4 style="margin: 0; font-size: 1em; color: #2d3748; font-weight: 600;">🔧 URL独立配置</h4>
                         <button type="button" onclick="clearAllUrlConfig('${item.id}')" class="btn-sm" style="padding: 4px 8px; background: #e2e8f0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空所有</button>
                     </div>
 
-                    <!-- Cookie配置 -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🍪 Cookie</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-cookie-preset" onchange="applyUrlCookiePreset('${item.id}')" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                                <option value="">选择预设...</option>
-                                <option value="bilibili_login">B站登录态</option>
-                                <option value="youtube_login">YouTube登录态</option>
-                            </select>
-                            <button type="button" onclick="clearUrlConfig('${item.id}', 'cookie')" class="btn-sm" style="padding: 8px 12px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                    <!-- 配置模块：基础配置 -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #3182ce;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #2d3748; font-weight: 600;">📝 基础配置</h5>
+
+                        <!-- Cookie配置 -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">🍪 Cookie</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-cookie-preset" onchange="applyUrlCookiePreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择预设...</option>
+                                    <option value="bilibili_login">B站登录态</option>
+                                    <option value="youtube_login">YouTube登录态</option>
+                                </select>
+                                <button type="button" onclick="clearUrlConfig('${item.id}', 'cookie')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            <textarea
+                                id="url-config-cookie-${item.id}"
+                                placeholder='{"name": "value"} 或 "name=value"'
+                                rows="2"
+                                style="width: 100%; padding: 6px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"
+                                oninput="updateUrlConfig('${item.id}', 'cookie', this.value)">${escapeHtml(config.cookie || '')}</textarea>
                         </div>
-                        <textarea
-                            id="url-config-cookie-${item.id}"
-                            placeholder='{"name": "value"} 或 "name=value" (留空使用默认)'
-                            rows="2"
-                            style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"
-                            oninput="updateUrlConfig('${item.id}', 'cookie', this.value)">${escapeHtml(config.cookie || '')}</textarea>
-                        <small style="color: #718096; font-size: 0.85em;">覆盖默认Cookie配置</small>
+
+                        <!-- delayMs配置 -->
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">⏱️ 延迟时间 (delayMs)</label>
+                            <input
+                                type="number"
+                                id="url-config-delay-${item.id}"
+                                placeholder="留空使用默认"
+                                value="${config.delayMs || ''}"
+                                min="0"
+                                step="1000"
+                                style="width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;"
+                                oninput="updateUrlConfig('${item.id}', 'delayMs', this.value ? parseInt(this.value) : null)">
+                        </div>
                     </div>
 
-                    <!-- delayMs配置 -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">⏱️ 延迟时间 (delayMs)</label>
-                        <input
-                            type="number"
-                            id="url-config-delay-${item.id}"
-                            placeholder="留空使用默认值"
-                            value="${config.delayMs || ''}"
-                            min="0"
-                            step="1000"
-                            style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px;"
-                            oninput="updateUrlConfig('${item.id}', 'delayMs', this.value ? parseInt(this.value) : null)">
-                        <small style="color: #718096; font-size: 0.85em;">此URL的延迟时间（毫秒）</small>
+                    <!-- 配置模块：网络和资源 -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #10b981;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #2d3748; font-weight: 600;">🌐 网络和资源</h5>
+
+                        <!-- HTTP Headers -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">📡 HTTP 头</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-headers-preset" onchange="applyUrlHeadersPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择预设...</option>
+                                    <option value="mobile_chrome">📱 移动Chrome</option>
+                                    <option value="mobile_safari">📱 iPhone Safari</option>
+                                    <option value="desktop_chrome">🖥️ 桌面Chrome</option>
+                                    <option value="desktop_mac">🖥️ Mac Safari</option>
+                                    <option value="with_auth">🔑 Bearer Token</option>
+                                    <option value="api_key">🔑 API Key</option>
+                                </select>
+                                <button type="button" onclick="clearUrlConfig('${item.id}', 'extraHTTPHeaders')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            <textarea
+                                id="url-config-headers-${item.id}"
+                                placeholder='{"User-Agent": "..."}'
+                                rows="2"
+                                style="width: 100%; padding: 6px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"
+                                oninput="try { updateUrlConfig(${item.id}, 'extraHTTPHeaders', this.value ? JSON.parse(this.value) : null); this.style.borderColor='#cbd5e0'; } catch(e) { this.style.borderColor='#fc8181'; }">${escapeHtml(config.extraHTTPHeaders ? JSON.stringify(config.extraHTTPHeaders, null, 2) : '')}</textarea>
+                        </div>
+
+                        <!-- Block List -->
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">🚫 阻止列表</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-blocklist-preset" onchange="applyUrlBlocklistPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择预设...</option>
+                                    <option value="block_images">🖼️ 阻止图片</option>
+                                    <option value="block_ads">🚫 阻止广告</option>
+                                    <option value="block_analytics">📊 阻止统计</option>
+                                    <option value="performance_mode">⚡ 性能模式</option>
+                                    <option value="bilibili_ads">🅱️ B站广告</option>
+                                </select>
+                                <button type="button" onclick="clearUrlConfig('${item.id}', 'blockList')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            <textarea
+                                id="url-config-blocklist-${item.id}"
+                                placeholder='["*.jpg", "*.png"]'
+                                rows="2"
+                                style="width: 100%; padding: 6px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"
+                                oninput="try { updateUrlConfig(${item.id}, 'blockList', this.value ? JSON.parse(this.value) : null); this.style.borderColor='#cbd5e0'; } catch(e) { this.style.borderColor='#fc8181'; }">${escapeHtml(config.blockList ? JSON.stringify(config.blockList, null, 2) : '')}</textarea>
+                        </div>
                     </div>
 
-                    <!-- HTTP Headers -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">📡 HTTP 头 (extraHTTPHeaders)</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-headers-preset" onchange="applyUrlHeadersPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择User-Agent预设...</option>
-                                <option value="mobile_chrome">📱 移动端Chrome</option>
-                                <option value="mobile_safari">📱 移动端Safari (iPhone)</option>
-                                <option value="desktop_chrome">🖥️ 桌面端Chrome (Win)</option>
-                                <option value="desktop_mac">🖥️ 桌面端Safari (Mac)</option>
-                                <option value="with_auth">🔑 Bearer Token认证</option>
-                                <option value="api_key">🔑 API Key认证</option>
-                            </select>
-                            <button type="button" onclick="clearUrlConfig('${item.id}', 'extraHTTPHeaders')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
+                    <!-- 配置模块：页面定制 -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #8b5cf6;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #2d3748; font-weight: 600;">🎨 页面定制</h5>
+
+                        <!-- Custom CSS -->
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">🎨 自定义 CSS</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-css-preset" onchange="applyUrlCssPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择预设...</option>
+                                    <option value="hide_ads">🚫 隐藏广告</option>
+                                    <option value="dark_mode">🌙 暗黑模式</option>
+                                    <option value="performance_boost">⚡ 性能优化</option>
+                                    <option value="bilibili_clean">🅱️ B站净化</option>
+                                </select>
+                                <button type="button" onclick="clearUrlConfig('${item.id}', 'customCss')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            <textarea
+                                id="url-config-css-${item.id}"
+                                placeholder="body { background: red; }"
+                                rows="2"
+                                style="width: 100%; padding: 6px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"
+                                oninput="updateUrlConfig('${item.id}', 'customCss', this.value)">${escapeHtml(config.customCss || '')}</textarea>
                         </div>
-                        <textarea
-                            id="url-config-headers-${item.id}"
-                            placeholder='{"User-Agent": "...", "Authorization": "..."}'
-                            rows="2"
-                            style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"
-                            oninput="try { updateUrlConfig(${item.id}, 'extraHTTPHeaders', this.value ? JSON.parse(this.value) : null); this.style.borderColor='#cbd5e0'; } catch(e) { this.style.borderColor='#fc8181'; }">${escapeHtml(config.extraHTTPHeaders ? JSON.stringify(config.extraHTTPHeaders, null, 2) : '')}</textarea>
-                        <small style="color: #718096; font-size: 0.85em;">JSON格式的额外HTTP请求头</small>
                     </div>
 
-                    <!-- Block List -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">阻止列表 (blockList)</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-blocklist-preset" onchange="applyUrlBlocklistPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择阻止列表预设...</option>
-                                <option value="block_images">🖼️ 阻止图片</option>
-                                <option value="block_videos">🎬 阻止视频文件</option>
-                                <option value="block_ads">🚫 阻止广告</option>
-                                <option value="block_analytics">📊 阻止统计分析</option>
-                                <option value="block_fonts">🔤 阻止字体</option>
-                                <option value="performance_mode">⚡ 性能模式（推荐）</option>
-                                <option value="bilibili_ads">🅱️ B站广告</option>
-                            </select>
-                            <button type="button" onclick="clearUrlConfig('${item.id}', 'blockList')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
-                        </div>
-                        <textarea
-                            id="url-config-blocklist-${item.id}"
-                            placeholder='["*.jpg", "*.png", "https://analytics.example.com/**"]'
-                            rows="2"
-                            style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"
-                            oninput="try { updateUrlConfig(${item.id}, 'blockList', this.value ? JSON.parse(this.value) : null); this.style.borderColor='#cbd5e0'; } catch(e) { this.style.borderColor='#fc8181'; }">${escapeHtml(config.blockList ? JSON.stringify(config.blockList, null, 2) : '')}</textarea>
-                        <small style="color: #718096; font-size: 0.85em;">JSON数组格式，支持glob模式，阻止匹配的资源加载 | 💡 可提升性能</small>
-                    </div>
+                    <!-- 配置模块：设备和网络 -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #f59e0b;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #2d3748; font-weight: 600;">📱 设备和网络</h5>
 
-                    <!-- Custom CSS -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">自定义 CSS (customCss)</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-css-preset" onchange="applyUrlCssPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择CSS预设...</option>
-                                <option value="hide_ads">🚫 隐藏广告元素</option>
-                                <option value="hide_headers">⬆️ 隐藏头部导航</option>
-                                <option value="hide_footers">⬇️ 隐藏页脚</option>
-                                <option value="focus_video">🎯 视频聚焦模式</option>
-                                <option value="dark_mode">🌙 暗黑模式</option>
-                                <option value="performance_boost">⚡ 性能提升</option>
-                                <option value="bilibili_clean">🅱️ B站净化</option>
+                        <!-- Device Options -->
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">📱 设备模拟</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-device-preset" onchange="applyUrlDevicePreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择设备预设...</option>
+                                    <optgroup label="🖥️ 桌面">
+                                        <option value="desktop_fullhd">Full HD 全屏</option>
+                                        <option value="desktop_2k">2K</option>
+                                    </optgroup>
+                                    <optgroup label="📱 移动">
+                                        <option value="mobile_iphone">iPhone</option>
+                                        <option value="mobile_android">Android</option>
+                                        <option value="mobile_ipad">iPad</option>
+                                    </optgroup>
+                                </select>
+                                <button type="button" onclick="clearUrlDeviceConfig('${item.id}')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            <select
+                                id="url-config-device-type-${item.id}"
+                                style="width: 100%; padding: 6px; margin-bottom: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;"
+                                onchange="updateUrlDeviceType('${item.id}', this.value)">
+                                <option value="">使用默认</option>
+                                <option value="Desktop" ${config.deviceOptions && config.deviceOptions[0] === 'Desktop' ? 'selected' : ''}>桌面</option>
+                                <option value="Mobile" ${config.deviceOptions && config.deviceOptions[0] === 'Mobile' ? 'selected' : ''}>移动</option>
                             </select>
-                            <button type="button" onclick="clearUrlConfig('${item.id}', 'customCss')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
-                        </div>
-                        <textarea
-                            id="url-config-css-${item.id}"
-                            placeholder="body { background: red; }"
-                            rows="2"
-                            style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"
-                            oninput="updateUrlConfig('${item.id}', 'customCss', this.value)">${escapeHtml(config.customCss || '')}</textarea>
-                        <small style="color: #718096; font-size: 0.85em;">注入到页面的自定义CSS样式</small>
-                    </div>
-
-                    <!-- Device Options -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">设备选项 (deviceOptions)</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-device-preset" onchange="applyUrlDevicePreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择设备预设...</option>
-                                <optgroup label="🖥️ 桌面设备">
-                                    <option value="desktop_fullhd">Full HD (1920x1080 全屏)</option>
-                                    <option value="desktop_normal">标准桌面 (1920x1080 窗口)</option>
-                                    <option value="desktop_2k">2K (2560x1440)</option>
-                                    <option value="desktop_4k">4K (3840x2160)</option>
-                                    <option value="desktop_small">小屏笔记本 (1366x768)</option>
-                                </optgroup>
-                                <optgroup label="📱 移动设备">
-                                    <option value="mobile_android">Android 标准</option>
-                                    <option value="mobile_iphone">iPhone 标准</option>
-                                    <option value="mobile_iphone_pro">iPhone Pro</option>
-                                    <option value="mobile_iphone_pro_max">iPhone Pro Max</option>
-                                    <option value="mobile_ipad">iPad</option>
-                                    <option value="mobile_galaxy_s21">Galaxy S21</option>
-                                </optgroup>
-                            </select>
-                            <button type="button" onclick="clearUrlDeviceConfig('${item.id}')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
-                        </div>
-                        <select
-                            id="url-config-device-type-${item.id}"
-                            style="width: 100%; padding: 8px; margin-bottom: 8px; border: 1px solid #cbd5e0; border-radius: 4px;"
-                            onchange="updateUrlDeviceType('${item.id}', this.value)">
-                            <option value="">不设置（使用默认）</option>
-                            <option value="Desktop" ${config.deviceOptions && config.deviceOptions[0] === 'Desktop' ? 'selected' : ''}>Desktop - 桌面设备</option>
-                            <option value="Mobile" ${config.deviceOptions && config.deviceOptions[0] === 'Mobile' ? 'selected' : ''}>Mobile - 移动设备</option>
-                        </select>
-                        <div id="url-${item.id}-device-desktop-options" style="display: ${config.deviceOptions && config.deviceOptions[0] === 'Desktop' ? 'block' : 'none'}; margin-top: 8px;">
-                            <label style="cursor: pointer;">
-                                <input type="checkbox" id="url-${item.id}-device-fullscreen" ${config.deviceOptions && config.deviceOptions[1]?.fullscreen ? 'checked' : ''} onchange="updateUrlDeviceOptions('${item.id}', 'Desktop', {fullscreen: this.checked})"> 全屏模式 (fullscreen)
-                            </label>
-                        </div>
-                        <div id="url-${item.id}-device-mobile-options" style="display: ${config.deviceOptions && config.deviceOptions[0] === 'Mobile' ? 'block' : 'none'}; margin-top: 8px;">
-                            <select id="url-${item.id}-device-mobile-preset" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px;" onchange="updateUrlDeviceOptions('${item.id}', 'Mobile', {preset: this.value})">
-                                <option value="android" ${config.deviceOptions && config.deviceOptions[1]?.preset === 'android' ? 'selected' : ''}>Android</option>
-                                <option value="iphone" ${config.deviceOptions && config.deviceOptions[1]?.preset === 'iphone' ? 'selected' : ''}>iPhone</option>
-                            </select>
-                        </div>
-                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同设备类型</small>
-                    </div>
-
-                    <!-- 网络模拟配置 -->
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🌐 网络模拟 (networkConditions)</label>
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="url-${item.id}-network-preset" onchange="applyUrlNetworkPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em; background: #edf2f7;">
-                                <option value="">✨ 选择网络预设...</option>
-                                <option value="offline">📵 离线模式 (Offline)</option>
-                                <option value="slow_3g">🐌 慢速3G (Slow 3G)</option>
-                                <option value="fast_3g">📶 快速3G (Fast 3G)</option>
-                                <option value="4g">📶 4G</option>
-                                <option value="wifi">📡 WiFi</option>
-                                <option value="dsl">🌐 DSL</option>
-                                <option value="custom_low_end">⚠️ 低端网络 (自定义)</option>
-                            </select>
-                            <button type="button" onclick="clearUrlConfig('${item.id}', 'networkConditions')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">清空</button>
-                        </div>
-                        <div style="background: #f7fafc; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0;">
-                            <div style="margin-bottom: 8px;">
-                                <label style="cursor: pointer; display: flex; align-items: center; gap: 6px;">
-                                    <input type="checkbox" id="url-${item.id}-network-offline" ${config.networkConditions?.offline ? 'checked' : ''} onchange="updateUrlNetworkCondition('${item.id}', 'offline', this.checked)">
-                                    <span style="font-size: 0.9em; color: #4a5568;">离线模式 (Offline)</span>
+                            <div id="url-${item.id}-device-desktop-options" style="display: ${config.deviceOptions && config.deviceOptions[0] === 'Desktop' ? 'block' : 'none'};">
+                                <label style="cursor: pointer; font-size: 0.85em;">
+                                    <input type="checkbox" id="url-${item.id}-device-fullscreen" ${config.deviceOptions && config.deviceOptions[1]?.fullscreen ? 'checked' : ''} onchange="updateUrlDeviceOptions('${item.id}', 'Desktop', {fullscreen: this.checked})"> 全屏模式
                                 </label>
                             </div>
-                            <div style="margin-bottom: 8px;">
-                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">下载速度 (Download Throughput)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="url-${item.id}-network-download" value="${config.networkConditions?.downloadThroughput !== undefined ? config.networkConditions.downloadThroughput : ''}" placeholder="字节/秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'downloadThroughput', this.value ? parseFloat(this.value) : undefined)">
-                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">bytes/s</span>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 8px;">
-                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">上传速度 (Upload Throughput)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="url-${item.id}-network-upload" value="${config.networkConditions?.uploadThroughput !== undefined ? config.networkConditions.uploadThroughput : ''}" placeholder="字节/秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'uploadThroughput', this.value ? parseFloat(this.value) : undefined)">
-                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">bytes/s</span>
-                                </div>
-                            </div>
-                            <div style="margin-bottom: 8px;">
-                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">延迟 (Latency)</label>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <input type="number" id="url-${item.id}-network-latency" value="${config.networkConditions?.latency !== undefined ? config.networkConditions.latency : ''}" placeholder="毫秒 (留空不限制)" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" oninput="updateUrlNetworkCondition('${item.id}', 'latency', this.value ? parseFloat(this.value) : undefined)">
-                                    <span style="font-size: 0.8em; color: #718096; white-space: nowrap;">ms</span>
-                                </div>
-                            </div>
-                            <div>
-                                <label style="display: block; margin-bottom: 4px; font-size: 0.85em; color: #4a5568;">连接类型 (Connection Type)</label>
-                                <select id="url-${item.id}-network-connection-type" style="width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" onchange="updateUrlNetworkCondition('${item.id}', 'connectionType', this.value)">
-                                    <option value="">不设置</option>
-                                    <option value="none" ${config.networkConditions?.connectionType === 'none' ? 'selected' : ''}>none</option>
-                                    <option value="cellular2g" ${config.networkConditions?.connectionType === 'cellular2g' ? 'selected' : ''}>cellular2g</option>
-                                    <option value="cellular3g" ${config.networkConditions?.connectionType === 'cellular3g' ? 'selected' : ''}>cellular3g</option>
-                                    <option value="cellular4g" ${config.networkConditions?.connectionType === 'cellular4g' ? 'selected' : ''}>cellular4g</option>
-                                    <option value="bluetooth" ${config.networkConditions?.connectionType === 'bluetooth' ? 'selected' : ''}>bluetooth</option>
-                                    <option value="ethernet" ${config.networkConditions?.connectionType === 'ethernet' ? 'selected' : ''}>ethernet</option>
-                                    <option value="wifi" ${config.networkConditions?.connectionType === 'wifi' ? 'selected' : ''}>wifi</option>
-                                    <option value="wimax" ${config.networkConditions?.connectionType === 'wimax' ? 'selected' : ''}>wimax</option>
-                                    <option value="other" ${config.networkConditions?.connectionType === 'other' ? 'selected' : ''}>other</option>
+                            <div id="url-${item.id}-device-mobile-options" style="display: ${config.deviceOptions && config.deviceOptions[0] === 'Mobile' ? 'block' : 'none'};">
+                                <select id="url-${item.id}-device-mobile-preset" style="width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;" onchange="updateUrlDeviceOptions('${item.id}', 'Mobile', {preset: this.value})">
+                                    <option value="android" ${config.deviceOptions && config.deviceOptions[1]?.preset === 'android' ? 'selected' : ''}>Android</option>
+                                    <option value="iphone" ${config.deviceOptions && config.deviceOptions[1]?.preset === 'iphone' ? 'selected' : ''}>iPhone</option>
                                 </select>
                             </div>
                         </div>
-                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">模拟不同网络环境，用于测试页面在低速网络下的表现</small>
+
+                        <!-- 网络模拟配置 -->
+                        <div style="margin-bottom: 0;">
+                            <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.85em;">🌐 网络模拟</label>
+                            <div style="margin-bottom: 6px; display: flex; gap: 6px;">
+                                <select id="url-${item.id}-network-preset" onchange="applyUrlNetworkPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                                    <option value="">选择网络预设...</option>
+                                    <option value="slow_3g">🐌 慢速3G</option>
+                                    <option value="fast_3g">📶 快速3G</option>
+                                    <option value="4g">📶 4G</option>
+                                    <option value="wifi">📡 WiFi</option>
+                                </select>
+                                <button type="button" onclick="clearUrlConfig('${item.id}', 'networkConditions')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
+                            </div>
+                            ${config.networkConditions ? `<div style="background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 0.8em; color: #718096;">
+                                ${config.networkConditions.offline ? '📵 离线' : ''}
+                                ${config.networkConditions.downloadThroughput ? `📥 ${(config.networkConditions.downloadThroughput / 1024).toFixed(0)} KB/s` : ''}
+                                ${config.networkConditions.latency ? `⏱️ ${config.networkConditions.latency}ms` : ''}
+                            </div>` : ''}
+                        </div>
                     </div>
 
-                    <!-- 生命周期钩子 -->
-                    <div style="background: #ffffff; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                        <label style="display: block; margin-bottom: 12px; font-weight: 600; color: #2d3748; font-size: 0.95em;">⚡ 生命周期钩子 (Lifecycle Hooks)</label>
+                    <!-- 配置模块：生命周期钩子 -->
+                    <div style="background: #f8fafc; padding: 12px; border-radius: 6px; margin-bottom: 12px; border-left: 3px solid #ef4444;">
+                        <h5 style="margin: 0 0 10px 0; font-size: 0.9em; color: #2d3748; font-weight: 600;">⚡ 生命周期钩子</h5>
 
                         <!-- beforePageLoad -->
                         <div style="margin-bottom: 12px;">
@@ -2339,6 +2430,13 @@ console.log('B站弹幕开关完成');`
                                placeholder="https://www.bilibili.com"
                                style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
                                oninput="updateUrlItem('${item.id}', 'url', this.value)">
+                        <button type="button"
+                                class="btn-secondary btn-sm"
+                                onclick="duplicateUrlItem('${item.id}')"
+                                style="padding: 6px 12px; font-size: 0.85em; white-space: nowrap;"
+                                title="复制该URL项">
+                            📋 复制
+                        </button>
                         <button type="button"
                                 class="btn-secondary btn-sm"
                                 onclick="toggleUrlConfig('${item.id}')"
@@ -2805,28 +2903,75 @@ console.log('B站弹幕开关完成');`
             showToast('用例已删除', 'success');
         }
 
+        // 测试标记输入相关的全局变量
+        let testLabelCallback = null;
+        let currentTestCaseId = null;
+
+        // 显示测试标记输入弹窗
+        function showTestLabelModal(caseId, callback) {
+            currentTestCaseId = caseId;
+            testLabelCallback = callback;
+            document.getElementById('test-label-input').value = '';
+            document.getElementById('test-label-modal').style.display = 'flex';
+            // 自动聚焦到输入框
+            setTimeout(() => {
+                document.getElementById('test-label-input').focus();
+            }, 100);
+        }
+
+        // 确认测试标记输入
+        function confirmTestLabelInput(skipLabel) {
+            const label = skipLabel === null ? '' : document.getElementById('test-label-input').value.trim();
+            document.getElementById('test-label-modal').style.display = 'none';
+
+            if (testLabelCallback) {
+                testLabelCallback(label);
+                testLabelCallback = null;
+            }
+        }
+
+        // 取消测试标记输入
+        function cancelTestLabelInput() {
+            document.getElementById('test-label-modal').style.display = 'none';
+            testLabelCallback = null;
+            currentTestCaseId = null;
+        }
+
+        // 支持回车键确认
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('test-label-input');
+            if (input) {
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        confirmTestLabelInput();
+                    }
+                });
+            }
+        });
+
         // 运行单个用例
         async function runCase(id, testLabel = '') {
             const testCase = testCases.find(tc => tc.id == id);
             if (!testCase) return;
 
-            // 如果是单个运行（没有传入testLabel），询问测试标记
+            // 如果是单个运行（没有传入testLabel），显示自定义弹窗询问测试标记
             if (!testLabel && arguments.length === 1) {
-                const userLabel = prompt(
-                    `请输入本次测试的标记（可选）：\n\n` +
-                    `建议标记格式：\n` +
-                    `• 优化前 / 优化后\n` +
-                    `• Baseline / V2.0\n` +
-                    `• 主分支 / 功能分支\n\n` +
-                    `标记将显示在任务名称中，留空则不添加标记`,
-                    ''
-                );
-
-                // 如果用户点击取消，停止执行
-                if (userLabel === null) return;
-
-                testLabel = userLabel.trim();
+                return new Promise((resolve) => {
+                    showTestLabelModal(id, (label) => {
+                        testLabel = label;
+                        executeRun(id, testLabel);
+                        resolve();
+                    });
+                });
             }
+
+            executeRun(id, testLabel);
+        }
+
+        // 执行运行逻辑
+        async function executeRun(id, testLabel) {
+            const testCase = testCases.find(tc => tc.id == id);
+            if (!testCase) return;
 
             // 移除单任务限制，允许并发执行
             const runningCount = Array.from(backendTasks.values()).filter(t => t.status === 'running').length;
@@ -3074,6 +3219,29 @@ console.log('B站弹幕开关完成');`
             }
 
             queueCard.style.display = 'block';
+
+            // 检查是否所有任务都已完成（completed 或 error）
+            const allCompleted = tasks.every(task =>
+                task.status === 'completed' || task.status === 'error'
+            );
+
+            // 如果所有任务都已完成，3秒后自动清空队列
+            if (allCompleted && tasks.length > 0) {
+                setTimeout(() => {
+                    // 再次检查，确保在这3秒内没有新任务加入
+                    const currentTasks = Array.from(backendTasks.values());
+                    const stillAllCompleted = currentTasks.every(task =>
+                        task.status === 'completed' || task.status === 'error'
+                    );
+
+                    if (stillAllCompleted && currentTasks.length > 0) {
+                        backendTasks.clear();
+                        updateStats();
+                        updateQueueDisplay();
+                        showToast('所有任务已完成，队列已自动清空', 'success');
+                    }
+                }, 3000);
+            }
 
             // 按状态排序：running -> pending -> completed -> error
             const sortedTasks = tasks.sort((a, b) => {

@@ -4,6 +4,17 @@
  */
 
 /**
+ * 计算数组的平均值
+ * @param {Array} arr - 数值数组
+ * @returns {number} 平均值
+ */
+function calculateAverage(arr) {
+    if (!arr || arr.length === 0) return 0;
+    const sum = arr.reduce((acc, val) => acc + val, 0);
+    return sum / arr.length;
+}
+
+/**
  * 创建多页面均值比较表（Initialization）
  * @param {Array} successfulResults - 成功的测试结果数组
  * @param {Array} metrics - 指标配置数组
