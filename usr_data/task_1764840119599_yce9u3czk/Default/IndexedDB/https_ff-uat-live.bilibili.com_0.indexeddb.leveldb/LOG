@@ -1,0 +1,5 @@
+2025/12/04-17:22:03.275 1b49d5c Creating DB /Users/bilibili/benchmark/usr_data/task_1764840119599_yce9u3czk/Default/IndexedDB/https_ff-uat-live.bilibili.com_0.indexeddb.leveldb since it was missing.
+2025/12/04-17:22:03.277 1b49d5c Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764840119599_yce9u3czk/Default/IndexedDB/https_ff-uat-live.bilibili.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/04-17:22:40.627 1b49d65 Level-0 table #5: started
+2025/12/04-17:22:40.643 1b49d65 Level-0 table #5: 1117683 bytes OK
+2025/12/04-17:22:40.645 1b49d65 Delete type=0 #3

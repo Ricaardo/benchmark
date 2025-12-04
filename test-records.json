@@ -1,5 +1,45 @@
 [
   {
+    "id": "task_1764839783408_r6zz0veun",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:16:23.408Z",
+    "endTime": "2025-12-04T09:18:59.959Z",
+    "duration": 156551,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T17-16-24-Runtime-Local.json",
+    "logFile": "task_task_1764839783408_r6zz0veun_1764839941009.log"
+  },
+  {
+    "id": "task_1764839627257_t02pg77zz",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "[12.04] 压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:13:47.257Z",
+    "endTime": "2025-12-04T09:16:29.001Z",
+    "duration": 161744,
+    "exitCode": 0,
+    "remarks": "12.04",
+    "reportFile": "2025-12-04T17-13-48-Runtime-Local.json",
+    "logFile": "task_task_1764839627257_t02pg77zz_1764839790073.log"
+  },
+  {
+    "id": "task_1764839442951_yvlyolwga",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:10:42.951Z",
+    "endTime": "2025-12-04T09:12:33.072Z",
+    "duration": 110121,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T17-10-43-Runtime-Local.json",
+    "logFile": "task_task_1764839442951_yvlyolwga_1764839554092.log"
+  },
+  {
     "id": "task_1764838666223_07zt9ilau",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "压测运行对比",

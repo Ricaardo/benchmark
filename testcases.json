@@ -9,7 +9,7 @@
       "Runtime": {
         "enabled": true,
         "repeatCount": 1,
-        "durationMs": 6000,
+        "durationMs": 60000,
         "delayMs": 10000
       },
       "MemoryLeak": {
@@ -48,6 +48,21 @@
               "displayName": "DANMU_ACTIVITY_CONFIG - 醒目留言动画_哈哈哈",
               "qps": null,
               "duration": null
+            },
+            {
+              "cmd_id": "d39f7c2df51a553d86f4bb7ab44ad1b8",
+              "cmd_name": "PK_INFO",
+              "displayName": "PK_INFO - PK"
+            },
+            {
+              "cmd_id": "9d8c80c645607b22178cff3c8c56c305",
+              "cmd_name": "DANMU_MSG",
+              "displayName": "DANMU_MSG"
+            },
+            {
+              "cmd_id": "13165b7a69b6552128cbc22a5ae32897",
+              "cmd_name": "DANMU_MSG",
+              "displayName": "DANMU_MSG - 弹幕"
             }
           ]
         }
@@ -72,6 +87,8 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764839783408_r6zz0veun",
+      "task_1764839627257_t02pg77zz",
       "task_1764838666223_07zt9ilau",
       "task_1764838234209_1qwp38ctb",
       "task_1764838160763_qftnzb50i",
@@ -116,7 +133,8 @@
       "task_1763723957301_5yvgw1kcn"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-12-04T08:50:29.280Z",
-    "chromeArgs": []
+    "updatedAt": "2025-12-04T09:13:36.410Z",
+    "chromeArgs": [],
+    "status": "pending"
   }
 ]

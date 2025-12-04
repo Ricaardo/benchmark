@@ -450,8 +450,14 @@ async function startTask(taskId: string) {
         const tempConfigPath = path.join(__dirname, `../benchmark.config.${taskId}.mts`);
         await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
 
-        // 🆕 处理压测模拟：使用原始配置（包含 urlsWithDesc）
-        await handleStressTest(task.rawConfig || task.config, taskId);
+        // 🆕 并行执行压测和benchmark：改为非阻塞方式
+        appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+        appendTaskOutput(taskId, `🚀 启动压测和Benchmark同步执行\n`);
+        appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
+
+        // 启动压测（后台运行，不阻塞benchmark启动）
+        handleStressTest(task.rawConfig || task.config, taskId)
+            .catch(error => console.error(`[StressTest] ❌ 后台压测失败: ${(error as Error).message}`));
 
         // 执行 benchmark
         const command = `npx @bilibili-player/benchmark --config benchmark.config.${taskId}.mts`;
@@ -2260,23 +2266,7 @@ async function handleStressTest(config: any, taskId: string) {
                 appendTaskOutput(taskId, `⏳ 等待压测完成 (${maxDuration}秒)...\n`);
                 await new Promise(resolve => setTimeout(resolve, maxDuration * 1000 + 2000));
 
-                // 步骤5: 压测完成后关播
-                appendTaskOutput(taskId, `📡 压测完成，关播中...\n`);
-
-                const finalStopPayload = { uid: parseInt(uid), room_id };
-                console.log('[StressTest] 📤 最终关播请求:', 'POST http://10.23.183.87:8083/live/stop', finalStopPayload);
-                appendTaskOutput(taskId, `  请求: POST /live/stop\n  参数: ${JSON.stringify(finalStopPayload)}\n`);
-
-                const finalStopResponse = await retryFetch('http://10.23.183.87:8083/live/stop', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(finalStopPayload)
-                }, 3, 1000);
-
-                const finalStopResult = await finalStopResponse.json();
-                console.log('[StressTest] 📥 最终关播响应:', finalStopResult);
-                appendTaskOutput(taskId, `  响应: ${JSON.stringify(finalStopResult)}\n`);
-                appendTaskOutput(taskId, `✅ 关播成功\n`);
+                appendTaskOutput(taskId, `✅ 压测完成\n`);
                 appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
                 appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
 
@@ -2288,28 +2278,6 @@ async function handleStressTest(config: any, taskId: string) {
                 appendTaskOutput(taskId, `\n❌ 压测模拟失败\n`);
                 appendTaskOutput(taskId, `错误: ${errorMsg}\n`);
                 appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-
-                // 尝试关播清理
-                try {
-                    const cleanupPayload = { uid: parseInt(uid), room_id };
-                    console.log('[StressTest] 📤 清理关播请求:', cleanupPayload);
-                    appendTaskOutput(taskId, `  清理请求: POST /live/stop\n  参数: ${JSON.stringify(cleanupPayload)}\n`);
-
-                    const cleanupResponse = await retryFetch('http://10.23.183.87:8083/live/stop', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(cleanupPayload)
-                    }, 2, 500);
-
-                    const cleanupResult = await cleanupResponse.json();
-                    console.log('[StressTest] 📥 清理关播响应:', cleanupResult);
-                    appendTaskOutput(taskId, `  响应: ${JSON.stringify(cleanupResult)}\n`);
-                    appendTaskOutput(taskId, `✅ 已尝试关播清理\n`);
-                } catch (stopError) {
-                    console.error('[StressTest] ❌ 清理关播失败:', stopError);
-                    appendTaskOutput(taskId, `⚠️ 关播清理失败: ${(stopError as Error).message}\n`);
-                }
-
                 appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
                 console.error(`[StressTest] 压测模拟失败:`, error);
                 // 不中断任务执行，只记录错误
