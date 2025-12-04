@@ -1,5 +1,57 @@
 [
   {
+    "id": "task_1764840801708_473afttt8",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "error",
+    "startTime": "2025-12-04T09:33:21.708Z",
+    "endTime": "2025-12-04T09:34:34.182Z",
+    "duration": 72474,
+    "exitCode": 1,
+    "errorMessage": "ignoreHTTPSErrors: true,\nGather process failed: Error: MultiConditionWaiter cancelled: abnormal page closed\nError occurred in 压测 of {\"runner\":\"Runtime\"}: Error: MultiConditionWaiter cancelled: abnormal page closed\n    ignoreHTTPSErrors: true,\nError occurred in 非压测 of {\"runner\":\"Runtime\"}: page.goto: Target page, context or browser has been closed\n  ❌  任务失败\n可能原因: 生成失败或文件名不匹配",
+    "logFile": "task_task_1764840801708_473afttt8_1764840875233.log"
+  },
+  {
+    "id": "task_1764840479796_rgussy2li",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:27:59.796Z",
+    "endTime": "2025-12-04T09:30:36.336Z",
+    "duration": 156540,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T17-28-00-Runtime-Local.json",
+    "logFile": "task_task_1764840479796_rgussy2li_1764840637416.log"
+  },
+  {
+    "id": "task_1764840256989_vyt4vtbmk",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:24:16.989Z",
+    "endTime": "2025-12-04T09:26:53.528Z",
+    "duration": 156539,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T17-24-17-Runtime-Local.json",
+    "logFile": "task_task_1764840256989_vyt4vtbmk_1764840414594.log"
+  },
+  {
+    "id": "task_1764840119599_yce9u3czk",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T09:21:59.599Z",
+    "endTime": "2025-12-04T09:24:45.605Z",
+    "duration": 166006,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T17-22-00-Runtime-Local.json",
+    "logFile": "task_task_1764840119599_yce9u3czk_1764840286699.log"
+  },
+  {
     "id": "task_1764839783408_r6zz0veun",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "压测运行对比",

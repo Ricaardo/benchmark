@@ -1678,10 +1678,24 @@ console.log('B站弹幕开关完成');`
                 item.config = {};
             }
 
-            if (value === '' || value === null || value === undefined) {
+            // 严格处理 value，将空字符串、null、undefined 都视为"无设置"
+            const isEmpty = value === '' || value === null || value === undefined;
+
+            if (isEmpty) {
                 delete item.config[field];
             } else {
-                item.config[field] = value;
+                // 对于cookie字段，需要额外检查是否是默认值或占位符
+                if (field === 'cookie') {
+                    const trimmedValue = typeof value === 'string' ? value.trim() : value;
+                    if (!trimmedValue) {
+                        // 空字符串或空白字符，删除字段
+                        delete item.config[field];
+                    } else {
+                        item.config[field] = trimmedValue;
+                    }
+                } else {
+                    item.config[field] = value;
+                }
             }
         }
 
@@ -3037,6 +3051,7 @@ console.log('B站弹幕开关完成');`
             document.getElementById('case-anonymous').checked = true;
             document.getElementById('case-cpu-throttling').value = '1';
             document.getElementById('case-description').value = '';
+            document.getElementById('testcase-cookie').value = '';  // 清空全局Cookie
 
             // 重置浏览器参数配置
             document.getElementById('case-disable-sandbox').checked = true;
@@ -3133,6 +3148,9 @@ console.log('B站弹幕开关完成');`
             }
 
             document.getElementById('case-description').value = testCase.description || '';
+
+            // 加载全局Cookie配置
+            document.getElementById('testcase-cookie').value = testCase.cookie || '';
 
             // 填充节点选择
             populateWorkerSelector(testCase.workerId);
@@ -3264,6 +3282,9 @@ console.log('B站弹幕开关完成');`
                 }
             };
 
+            // 获取全局Cookie配置
+            const globalCookie = document.getElementById('testcase-cookie').value.trim();
+
             // 获取选中的节点
             const selectedWorkerId = document.getElementById('case-worker').value || undefined;
 
@@ -3288,6 +3309,7 @@ console.log('B站弹幕开关完成');`
                     testCase.description = description;
                     testCase.workerId = selectedWorkerId;  // 新增：保存选中的节点
                     testCase.chromeArgs = chromeArgs;  // 新增：保存浏览器参数
+                    testCase.cookie = globalCookie;  // 新增：保存全局Cookie
                     // 移除旧的字段（如果存在）
                     delete testCase.url;
                     delete testCase.runner;
@@ -3329,6 +3351,7 @@ console.log('B站弹幕开关完成');`
                     tags,
                     workerId: selectedWorkerId,  // 新增：保存选中的节点
                     chromeArgs,  // 新增：保存浏览器参数
+                    cookie: globalCookie,  // 新增：保存全局Cookie
                     createdAt: new Date().toISOString(),
                     executionHistory: [] // 初始化执行历史为空数组
                 };
@@ -3476,6 +3499,12 @@ console.log('B站弹幕开关完成');`
                 const advConfig = testCase.advancedConfig || {};
                 console.log('🔧 运行时 - 用例的advancedConfig:', advConfig);
 
+                // 获取全局cookie（如果存在）
+                const globalCookie = testCase.cookie;
+                if (globalCookie) {
+                    console.log('🔧 运行时 - 全局Cookie:', globalCookie.substring(0, 50) + '...');
+                }
+
                 const testCasesArray = urlsData.map(item => {
                     const tc = {
                         target: item.url,
@@ -3484,7 +3513,9 @@ console.log('B站弹幕开关完成');`
 
                     // 应用全局高级配置（默认配置）
                     if (advConfig.delayMs !== undefined) tc.delayMs = advConfig.delayMs;
-                    if (advConfig.cookie) tc.cookie = advConfig.cookie;
+                    // ⚠️ 全局Cookie只应用于没有per-URL配置的URL
+                    // 当URL有per-URL配置时，优先级应该是：per-URL cookie > 全局cookie
+                    // 所以这里暂时不设置tc.cookie，等到下面的per-URL处理后再判断
                     if (advConfig.autoCookie) tc.autoCookie = advConfig.autoCookie;  // 🆕 添加自动Cookie支持
                     if (advConfig.extraHTTPHeaders) tc.extraHTTPHeaders = advConfig.extraHTTPHeaders;
                     if (advConfig.blockList) tc.blockList = advConfig.blockList;
@@ -3496,6 +3527,21 @@ console.log('B站弹幕开关完成');`
                     if (item.config) {
                         tc.config = item.config;
                         console.log('✨ URL有独立配置:', item.url, item.config);
+                        
+                        // ✅ 判断Per-URL配置中是否真的有cookie设置
+                        // 如果没有cookie或cookie为空，则使用全局cookie
+                        const hasPerUrlCookie = item.config.cookie && typeof item.config.cookie === 'string' && item.config.cookie.trim();
+                        
+                        if (!hasPerUrlCookie && globalCookie) {
+                            tc.config.cookie = globalCookie;
+                            console.log('✨ URL配置中添加全局Cookie:', item.url);
+                        }
+                    } else {
+                        // 没有per-URL配置，则应用全局cookie
+                        if (globalCookie) {
+                            tc.cookie = globalCookie;
+                            console.log('✨ 应用全局Cookie到:', item.url);
+                        }
                     }
 
                     // 将整个advancedConfig传递，以便后端处理autoCookie

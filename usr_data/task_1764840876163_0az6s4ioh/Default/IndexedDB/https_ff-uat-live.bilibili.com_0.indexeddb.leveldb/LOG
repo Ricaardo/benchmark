@@ -1,0 +1,23 @@
+2025/12/04-17:34:40.217 1b4fcf3 Creating DB /Users/bilibili/benchmark/usr_data/task_1764840876163_0az6s4ioh/Default/IndexedDB/https_ff-uat-live.bilibili.com_0.indexeddb.leveldb since it was missing.
+2025/12/04-17:34:40.219 1b4fcf3 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764840876163_0az6s4ioh/Default/IndexedDB/https_ff-uat-live.bilibili.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/12/04-17:35:21.493 1b4fcfc Level-0 table #5: started
+2025/12/04-17:35:21.517 1b4fcfc Level-0 table #5: 1117543 bytes OK
+2025/12/04-17:35:21.519 1b4fcfc Delete type=0 #3
+2025/12/04-17:35:49.039 1b4fcfa Level-0 table #7: started
+2025/12/04-17:35:49.053 1b4fcfa Level-0 table #7: 1110985 bytes OK
+2025/12/04-17:35:49.055 1b4fcfa Delete type=0 #4
+2025/12/04-17:35:51.076 1b4fcf1 Compacting 1@1 + 1@2 files
+2025/12/04-17:35:51.090 1b4fcf1 Generated table #8@1: 6605 keys, 1503585 bytes
+2025/12/04-17:35:51.090 1b4fcf1 Compacted 1@1 + 1@2 files => 1503585 bytes
+2025/12/04-17:35:51.092 1b4fcf1 compacted to: files[ 0 0 1 0 0 0 0 ]
+2025/12/04-17:35:51.092 1b4fcf1 Delete type=2 #7
+2025/12/04-17:35:51.092 1b4fcf1 Delete type=2 #5
+2025/12/04-17:36:00.315 1b4fcf1 Level-0 table #10: started
+2025/12/04-17:36:00.335 1b4fcf1 Level-0 table #10: 1055584 bytes OK
+2025/12/04-17:36:00.338 1b4fcf1 Delete type=0 #6
+2025/12/04-17:36:00.344 1b4fcf3 Compacting 1@1 + 1@2 files
+2025/12/04-17:36:00.363 1b4fcf3 Generated table #11@1: 11229 keys, 2035765 bytes
+2025/12/04-17:36:00.363 1b4fcf3 Compacted 1@1 + 1@2 files => 2035765 bytes
+2025/12/04-17:36:00.364 1b4fcf3 compacted to: files[ 0 0 1 0 0 0 0 ]
+2025/12/04-17:36:00.364 1b4fcf3 Delete type=2 #10
+2025/12/04-17:36:00.364 1b4fcf3 Delete type=2 #8

@@ -71,7 +71,7 @@
         "url": "https://ff-uat-live.bilibili.com/460690",
         "description": "非压测",
         "config": {
-          "cookie": "DedeUserID=123456; SESSDATA=custom_session",
+          "cookie": "",
           "customCss": ".ad { display: none; }"
         }
       }
@@ -87,6 +87,8 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764840801708_473afttt8",
+      "task_1764840479796_rgussy2li",
       "task_1764839783408_r6zz0veun",
       "task_1764839627257_t02pg77zz",
       "task_1764838666223_07zt9ilau",
@@ -133,8 +135,9 @@
       "task_1763723957301_5yvgw1kcn"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-12-04T09:13:36.410Z",
+    "updatedAt": "2025-12-04T09:34:22.612Z",
     "chromeArgs": [],
-    "status": "pending"
+    "status": "pending",
+    "cookie": ""
   }
 ]

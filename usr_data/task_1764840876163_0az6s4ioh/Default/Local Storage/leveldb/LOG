@@ -1,0 +1,8 @@
+2025/12/04-17:34:37.496 1b4fd46 Creating DB /Users/bilibili/benchmark/usr_data/task_1764840876163_0az6s4ioh/Default/Local Storage/leveldb since it was missing.
+2025/12/04-17:34:37.511 1b4fd46 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764840876163_0az6s4ioh/Default/Local Storage/leveldb/MANIFEST-000001
+2025/12/04-17:35:37.513 1b4fd49 Level-0 table #5: started
+2025/12/04-17:35:37.521 1b4fd49 Level-0 table #5: 748381 bytes OK
+2025/12/04-17:35:37.523 1b4fd49 Delete type=0 #3
+2025/12/04-17:36:11.553 1b4fd49 Level-0 table #7: started
+2025/12/04-17:36:11.556 1b4fd49 Level-0 table #7: 22451 bytes OK
+2025/12/04-17:36:11.566 1b4fd49 Delete type=0 #4
