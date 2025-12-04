@@ -18,16 +18,7 @@ const ConfigPresets = {
                 },
                 instruction: '请替换为你自己的Cookie值（在浏览器开发者工具 → Application → Cookies 中获取）'
             },
-            youtube_login: {
-                name: 'YouTube登录态',
-                description: '使用已登录的YouTube Cookie',
-                value: {
-                    SID: 'your_sid_here',
-                    HSID: 'your_hsid_here',
-                    SSID: 'your_ssid_here'
-                },
-                instruction: '请替换为你自己的YouTube Cookie'
-            },
+    
             custom_simple: {
                 name: '简单Cookie',
                 description: '单个Cookie键值对',

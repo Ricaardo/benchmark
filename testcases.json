@@ -87,6 +87,12 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764842382461_5prcrp4ho",
+      "task_1764842355283_hrgqwnww4",
+      "task_1764842116505_2e67zdgqo",
+      "task_1764841937165_a4p0y1r8s",
+      "task_1764841902012_g0vstzxg7",
+      "task_1764841431704_lvfs6v0ho",
       "task_1764840801708_473afttt8",
       "task_1764840479796_rgussy2li",
       "task_1764839783408_r6zz0veun",
@@ -130,14 +136,18 @@
       "task_1763985430692_55ecjzp72",
       "task_1763956897290_vwiznux0h",
       "task_1763955776797_cvsnsh9kj",
-      "task_1763727359664_hcaq15cii",
-      "task_1763727188057_6aywxys2j",
-      "task_1763723957301_5yvgw1kcn"
+      "task_1763727359664_hcaq15cii"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-12-04T09:34:22.612Z",
+    "updatedAt": "2025-12-04T09:59:40.671Z",
     "chromeArgs": [],
     "status": "pending",
-    "cookie": ""
+    "cookie": "",
+    "advancedConfig": {
+      "autoCookie": {
+        "uid": "110000233",
+        "env": "uat"
+      }
+    }
   }
 ]

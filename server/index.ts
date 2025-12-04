@@ -1999,44 +1999,87 @@ app.post('/api/webhook/test', async (req, res) => {
 // 处理测试配置中的自动Cookie
 async function processAutoCookies(config: any, taskId: string) {
     const runners = config.runners || {};
+    console.log(`[AutoCookie] 开始处理任务 ${taskId} 的自动Cookie获取...`);
+    console.log(`[AutoCookie] 配置结构:`, JSON.stringify(config, null, 2).substring(0, 500));
+    appendTaskOutput(taskId, `\n[AutoCookie] 初始化自动Cookie处理\n`);
+
+    let processedCount = 0;
+    let skippedCount = 0;
 
     for (const runnerName of Object.keys(runners)) {
         const runner = runners[runnerName];
-        if (!runner.enabled || !runner.testCases) continue;
+        if (!runner.enabled || !runner.testCases) {
+            console.log(`[AutoCookie] Runner ${runnerName} 未启用或无测试用例，跳过`);
+            continue;
+        }
 
-        for (const testCase of runner.testCases) {
+        console.log(`[AutoCookie] 处理 Runner: ${runnerName}, 包含 ${runner.testCases.length} 个测试用例`);
+
+        for (let idx = 0; idx < runner.testCases.length; idx++) {
+            const testCase = runner.testCases[idx];
+            console.log(`[AutoCookie] [${runnerName}#${idx}] TestCase结构:`, JSON.stringify(testCase, null, 2).substring(0, 300));
+            
             const advConfig = testCase.advancedConfig;
-            if (!advConfig || !advConfig.autoCookie) continue;
+            
+            if (!advConfig) {
+                console.log(`[AutoCookie] [${runnerName}#${idx}] 无 advancedConfig，检查其他字段...`);
+                // 检查是否有其他位置的自动Cookie配置
+                if (testCase.autoCookie) {
+                    console.log(`[AutoCookie] [${runnerName}#${idx}] 发现 testCase.autoCookie`);
+                } else if (testCase.config?.autoCookie) {
+                    console.log(`[AutoCookie] [${runnerName}#${idx}] 发现 testCase.config.autoCookie`);
+                } else {
+                    console.log(`[AutoCookie] [${runnerName}#${idx}] 所有位置均无 autoCookie，跳过`);
+                }
+                skippedCount++;
+                continue;
+            }
+
+            if (!advConfig.autoCookie) {
+                console.log(`[AutoCookie] [${runnerName}#${idx}] advConfig 结构:`, JSON.stringify(advConfig, null, 2).substring(0, 200));
+                console.log(`[AutoCookie] [${runnerName}#${idx}] 无 autoCookie 配置，跳过`);
+                skippedCount++;
+                continue;
+            }
 
             const { uid, env } = advConfig.autoCookie;
+            console.log(`[AutoCookie] [${runnerName}#${idx}] 发现 autoCookie 配置: UID=${uid}, ENV=${env}`);
 
-            appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
-            appendTaskOutput(taskId, `🔄 自动获取Cookie\n`);
+            appendTaskOutput(taskId, `\n${'-'.repeat(70)}\n`);
+            appendTaskOutput(taskId, `🔄 自动获取Cookie [${runnerName}#${idx}]\n`);
             appendTaskOutput(taskId, `UID:  ${uid}\n`);
             appendTaskOutput(taskId, `环境: ${env}\n`);
-            console.log(`[Cookie] 为任务 ${taskId} 自动获取Cookie: UID=${uid}, 环境=${env}`);
 
             try {
                 // 调用内部Cookie获取逻辑
+                console.log(`[AutoCookie] 验证UID格式...`);
                 const numericUid = typeof uid === 'string' ? parseInt(uid, 10) : uid;
 
                 if (isNaN(numericUid)) {
-                    throw new Error(`Invalid UID: ${uid}`);
+                    throw new Error(`无效的UID格式: ${uid} (解析后: ${numericUid})`);
                 }
+
+                console.log(`[AutoCookie] UID验证通过: ${numericUid}`);
+                appendTaskOutput(taskId, `📌 UID验证: ${numericUid} ✓\n`);
 
                 let tokenData: any;
 
                 if (env === 'uat') {
+                    console.log(`[AutoCookie] 开始从UAT环境获取Cookie...`);
+                    appendTaskOutput(taskId, `🌐 请求UAT环境: ${cookieEnvConfig.uatUrl}\n`);
+                    
                     const response = await fetch(cookieEnvConfig.uatUrl, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ mid: numericUid })
                     });
 
+                    console.log(`[AutoCookie] UAT响应状态: ${response.status}`);
                     const result = await response.json() as any;
+                    console.log(`[AutoCookie] UAT响应数据:`, JSON.stringify(result, null, 2).substring(0, 200));
 
                     if (!result.data || !result.data.session || !result.data.csrf) {
-                        throw new Error(`UAT Cookie获取失败: ${result.message || 'Unknown error'}`);
+                        throw new Error(`UAT环境Cookie获取失败: ${result.message || '响应数据不完整'}`);
                     }
 
                     tokenData = {
@@ -2044,14 +2087,20 @@ async function processAutoCookies(config: any, taskId: string) {
                         csrf: result.data.csrf,
                         mid: numericUid
                     };
-                } else {
-                    // 生产环境
+                    console.log(`[AutoCookie] UAT Cookie获取成功`);
+                } else if (env === 'prod') {
+                    console.log(`[AutoCookie] 开始从生产环境获取Cookie...`);
                     const url = `${cookieEnvConfig.prodUrl}?mid=${numericUid}`;
+                    appendTaskOutput(taskId, `🌐 请求生产环境: ${url}\n`);
+                    
                     const response = await fetch(url);
+                    console.log(`[AutoCookie] 生产环境响应状态: ${response.status}`);
+                    
                     const result = await response.json() as any;
+                    console.log(`[AutoCookie] 生产环境响应数据:`, JSON.stringify(result, null, 2).substring(0, 200));
 
                     if (!result.data || !result.data.session || !result.data.csrf) {
-                        throw new Error(`生产环境Cookie获取失败: ${result.message || 'Unknown error'}`);
+                        throw new Error(`生产环境Cookie获取失败: ${result.message || '响应数据不完整'}`);
                     }
 
                     tokenData = {
@@ -2059,29 +2108,40 @@ async function processAutoCookies(config: any, taskId: string) {
                         csrf: result.data.csrf,
                         mid: result.data.mid || numericUid
                     };
+                    console.log(`[AutoCookie] 生产环境Cookie获取成功`);
+                } else {
+                    throw new Error(`不支持的环境: ${env}，仅支持 'uat' 或 'prod'`);
                 }
 
                 // 构建Cookie字符串
                 const cookieString = `SESSDATA=${tokenData.session}; bili_jct=${tokenData.csrf}; DedeUserID=${tokenData.mid}; buvid3=FFFFFFFF-00FE-TEST-MAIN-FRONTWHITEBUVID00infoc`;
+                console.log(`[AutoCookie] Cookie字符串已构建，长度: ${cookieString.length} 字符`);
+                console.log(`[AutoCookie] Cookie预览: ${cookieString.substring(0, 100)}...`);
 
                 // 替换 autoCookie 为实际的 cookie
                 delete advConfig.autoCookie;
                 advConfig.cookie = cookieString;
 
                 appendTaskOutput(taskId, `✅ Cookie获取成功\n`);
-                appendTaskOutput(taskId, `UID: ${numericUid}\n`);
-                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-                console.log(`[Cookie] 成功获取Cookie: UID=${numericUid}, 环境=${env}`);
+                appendTaskOutput(taskId, `📝 UID: ${numericUid}\n`);
+                appendTaskOutput(taskId, `🔐 Session片段: ${tokenData.session.substring(0, 20)}...\n`);
+                appendTaskOutput(taskId, `🔑 CSRF片段: ${tokenData.csrf.substring(0, 20)}...\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(70)}\n`);
+                console.log(`[AutoCookie] [${runnerName}#${idx}] ✅ Cookie处理完成`);
+                processedCount++;
             } catch (error) {
                 const errorMsg = (error as Error).message;
+                console.error(`[AutoCookie] [${runnerName}#${idx}] ❌ 错误详情:`, error);
                 appendTaskOutput(taskId, `❌ Cookie获取失败\n`);
-                appendTaskOutput(taskId, `错误: ${errorMsg}\n`);
-                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-                console.error(`[Cookie] Cookie获取失败:`, error);
+                appendTaskOutput(taskId, `错误信息: ${errorMsg}\n`);
+                appendTaskOutput(taskId, `${'!'.repeat(70)}\n`);
                 throw error; // 中断任务执行
             }
         }
     }
+
+    console.log(`[AutoCookie] 处理完成 - 已处理: ${processedCount}, 已跳过: ${skippedCount}`);
+    appendTaskOutput(taskId, `\n[AutoCookie] 处理统计: 已处理 ${processedCount} 个，已跳过 ${skippedCount} 个\n`);
 }
 
 // ========== 压测模拟处理 ==========

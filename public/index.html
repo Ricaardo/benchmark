@@ -3282,8 +3282,28 @@ console.log('B站弹幕开关完成');`
                 }
             };
 
-            // 获取全局Cookie配置
-            const globalCookie = document.getElementById('testcase-cookie').value.trim();
+            // 获取全局Cookie配置（支持自动和手动模式）
+            const cookieMode = document.getElementById('cookie-mode')?.value || 'auto';
+            let globalCookie = '';
+            let autoCookieConfig = null;
+
+            if (cookieMode === 'auto') {
+                // 自动获取模式
+                const autoCookieUid = document.getElementById('auto-cookie-uid')?.value.trim();
+                const autoCookieEnv = document.getElementById('auto-cookie-env')?.value || 'prod';
+
+                if (autoCookieUid) {
+                    autoCookieConfig = {
+                        uid: autoCookieUid,
+                        env: autoCookieEnv
+                    };
+                    console.log('🔄 自动Cookie配置:', autoCookieConfig);
+                }
+            } else {
+                // 手动配置模式
+                globalCookie = document.getElementById('testcase-cookie')?.value.trim() || '';
+                console.log('🍪 手动Cookie配置长度:', globalCookie.length);
+            }
 
             // 获取选中的节点
             const selectedWorkerId = document.getElementById('case-worker').value || undefined;
@@ -3310,6 +3330,18 @@ console.log('B站弹幕开关完成');`
                     testCase.workerId = selectedWorkerId;  // 新增：保存选中的节点
                     testCase.chromeArgs = chromeArgs;  // 新增：保存浏览器参数
                     testCase.cookie = globalCookie;  // 新增：保存全局Cookie
+                    
+                    // 🔄 处理自动Cookie配置
+                    if (autoCookieConfig) {
+                        if (!testCase.advancedConfig) {
+                            testCase.advancedConfig = {};
+                        }
+                        testCase.advancedConfig.autoCookie = autoCookieConfig;
+                        console.log('✅ 已保存autoCookie配置到编辑用例:', autoCookieConfig);
+                    } else if (testCase.advancedConfig?.autoCookie) {
+                        delete testCase.advancedConfig.autoCookie;  // 清除已有的autoCookie配置
+                    }
+                    
                     // 移除旧的字段（如果存在）
                     delete testCase.url;
                     delete testCase.runner;
@@ -3355,6 +3387,14 @@ console.log('B站弹幕开关完成');`
                     createdAt: new Date().toISOString(),
                     executionHistory: [] // 初始化执行历史为空数组
                 };
+                
+                // 🔄 处理自动Cookie配置
+                if (autoCookieConfig) {
+                    newCase.advancedConfig = {
+                        autoCookie: autoCookieConfig
+                    };
+                    console.log('✅ 已保存autoCookie配置到新增用例:', autoCookieConfig);
+                }
 
                 // 先保存到后端获取ID
                 saveTestCaseToBackend(newCase).then(saved => {
