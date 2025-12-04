@@ -1,6 +1,14 @@
 import { type UserOptions } from "@bilibili-player/benchmark";
 
 const config: UserOptions = {
+    __internal__: {
+        launchOptions: {
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox"
+            ]
+        }
+    },
     mode: {
         "anonymous": true,
         "headless": true,

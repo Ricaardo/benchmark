@@ -112,6 +112,29 @@
                     <small style="display: block; margin-top: 6px; color: #6b7280; font-size: 0.875rem;">留空则使用CPU核心数作为默认值</small>
                 </div>
 
+                <!-- 浏览器启动参数配置 -->
+                <div class="form-group" style="margin-bottom: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                    <label class="form-label" style="display: block; margin-bottom: 12px; font-weight: 500; color: #374151;">🔧 浏览器启动参数</label>
+
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: #f7fafc; border-radius: 6px;">
+                            <input type="checkbox" id="editDisableSandbox" checked>
+                            <span style="font-weight: 500; color: #374151;">禁用沙箱模式</span>
+                        </label>
+                        <small style="display: block; margin-top: 6px; margin-left: 4px; color: #6b7280; font-size: 0.875rem;">
+                            添加 --no-sandbox 参数（推荐在 Docker/CI 环境中使用）
+                        </small>
+                    </div>
+
+                    <div>
+                        <label class="form-label" style="display: block; margin-bottom: 8px; font-weight: 500; color: #374151;">自定义参数</label>
+                        <textarea id="editChromeArgs" class="form-input" placeholder="每行一个参数，例如：&#10;--disable-gpu&#10;--window-size=1920,1080" rows="3" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%; font-family: monospace; font-size: 0.9em;"></textarea>
+                        <small style="display: block; margin-top: 6px; color: #6b7280; font-size: 0.875rem;">
+                            可选，用于高级配置。每行一个 Chrome 启动参数
+                        </small>
+                    </div>
+                </div>
+
                 <div class="form-buttons" style="display: flex; justify-content: flex-end; gap: 12px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">取消</button>
                     <button type="submit" class="btn btn-primary">💾 保存</button>
@@ -366,6 +389,14 @@
             document.getElementById('editDescription').value = worker.description || '';
             document.getElementById('editMaxConcurrency').value = worker.maxConcurrency || '';
 
+            // 加载浏览器参数配置
+            const chromeArgs = worker.chromeArgs || [];
+            const hasSandbox = chromeArgs.includes('--no-sandbox');
+            const otherArgs = chromeArgs.filter(arg => arg !== '--no-sandbox' && arg !== '--disable-setuid-sandbox');
+
+            document.getElementById('editDisableSandbox').checked = hasSandbox;
+            document.getElementById('editChromeArgs').value = otherArgs.join('\n');
+
             const modal = document.getElementById('editModal');
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('show'), 10);
@@ -392,10 +423,24 @@
                 return;
             }
 
+            // 构建 chromeArgs 数组
+            const disableSandbox = document.getElementById('editDisableSandbox').checked;
+            const customChromeArgs = document.getElementById('editChromeArgs').value.trim();
+
+            const chromeArgs = [];
+            if (disableSandbox) {
+                chromeArgs.push('--no-sandbox', '--disable-setuid-sandbox');
+            }
+            if (customChromeArgs) {
+                const customArgs = customChromeArgs.split('\n').map(arg => arg.trim()).filter(arg => arg);
+                chromeArgs.push(...customArgs);
+            }
+
             const updates = {
                 performanceTier: document.getElementById('editPerformanceTier').value || undefined,
                 description: document.getElementById('editDescription').value || undefined,
-                maxConcurrency: parseInt(maxConcurrencyValue) || undefined
+                maxConcurrency: parseInt(maxConcurrencyValue) || undefined,
+                chromeArgs: chromeArgs.length > 0 ? chromeArgs : undefined
             };
 
             try {

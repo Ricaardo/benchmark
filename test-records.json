@@ -1,5 +1,57 @@
 [
   {
+    "id": "task_1764822170099_81gfcvzww",
+    "testCaseId": "testcase_1763959806689_k1ul6o0x",
+    "name": "初始化对比测试",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T04:22:50.099Z",
+    "endTime": "2025-12-04T04:26:09.747Z",
+    "duration": 199648,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T12-22-51-Runtime-Local.json",
+    "logFile": "task_task_1764822170099_81gfcvzww_1764822370777.log"
+  },
+  {
+    "id": "task_1764820499276_xxs32tmxv",
+    "testCaseId": "testcase_1763961938343_c9oskuf9",
+    "name": "内存泄露对比测试",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T03:54:59.276Z",
+    "endTime": "2025-12-04T03:56:23.666Z",
+    "duration": 84390,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T11-55-00-Runtime-Local.json",
+    "logFile": "task_task_1764820499276_xxs32tmxv_1764820584685.log"
+  },
+  {
+    "id": "task_1764820282993_9qaad4yxe",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "error",
+    "startTime": "2025-12-04T03:51:22.993Z",
+    "endTime": "2025-12-04T03:51:34.422Z",
+    "duration": 11429,
+    "exitCode": 1,
+    "errorMessage": "ignoreHTTPSErrors: true,\nError occurred in 压测 of {\"runner\":\"Runtime\"}: page.goto: Target page, context or browser has been closed\n    ignoreHTTPSErrors: true,\nError occurred in 非压测 of {\"runner\":\"Runtime\"}: page.goto: Target page, context or browser has been closed\n  ❌  任务失败\n可能原因: 生成失败或文件名不匹配",
+    "logFile": "task_task_1764820282993_9qaad4yxe_1764820295444.log"
+  },
+  {
+    "id": "task_1764753395395_0t8u9mn70",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-03T09:16:35.396Z",
+    "endTime": "2025-12-03T09:38:01.398Z",
+    "duration": 1286002,
+    "exitCode": 0,
+    "reportFile": "2025-12-03T17-16-36-Runtime-Local.json",
+    "logFile": "task_task_1764753395395_0t8u9mn70_1764754682471.log"
+  },
+  {
     "id": "task_1764752466127_i39n1lbqs",
     "testCaseId": "testcase_1763959806689_k1ul6o0x",
     "name": "初始化对比测试",

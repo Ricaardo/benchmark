@@ -1,0 +1,5 @@
+2025/12/04-11:49:06.826 1acfdd5 Creating DB /Users/bilibili/benchmark/usr_data/task_1764820144326_pk3gioklb/Default/Local Storage/leveldb since it was missing.
+2025/12/04-11:49:06.830 1acfdd5 Reusing MANIFEST /Users/bilibili/benchmark/usr_data/task_1764820144326_pk3gioklb/Default/Local Storage/leveldb/MANIFEST-000001
+2025/12/04-11:50:06.834 1acfdd8 Level-0 table #5: started
+2025/12/04-11:50:06.843 1acfdd8 Level-0 table #5: 542213 bytes OK
+2025/12/04-11:50:06.846 1acfdd8 Delete type=0 #3

@@ -104,7 +104,7 @@ export function createDistributedRoutes(
     router.put('/workers/:workerId', async (req, res) => {
         try {
             const { workerId } = req.params;
-            const { performanceTier, description, maxConcurrency } = req.body;
+            const { performanceTier, description, maxConcurrency, chromeArgs } = req.body;
 
             // 验证 performanceTier
             if (performanceTier && !['high', 'medium', 'low', 'custom'].includes(performanceTier)) {
@@ -122,10 +122,19 @@ export function createDistributedRoutes(
                 });
             }
 
+            // 验证 chromeArgs
+            if (chromeArgs !== undefined && !Array.isArray(chromeArgs)) {
+                return res.status(400).json({
+                    error: 'Invalid chrome args',
+                    message: 'Chrome args must be an array of strings'
+                });
+            }
+
             const updates = {
                 performanceTier,
                 description,
-                maxConcurrency
+                maxConcurrency,
+                chromeArgs
             };
 
             const updatedWorker = await workerManager.updateWorkerProperties(workerId, updates);

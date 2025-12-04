@@ -107,21 +107,6 @@
                         title="清除搜索"
                     >✕</button>
                 </div>
-                <div style="position: relative;">
-                    <input
-                        type="text"
-                        id="tag-filter-input"
-                        placeholder="🏷️ 标签筛选 (逗号分隔)"
-                        style="width: 250px; padding: 8px 35px 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;"
-                        oninput="filterTestCases()"
-                    />
-                    <button
-                        onclick="clearTagFilter()"
-                        id="clear-tag-btn"
-                        style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #999; font-size: 18px; padding: 0 8px; display: none;"
-                        title="清除标签筛选"
-                    >✕</button>
-                </div>
                 <button class="btn-secondary btn-sm" onclick="resetFilters()">🔄 重置筛选</button>
             </div>
 
@@ -166,9 +151,10 @@
         <div class="modal-content">
             <div class="modal-header">➕ 添加测试用例</div>
 
-            <!-- ========== 第一部分：基本信息 ========== -->
-            <div class="config-card">
-                <div class="config-card-title">📝 基本信息</div>
+            <div class="modal-body" style="padding: 20px 24px;">
+            <!-- 基本信息 -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1em; font-weight: 600; color: #1a202c; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0;">📝 基本信息</h3>
 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">用例名称 *</label>
@@ -176,25 +162,21 @@
                 </div>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">描述和标签（可选）</label>
-                    <input type="text" id="case-description" placeholder="测试描述..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; margin-bottom: 8px; font-size: 0.9em;">
-                    <input type="text" id="case-tags" placeholder="标签（用逗号分隔）..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9em;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">测试描述</label>
+                    <input type="text" id="case-description" placeholder="用于区分相似用例的详细说明..." style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9em;">
                 </div>
 
-                <div style="margin-bottom: 0;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🖥️ 执行节点（可选）</label>
-                    <select id="case-worker" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
+                <div>
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">🖥️ 执行节点</label>
+                    <select id="case-worker" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.9em;">
                         <option value="">自动分配（推荐）</option>
                     </select>
-                    <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">
-                        选择特定节点执行测试，留空则自动分配可用节点
-                    </small>
                 </div>
             </div>
 
-            <!-- ========== 第二部分：测试配置 ========== -->
-            <div class="config-card">
-                <div class="config-card-title">⚙️ 测试配置</div>
+            <!-- 测试配置 -->
+            <div style="margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1em; font-weight: 600; color: #1a202c; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0;">⚙️ 测试配置</h3>
 
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">测试类型 *（可多选）</label>
@@ -228,67 +210,67 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: #f7fafc; border-radius: 4px;">
+                        <input type="checkbox" id="case-anonymous" checked onchange="toggleAnonymousMode()">
+                        <span style="font-weight: 500; color: #4a5568; font-size: 0.9em;">匿名模式</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 8px; background: #f7fafc; border-radius: 4px;">
+                        <input type="checkbox" id="case-disable-sandbox" checked>
+                        <span style="font-weight: 500; color: #4a5568; font-size: 0.9em;">禁用沙箱</span>
+                    </label>
                     <div>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 10px; background: #f7fafc; border-radius: 6px;">
-                            <input type="checkbox" id="case-anonymous" checked onchange="toggleAnonymousMode()">
-                            <span style="font-weight: 500; color: #4a5568;">匿名模式</span>
-                        </label>
-                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px; margin-left: 4px;">
-                            开启后将禁用Cookie登录态配置
-                        </small>
-                    </div>
-                    <div>
-                        <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568;">CPU 节流倍数</label>
-                        <input type="number" id="case-cpu-throttling" value="1" min="1" max="20" step="1" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em;">
-                        <small style="color: #718096; font-size: 0.85em; display: block; margin-top: 4px;">
-                            1=无节流，2=2倍慢，4=4倍慢
-                        </small>
+                        <input type="number" id="case-cpu-throttling" value="1" min="1" max="20" step="1" placeholder="CPU节流(1-20)" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
                     </div>
                 </div>
 
+                <!-- 浏览器自定义参数 -->
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.9em;">浏览器自定义参数（可选）</label>
+                    <textarea id="case-chrome-args" placeholder="每行一个参数，例如：&#10;--disable-gpu&#10;--window-size=1920,1080" rows="2" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
+                </div>
+
                 <!-- Cookie配置 -->
-                <div id="cookie-config-section" style="margin-bottom: 0;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">🍪 登录态配置</label>
-                    <select id="cookie-mode" onchange="toggleCookieMode()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.95em; margin-bottom: 10px;">
-                        <option value="auto">🔄 自动获取（推荐）</option>
-                        <option value="manual">✍️ 手动配置</option>
+                <div id="cookie-config-section">
+                    <label style="display: block; margin-bottom: 6px; font-weight: 500; color: #4a5568; font-size: 0.9em;">🍪 登录态配置</label>
+                    <select id="cookie-mode" onchange="toggleCookieMode()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em; margin-bottom: 8px;">
+                        <option value="auto">自动获取（推荐）</option>
+                        <option value="manual">手动配置</option>
                     </select>
 
-                    <!-- 自动获取配置 -->
-                    <div id="auto-cookie-config" style="display: none; background: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                        <select id="auto-cookie-preset" onchange="applyAutoCookiePreset()" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; margin-bottom: 10px; font-size: 0.9em;">
-                            <option value="">自定义UID...</option>
-                            <option value="uat:110000233">UAT测试账号</option>
-                            <option value="prod:3546793358919882">生产测试账号</option>
-                        </select>
-                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
-                            <input type="text" id="auto-cookie-uid" placeholder="用户UID" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
-                            <select id="auto-cookie-env" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                    <!-- 自动获取 -->
+                    <div id="auto-cookie-config" style="display: block;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" id="auto-cookie-uid" placeholder="用户UID（或选择预设↓）" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                            <select id="auto-cookie-env" style="width: 100%; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
                                 <option value="prod">生产</option>
                                 <option value="uat">UAT</option>
                             </select>
                         </div>
+                        <select id="auto-cookie-preset" onchange="applyAutoCookiePreset()" style="width: 100%; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
+                            <option value="">快速选择预设账号...</option>
+                            <option value="uat:110000233">UAT测试账号</option>
+                            <option value="prod:3546793358919882">生产测试账号</option>
+                        </select>
                     </div>
 
                     <!-- 手动配置 -->
                     <div id="manual-cookie-config" style="display: none;">
-                        <div style="margin-bottom: 8px; display: flex; gap: 8px;">
-                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <select id="cookie-preset" onchange="applyCookiePreset()" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
                                 <option value="">选择预设...</option>
                                 <option value="bilibili_login">B站登录态</option>
-                                <option value="youtube_login">YouTube登录态</option>
                             </select>
-                            <button type="button" onclick="showAutoFetchCookieModal()" class="btn-sm" style="padding: 8px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer;">获取</button>
+                            <button type="button" onclick="showAutoFetchCookieModal()" class="btn-sm" style="padding: 6px 12px; background: #48bb78; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85em;">获取</button>
                         </div>
-                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.9em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
+                        <textarea id="testcase-cookie" placeholder='{"name": "value"} 或 "name=value"' rows="2" style="width: 100%; padding: 8px; font-family: monospace; font-size: 0.85em; border: 1px solid #cbd5e0; border-radius: 4px;"></textarea>
                     </div>
                 </div>
             </div>
 
-            <!-- ========== 第三部分：Runner配置（针对选中的测试类型） ========== -->
-            <div class="config-card" id="runner-config-card" style="display: none;">
-                <div class="config-card-title">🎯 Runner 详细配置</div>
+            <!-- Runner 详细配置 -->
+            <div id="runner-config-card" style="display: none; margin-bottom: 24px;">
+                <h3 style="margin: 0 0 16px 0; font-size: 1.1em; font-weight: 600; color: #1a202c; padding-bottom: 12px; border-bottom: 2px solid #e2e8f0;">🎯 Runner 详细配置</h3>
 
                 <!-- Initialization 配置 -->
                 <div id="initialization-config" style="display: none; padding: 15px; background: #f7fafc; border-radius: 8px; margin-bottom: 12px;">
@@ -399,15 +381,16 @@
                 <p id="no-runner-config" style="color: #9ca3af; margin: 0; text-align: center; padding: 20px;">选择测试类型后显示对应配置</p>
             </div>
 
-            <!-- ========== URL列表（移到这里） ========== -->
-            <div class="config-card">
-                <div class="config-card-title">🌐 测试URL</div>
-                <div style="margin-bottom: 0;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 500; color: #4a5568;">测试URL * <button type="button" class="btn-secondary btn-sm" onclick="addUrlItem()" style="padding: 4px 10px; font-size: 0.85em; margin-left: 8px;">➕ 添加URL</button></label>
-                    <div id="url-list" style="background: #f7fafc; padding: 12px; border-radius: 6px; border: 1px solid #cbd5e0;">
-                        <!-- URL 项会动态添加到这里 -->
-                    </div>
+            <!-- 测试URL -->
+            <div style="margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                    <h3 style="margin: 0; font-size: 1.1em; font-weight: 600; color: #1a202c;">🌐 测试URL *</h3>
+                    <button type="button" class="btn-secondary btn-sm" onclick="addUrlItem()" style="padding: 6px 12px; font-size: 0.85em;">➕ 添加URL</button>
                 </div>
+                <div id="url-list" style="background: #f9fafb; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <!-- URL 项会动态添加到这里 -->
+                </div>
+            </div>
             </div>
 
             <!-- 底部操作按钮 -->
@@ -581,6 +564,7 @@
         let backendTasks = new Map(); // taskId -> task对象
         const MAX_CONCURRENT = 3;
         let serverMaxConcurrent = 10; // 服务器的并发限制，从API获取
+        let autoClearQueueTimer = null; // 自动清空队列的定时器ID（用于防抖）
 
         // Worker 节点选择器
         let workerSelector = null;
@@ -1350,16 +1334,12 @@
         // 筛选测试用例
         function filterTestCases() {
             const searchInput = document.getElementById('search-input');
-            const tagFilterInput = document.getElementById('tag-filter-input');
             const clearSearchBtn = document.getElementById('clear-search-btn');
-            const clearTagBtn = document.getElementById('clear-tag-btn');
 
             const searchQuery = searchInput.value.trim().toLowerCase();
-            const tagQuery = tagFilterInput.value.trim();
 
             // 显示/隐藏清除按钮
             clearSearchBtn.style.display = searchQuery ? 'block' : 'none';
-            clearTagBtn.style.display = tagQuery ? 'block' : 'none';
 
             let filtered = testCases;
 
@@ -1372,20 +1352,6 @@
                 });
             }
 
-            // 根据标签筛选
-            if (tagQuery) {
-                const searchTags = tagQuery.split(',').map(t => t.trim().toLowerCase()).filter(t => t);
-                if (searchTags.length > 0) {
-                    filtered = filtered.filter(testCase => {
-                        const caseTags = (testCase.tags || []).map(t => t.toLowerCase());
-                        // 只要测试用例包含任何一个搜索标签即匹配
-                        return searchTags.some(searchTag =>
-                            caseTags.some(caseTag => caseTag.includes(searchTag))
-                        );
-                    });
-                }
-            }
-
             renderCases(filtered);
         }
 
@@ -1395,18 +1361,10 @@
             filterTestCases();
         }
 
-        // 清除标签筛选
-        function clearTagFilter() {
-            document.getElementById('tag-filter-input').value = '';
-            filterTestCases();
-        }
-
         // 重置所有筛选
         function resetFilters() {
             document.getElementById('search-input').value = '';
-            document.getElementById('tag-filter-input').value = '';
             document.getElementById('clear-search-btn').style.display = 'none';
-            document.getElementById('clear-tag-btn').style.display = 'none';
             renderCases();
         }
 
@@ -1974,6 +1932,16 @@ console.log('B站弹幕开关完成');`
         // 应用URL网络预设
         function applyUrlNetworkPreset(itemId) {
             const presetKey = document.getElementById(`url-${itemId}-network-preset`).value;
+            const customDiv = document.getElementById(`url-${itemId}-network-custom`);
+
+            // 显示/隐藏自定义输入区域
+            if (presetKey === 'custom') {
+                customDiv.style.display = 'block';
+                return;
+            } else {
+                customDiv.style.display = 'none';
+            }
+
             if (!presetKey) return;
 
             const item = urlItems.find(i => i.id == itemId);
@@ -1983,10 +1951,11 @@ console.log('B站弹幕开关完成');`
                 item.config = {};
             }
 
-            // 网络预设配置
+            // 网络预设配置 - 包含基础预设和场景化预设
             const networkPresets = {
+                // === 基础网络类型 ===
                 offline: {
-                    name: '离线模式',
+                    name: '🔌 离线模式',
                     value: {
                         offline: true,
                         downloadThroughput: 0,
@@ -1996,63 +1965,135 @@ console.log('B站弹幕开关完成');`
                     }
                 },
                 slow_3g: {
-                    name: '慢速3G',
+                    name: '🐌 慢速3G',
                     value: {
                         offline: false,
-                        downloadThroughput: 50 * 1024, // 50 KB/s
+                        downloadThroughput: 50 * 1024,
                         uploadThroughput: 50 * 1024,
                         latency: 2000,
                         connectionType: 'cellular3g'
                     }
                 },
                 fast_3g: {
-                    name: '快速3G',
+                    name: '📶 快速3G',
                     value: {
                         offline: false,
-                        downloadThroughput: 1.6 * 1024 * 1024, // 1.6 MB/s
-                        uploadThroughput: 750 * 1024, // 750 KB/s
+                        downloadThroughput: 1.6 * 1024 * 1024,
+                        uploadThroughput: 750 * 1024,
                         latency: 562.5,
                         connectionType: 'cellular3g'
                     }
                 },
                 '4g': {
-                    name: '4G',
+                    name: '📶 4G',
                     value: {
                         offline: false,
-                        downloadThroughput: 4 * 1024 * 1024, // 4 MB/s
-                        uploadThroughput: 3 * 1024 * 1024, // 3 MB/s
+                        downloadThroughput: 4 * 1024 * 1024,
+                        uploadThroughput: 3 * 1024 * 1024,
                         latency: 20,
                         connectionType: 'cellular4g'
                     }
                 },
-                wifi: {
-                    name: 'WiFi',
+                '5g': {
+                    name: '⚡ 5G',
                     value: {
                         offline: false,
-                        downloadThroughput: 30 * 1024 * 1024, // 30 MB/s
-                        uploadThroughput: 15 * 1024 * 1024, // 15 MB/s
+                        downloadThroughput: 20 * 1024 * 1024,  // 20 MB/s
+                        uploadThroughput: 10 * 1024 * 1024,     // 10 MB/s
+                        latency: 10,
+                        connectionType: 'cellular5g'
+                    }
+                },
+                wifi: {
+                    name: '📡 WiFi',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 30 * 1024 * 1024,
+                        uploadThroughput: 15 * 1024 * 1024,
                         latency: 2,
                         connectionType: 'wifi'
                     }
                 },
-                dsl: {
-                    name: 'DSL',
+
+                // === 场景化预设 ===
+                subway: {
+                    name: '🚇 地铁（信号差）',
                     value: {
                         offline: false,
-                        downloadThroughput: 2 * 1024 * 1024, // 2 MB/s
-                        uploadThroughput: 1 * 1024 * 1024, // 1 MB/s
-                        latency: 5,
+                        downloadThroughput: 200 * 1024,         // 200 KB/s - 信号不稳定
+                        uploadThroughput: 100 * 1024,           // 100 KB/s
+                        latency: 800,                           // 高延迟
+                        connectionType: 'cellular4g'
+                    }
+                },
+                meeting_room: {
+                    name: '🏢 会议室（拥挤WiFi）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 2 * 1024 * 1024,    // 2 MB/s - 多人共享
+                        uploadThroughput: 1 * 1024 * 1024,      // 1 MB/s
+                        latency: 50,                            // 中等延迟
+                        connectionType: 'wifi'
+                    }
+                },
+                home_wifi: {
+                    name: '🏠 家庭WiFi（稳定）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 10 * 1024 * 1024,   // 10 MB/s - 家庭宽带
+                        uploadThroughput: 5 * 1024 * 1024,      // 5 MB/s
+                        latency: 15,
+                        connectionType: 'wifi'
+                    }
+                },
+                cafe_wifi: {
+                    name: '☕ 咖啡店WiFi（不稳定）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 1 * 1024 * 1024,    // 1 MB/s - 公共WiFi
+                        uploadThroughput: 512 * 1024,           // 512 KB/s
+                        latency: 100,                           // 较高延迟
+                        connectionType: 'wifi'
+                    }
+                },
+                rural_area: {
+                    name: '🌾 郊区（信号弱）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 300 * 1024,         // 300 KB/s
+                        uploadThroughput: 150 * 1024,           // 150 KB/s
+                        latency: 600,
+                        connectionType: 'cellular3g'
+                    }
+                },
+                elevator: {
+                    name: '🛗 电梯（信号极差）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 50 * 1024,          // 50 KB/s - 信号屏蔽
+                        uploadThroughput: 25 * 1024,            // 25 KB/s
+                        latency: 1500,
+                        connectionType: 'cellular3g'
+                    }
+                },
+                office_lan: {
+                    name: '💼 办公室有线（极快）',
+                    value: {
+                        offline: false,
+                        downloadThroughput: 100 * 1024 * 1024,  // 100 MB/s
+                        uploadThroughput: 100 * 1024 * 1024,    // 100 MB/s
+                        latency: 1,
                         connectionType: 'ethernet'
                     }
                 },
-                custom_low_end: {
-                    name: '低端网络',
+                moving_vehicle: {
+                    name: '🚗 移动车辆（频繁切换）',
                     value: {
                         offline: false,
-                        downloadThroughput: 400 * 1024, // 400 KB/s
-                        uploadThroughput: 400 * 1024,
+                        downloadThroughput: 500 * 1024,         // 500 KB/s - 基站切换
+                        uploadThroughput: 250 * 1024,           // 250 KB/s
                         latency: 400,
-                        connectionType: 'other'
+                        connectionType: 'cellular4g'
                     }
                 }
             };
@@ -2065,6 +2106,161 @@ console.log('B站弹幕开关完成');`
             // 更新UI显示
             renderUrlList();
             showToast(`已应用网络预设: ${preset.name}`, 'success');
+        }
+
+        // 应用自定义网络配置
+        function applyCustomNetwork(itemId) {
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            const downloadInput = document.getElementById(`url-${itemId}-download`);
+            const uploadInput = document.getElementById(`url-${itemId}-upload`);
+            const latencyInput = document.getElementById(`url-${itemId}-latency`);
+            const packetLossInput = document.getElementById(`url-${itemId}-packetloss`);
+            const connectionTypeSelect = document.getElementById(`url-${itemId}-connectiontype`);
+            const offlineCheckbox = document.getElementById(`url-${itemId}-offline`);
+
+            const downloadThroughput = parseFloat(downloadInput.value);
+            const uploadThroughput = parseFloat(uploadInput.value);
+            const latency = parseFloat(latencyInput.value);
+            const packetLoss = parseFloat(packetLossInput.value);
+            const connectionType = connectionTypeSelect.value;
+            const offline = offlineCheckbox.checked;
+
+            // 验证输入 - 离线模式下不需要其他参数
+            if (!offline && isNaN(downloadThroughput) && isNaN(uploadThroughput) && isNaN(latency) && isNaN(packetLoss)) {
+                showToast('请至少输入一个网络参数或选择离线模式', 'error');
+                return;
+            }
+
+            if (!item.config) {
+                item.config = {};
+            }
+
+            // 构建网络条件对象
+            const networkConditions = {
+                offline: offline,
+                downloadThroughput: isNaN(downloadThroughput) ? -1 : downloadThroughput * 1024, // 转换为字节/秒
+                uploadThroughput: isNaN(uploadThroughput) ? -1 : uploadThroughput * 1024,
+                latency: isNaN(latency) ? 0 : latency
+            };
+
+            // 添加丢包率（如果有）
+            if (!isNaN(packetLoss) && packetLoss > 0) {
+                networkConditions.packetLoss = packetLoss;
+            }
+
+            // 添加连接类型（如果选择了）
+            if (connectionType) {
+                networkConditions.connectionType = connectionType;
+            }
+
+            item.config.networkConditions = networkConditions;
+
+            showToast('已应用自定义网络配置', 'success');
+            renderUrlList(); // 刷新显示
+        }
+
+        // ==================== 压测模拟功能 ====================
+
+        // 切换压测配置显示
+        function toggleStressTest(itemId) {
+            const enabled = document.getElementById(`stress-enabled-${itemId}`).checked;
+            const configDiv = document.getElementById(`stress-config-${itemId}`);
+            configDiv.style.display = enabled ? 'block' : 'none';
+        }
+
+        // 加载广播列表
+        async function loadBroadcastList(itemId) {
+            try {
+                showToast('正在加载广播列表...', 'info');
+
+                const response = await fetch('http://10.23.35.21:8083/broadcast/list?aggr=true', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const select = document.getElementById(`stress-broadcasts-${itemId}`);
+                select.innerHTML = '';
+
+                if (data && Array.isArray(data)) {
+                    data.forEach(broadcast => {
+                        const option = document.createElement('option');
+                        option.value = broadcast.cmd;
+                        option.textContent = `${broadcast.cmd} - ${broadcast.cmd_desc || '未知'}`;
+                        select.appendChild(option);
+                    });
+                    showToast(`成功加载 ${data.length} 个广播类型`, 'success');
+                } else {
+                    throw new Error('返回数据格式不正确');
+                }
+            } catch (error) {
+                console.error('加载广播列表失败:', error);
+                showToast(`加载失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 应用压测配置
+        function applyStressTest(itemId) {
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            const enabled = document.getElementById(`stress-enabled-${itemId}`).checked;
+
+            if (!enabled) {
+                delete item.stressTest;
+                showToast('已禁用压测配置', 'success');
+                renderUrlList();
+                return;
+            }
+
+            const roomId = document.getElementById(`stress-room-${itemId}`).value.trim();
+            const uid = document.getElementById(`stress-uid-${itemId}`).value.trim();
+            const qps = parseInt(document.getElementById(`stress-qps-${itemId}`).value);
+            const duration = parseInt(document.getElementById(`stress-duration-${itemId}`).value);
+            const broadcastSelect = document.getElementById(`stress-broadcasts-${itemId}`);
+            const selectedBroadcasts = Array.from(broadcastSelect.selectedOptions).map(opt => parseInt(opt.value));
+
+            // 验证必填字段
+            if (!roomId) {
+                showToast('请输入房间号', 'error');
+                return;
+            }
+            if (!uid) {
+                showToast('请输入UID', 'error');
+                return;
+            }
+            if (selectedBroadcasts.length === 0) {
+                showToast('请选择至少一个广播类型', 'error');
+                return;
+            }
+            if (isNaN(qps) || qps < 1) {
+                showToast('QPS必须大于0', 'error');
+                return;
+            }
+            if (isNaN(duration) || duration < 1) {
+                showToast('持续时间必须大于0', 'error');
+                return;
+            }
+
+            item.stressTest = {
+                enabled: true,
+                room_id: roomId,
+                uid: uid,
+                qps: qps,
+                duration: duration,
+                cmd_ids: selectedBroadcasts
+            };
+
+            showToast('已应用压测配置', 'success');
+            renderUrlList();
         }
 
         // 渲染URL配置面板 - 优化布局，模块化组织
@@ -2089,7 +2285,6 @@ console.log('B站弹幕开关完成');`
                                 <select id="url-${item.id}-cookie-preset" onchange="applyUrlCookiePreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
                                     <option value="">选择预设...</option>
                                     <option value="bilibili_login">B站登录态</option>
-                                    <option value="youtube_login">YouTube登录态</option>
                                 </select>
                                 <button type="button" onclick="clearUrlConfig('${item.id}', 'cookie')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
                             </div>
@@ -2241,17 +2436,79 @@ console.log('B站弹幕开关完成');`
                             <div style="margin-bottom: 6px; display: flex; gap: 6px;">
                                 <select id="url-${item.id}-network-preset" onchange="applyUrlNetworkPreset('${item.id}')" style="flex: 1; padding: 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.85em;">
                                     <option value="">选择网络预设...</option>
-                                    <option value="slow_3g">🐌 慢速3G</option>
-                                    <option value="fast_3g">📶 快速3G</option>
-                                    <option value="4g">📶 4G</option>
-                                    <option value="wifi">📡 WiFi</option>
+                                    <optgroup label="基础网络类型">
+                                        <option value="slow_3g">🐌 慢速3G</option>
+                                        <option value="fast_3g">📶 快速3G</option>
+                                        <option value="4g">📶 4G</option>
+                                        <option value="5g">🚀 5G</option>
+                                        <option value="wifi">📡 WiFi</option>
+                                    </optgroup>
+                                    <optgroup label="场景预设">
+                                        <option value="subway">🚇 地铁（信号差）</option>
+                                        <option value="meeting_room">🏢 会议室</option>
+                                        <option value="home_wifi">🏠 家庭WiFi</option>
+                                        <option value="cafe_wifi">☕ 咖啡厅WiFi</option>
+                                        <option value="rural_area">🌾 农村地区</option>
+                                        <option value="elevator">🛗 电梯内</option>
+                                        <option value="office_lan">🏢 办公室有线</option>
+                                        <option value="moving_vehicle">🚗 移动车辆</option>
+                                    </optgroup>
+                                    <option value="custom">🔧 自定义</option>
                                 </select>
                                 <button type="button" onclick="clearUrlConfig('${item.id}', 'networkConditions')" class="btn-sm" style="padding: 6px 10px; background: #cbd5e0; color: #4a5568; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">清空</button>
                             </div>
-                            ${config.networkConditions ? `<div style="background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 0.8em; color: #718096;">
-                                ${config.networkConditions.offline ? '📵 离线' : ''}
-                                ${config.networkConditions.downloadThroughput ? `📥 ${(config.networkConditions.downloadThroughput / 1024).toFixed(0)} KB/s` : ''}
-                                ${config.networkConditions.latency ? `⏱️ ${config.networkConditions.latency}ms` : ''}
+
+                            <!-- 自定义网络参数输入区域 -->
+                            <div id="url-${item.id}-network-custom" style="display: none; background: #f7fafc; padding: 10px; border-radius: 4px; border: 1px solid #cbd5e0; margin-bottom: 6px;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 4px; font-size: 0.75em; color: #4a5568;">📥 下载速度 (KB/s)</label>
+                                        <input type="number" id="url-${item.id}-download" placeholder="例如: 500" min="0" style="width: 100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8em;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 4px; font-size: 0.75em; color: #4a5568;">📤 上传速度 (KB/s)</label>
+                                        <input type="number" id="url-${item.id}-upload" placeholder="例如: 200" min="0" style="width: 100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8em;">
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                    <div>
+                                        <label style="display: block; margin-bottom: 4px; font-size: 0.75em; color: #4a5568;">⏱️ 延迟 (ms)</label>
+                                        <input type="number" id="url-${item.id}-latency" placeholder="例如: 100" min="0" style="width: 100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8em;">
+                                    </div>
+                                    <div>
+                                        <label style="display: block; margin-bottom: 4px; font-size: 0.75em; color: #4a5568;">📉 丢包率 (%)</label>
+                                        <input type="number" id="url-${item.id}-packetloss" placeholder="0-100" min="0" max="100" step="0.1" style="width: 100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8em;">
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    <label style="display: block; margin-bottom: 4px; font-size: 0.75em; color: #4a5568;">📶 连接类型</label>
+                                    <select id="url-${item.id}-connectiontype" style="width: 100%; padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.8em;">
+                                        <option value="">自动检测</option>
+                                        <option value="cellular2g">2G</option>
+                                        <option value="cellular3g">3G</option>
+                                        <option value="cellular4g">4G</option>
+                                        <option value="cellular5g">5G</option>
+                                        <option value="wifi">WiFi</option>
+                                        <option value="ethernet">以太网</option>
+                                        <option value="wimax">WiMAX</option>
+                                        <option value="bluetooth">蓝牙</option>
+                                        <option value="none">无连接</option>
+                                    </select>
+                                </div>
+                                <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px; cursor: pointer; font-size: 0.8em; color: #4a5568;">
+                                    <input type="checkbox" id="url-${item.id}-offline" style="cursor: pointer;">
+                                    <span>📵 离线模式</span>
+                                </label>
+                                <button type="button" onclick="applyCustomNetwork('${item.id}')" class="btn-sm" style="width: 100%; padding: 6px; background: #3182ce; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8em;">应用自定义配置</button>
+                            </div>
+
+                            ${config.networkConditions ? `<div style="background: #ffffff; padding: 8px; border-radius: 4px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 0.8em; color: #718096; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${config.networkConditions.offline ? '<span style="background: #fed7d7; color: #c53030; padding: 2px 6px; border-radius: 3px;">📵 离线</span>' : ''}
+                                ${config.networkConditions.downloadThroughput && config.networkConditions.downloadThroughput > 0 ? `<span>📥 ${(config.networkConditions.downloadThroughput / 1024).toFixed(0)} KB/s</span>` : ''}
+                                ${config.networkConditions.uploadThroughput && config.networkConditions.uploadThroughput > 0 ? `<span>📤 ${(config.networkConditions.uploadThroughput / 1024).toFixed(0)} KB/s</span>` : ''}
+                                ${config.networkConditions.latency ? `<span>⏱️ ${config.networkConditions.latency}ms</span>` : ''}
+                                ${config.networkConditions.packetLoss ? `<span>📉 丢包 ${config.networkConditions.packetLoss}%</span>` : ''}
+                                ${config.networkConditions.connectionType ? `<span>📶 ${config.networkConditions.connectionType}</span>` : ''}
                             </div>` : ''}
                         </div>
                     </div>
@@ -2448,7 +2705,7 @@ console.log('B站弹幕开关完成');`
                                 onclick="removeUrlItem('${item.id}')"
                                 style="padding: 6px 12px; font-size: 0.85em;">🗑️</button>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: ${item.configExpanded ? '12px' : '0'};">
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
                         <span style="font-weight: 600; color: #4a5568; min-width: 30px;">描述:</span>
                         <input type="text"
                                class="desc-input"
@@ -2458,6 +2715,30 @@ console.log('B站弹幕开关完成');`
                                style="flex: 1; padding: 6px 10px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;"
                                oninput="updateUrlItem('${item.id}', 'description', this.value)">
                         ${configBadge}
+                    </div>
+
+                    <!-- 压测模拟配置 -->
+                    <div style="background: #fffbeb; padding: 10px; border-radius: 4px; border: 1px solid #fbbf24; margin-bottom: ${item.configExpanded ? '12px' : '0'};">
+                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" id="stress-enabled-${item.id}" ${item.stressTest?.enabled ? 'checked' : ''} onchange="toggleStressTest('${item.id}')" style="cursor: pointer;">
+                            <span style="font-weight: 600; color: #92400e; font-size: 0.9em;">🚀 启用压测模拟</span>
+                        </label>
+                        <div id="stress-config-${item.id}" style="display: ${item.stressTest?.enabled ? 'block' : 'none'};">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; font-size: 0.85em;">
+                                <input type="text" id="stress-room-${item.id}" placeholder="房间号" value="${item.stressTest?.room_id || ''}" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
+                                <input type="text" id="stress-uid-${item.id}" placeholder="UID" value="${item.stressTest?.uid || ''}" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
+                                <input type="number" id="stress-qps-${item.id}" placeholder="QPS" value="${item.stressTest?.qps || 50}" min="1" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
+                                <input type="number" id="stress-duration-${item.id}" placeholder="时长(秒)" value="${item.stressTest?.duration || 60}" min="1" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
+                            </div>
+                            <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center;">
+                                <button type="button" onclick="loadBroadcastList('${item.id}')" style="padding: 4px 8px; background: #3182ce; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; white-space: nowrap;">加载广播</button>
+                                <select id="stress-broadcasts-${item.id}" multiple style="flex: 1; padding: 4px; border: 1px solid #fbbf24; border-radius: 3px; font-size: 0.8em; min-height: 50px;">
+                                    <option disabled>点击"加载广播"</option>
+                                </select>
+                                <button type="button" onclick="applyStressTest('${item.id}')" style="padding: 4px 8px; background: #10b981; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; white-space: nowrap;">应用</button>
+                            </div>
+                            ${item.stressTest?.cmd_ids ? `<div style="margin-top: 6px; padding: 4px 6px; background: white; border-radius: 3px; font-size: 0.75em; color: #78350f;">✓ 已配置: 房间${item.stressTest.room_id} | ${item.stressTest.cmd_ids.length}个广播 | QPS${item.stressTest.qps} | ${item.stressTest.duration}秒</div>` : ''}
+                        </div>
                     </div>
 
                     ${item.configExpanded ? renderUrlConfigPanel(item) : ''}
@@ -2600,7 +2881,10 @@ console.log('B站弹幕开关完成');`
             document.getElementById('case-anonymous').checked = true;
             document.getElementById('case-cpu-throttling').value = '1';
             document.getElementById('case-description').value = '';
-            document.getElementById('case-tags').value = '';
+
+            // 重置浏览器参数配置
+            document.getElementById('case-disable-sandbox').checked = true;
+            document.getElementById('case-chrome-args').value = '';
 
             // 清空 Runner 配置
             document.getElementById('runtime-duration').value = '60000';
@@ -2665,6 +2949,14 @@ console.log('B站弹幕开关完成');`
             document.getElementById('case-anonymous').checked = testCase.anonymous !== undefined ? testCase.anonymous : true;
             document.getElementById('case-cpu-throttling').value = testCase.cpuThrottling || 1;
 
+            // 加载浏览器参数配置
+            const chromeArgs = testCase.chromeArgs || [];
+            const hasSandbox = chromeArgs.includes('--no-sandbox');
+            const otherArgs = chromeArgs.filter(arg => arg !== '--no-sandbox' && arg !== '--disable-setuid-sandbox');
+
+            document.getElementById('case-disable-sandbox').checked = hasSandbox;
+            document.getElementById('case-chrome-args').value = otherArgs.join('\n');
+
             // 填充 Runner 配置字段
             if (testCase.runners?.Runtime) {
                 document.getElementById('runtime-duration').value = testCase.runners.Runtime.durationMs || 60000;
@@ -2685,7 +2977,6 @@ console.log('B站弹幕开关完成');`
             }
 
             document.getElementById('case-description').value = testCase.description || '';
-            document.getElementById('case-tags').value = (testCase.tags || []).join(', ');
 
             // 填充节点选择
             populateWorkerSelector(testCase.workerId);
@@ -2710,10 +3001,23 @@ console.log('B站弹幕开关完成');`
             const anonymous = document.getElementById('case-anonymous').checked;
             const cpuThrottling = parseInt(document.getElementById('case-cpu-throttling').value) || 1;
             const description = document.getElementById('case-description').value.trim();
-            const tags = document.getElementById('case-tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+            // 读取浏览器参数配置
+            const disableSandbox = document.getElementById('case-disable-sandbox').checked;
+            const customChromeArgs = document.getElementById('case-chrome-args').value.trim();
+
+            // 构建 chromeArgs 数组
+            const chromeArgs = [];
+            if (disableSandbox) {
+                chromeArgs.push('--no-sandbox', '--disable-setuid-sandbox');
+            }
+            if (customChromeArgs) {
+                const customArgs = customChromeArgs.split('\n').map(arg => arg.trim()).filter(arg => arg);
+                chromeArgs.push(...customArgs);
+            }
 
             // 调试日志
-            console.log('💾 保存用例 - 匿名模式:', anonymous, '节流:', cpuThrottling);
+            console.log('💾 保存用例 - 匿名模式:', anonymous, '节流:', cpuThrottling, 'Chrome参数:', chromeArgs);
 
             if (!name) {
                 showToast('请输入用例名称', 'error');
@@ -2821,8 +3125,8 @@ console.log('B站弹幕开关完成');`
                     testCase.anonymous = anonymous;
                     testCase.cpuThrottling = cpuThrottling;
                     testCase.description = description;
-                    testCase.tags = tags;
                     testCase.workerId = selectedWorkerId;  // 新增：保存选中的节点
+                    testCase.chromeArgs = chromeArgs;  // 新增：保存浏览器参数
                     // 移除旧的字段（如果存在）
                     delete testCase.url;
                     delete testCase.runner;
@@ -2863,6 +3167,7 @@ console.log('B站弹幕开关完成');`
                     description,
                     tags,
                     workerId: selectedWorkerId,  // 新增：保存选中的节点
+                    chromeArgs,  // 新增：保存浏览器参数
                     createdAt: new Date().toISOString(),
                     executionHistory: [] // 初始化执行历史为空数组
                 };
@@ -3215,6 +3520,11 @@ console.log('B站弹幕开关完成');`
 
             if (tasks.length === 0) {
                 queueCard.style.display = 'none';
+                // 清除自动清空定时器
+                if (autoClearQueueTimer) {
+                    clearTimeout(autoClearQueueTimer);
+                    autoClearQueueTimer = null;
+                }
                 return;
             }
 
@@ -3227,7 +3537,12 @@ console.log('B站弹幕开关完成');`
 
             // 如果所有任务都已完成，3秒后自动清空队列
             if (allCompleted && tasks.length > 0) {
-                setTimeout(() => {
+                // 清除之前的定时器，重新计时（防抖）
+                if (autoClearQueueTimer) {
+                    clearTimeout(autoClearQueueTimer);
+                }
+
+                autoClearQueueTimer = setTimeout(() => {
                     // 再次检查，确保在这3秒内没有新任务加入
                     const currentTasks = Array.from(backendTasks.values());
                     const stillAllCompleted = currentTasks.every(task =>
@@ -3238,9 +3553,17 @@ console.log('B站弹幕开关完成');`
                         backendTasks.clear();
                         updateStats();
                         updateQueueDisplay();
-                        showToast('所有任务已完成，队列已自动清空', 'success');
+                        showToast('✅ 所有任务已完成，队列已自动清空', 'success');
                     }
+
+                    autoClearQueueTimer = null;
                 }, 3000);
+            } else {
+                // 如果有任务还在运行或等待，清除自动清空定时器
+                if (autoClearQueueTimer) {
+                    clearTimeout(autoClearQueueTimer);
+                    autoClearQueueTimer = null;
+                }
             }
 
             // 按状态排序：running -> pending -> completed -> error

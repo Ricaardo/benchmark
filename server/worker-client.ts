@@ -485,6 +485,19 @@ export class WorkerClient {
         // 构建完整配置字符串
         const configParts: string[] = [];
 
+        // __internal__ 配置 - 添加 Chrome 启动参数
+        // 优先使用测试用例中的 chromeArgs，如果没有则使用默认的 no-sandbox
+        const chromeArgs = config.chromeArgs || ['--no-sandbox', '--disable-setuid-sandbox'];
+        const argsStr = chromeArgs.map((arg: string) => `"${arg}"`).join(',\n                ');
+
+        configParts.push(`__internal__: {
+        launchOptions: {
+            args: [
+                ${argsStr}
+            ]
+        }
+    }`);
+
         // Mode配置
         configParts.push(`mode: ${JSON.stringify(mode, null, 4).replace(/\n/g, '\n    ')}`);
 
