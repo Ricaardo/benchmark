@@ -1633,16 +1633,24 @@ console.log('B站弹幕开关完成');`
         let urlItems = [];
         let urlItemCounter = 0;
 
+        // 广播列表缓存
+        let broadcastListCache = [];
+        let broadcastListLoaded = false;
+
         // 添加URL项
-        function addUrlItem(url = '', description = '', config = null) {
+        function addUrlItem(url = '', description = '', config = null, stressTest = null) {
             const itemId = urlItemCounter++;
-            urlItems.push({
+            const item = {
                 id: itemId,
                 url,
                 description,
                 config: config || {},
                 configExpanded: false
-            });
+            };
+            if (stressTest) {
+                item.stressTest = stressTest;
+            }
+            urlItems.push(item);
             renderUrlList();
         }
 
@@ -2170,12 +2178,13 @@ console.log('B站弹幕开关完成');`
             configDiv.style.display = enabled ? 'block' : 'none';
         }
 
-        // 加载广播列表
-        async function loadBroadcastList(itemId) {
-            try {
-                showToast('正在加载广播列表...', 'info');
+        // 自动加载广播列表（全局缓存）
+        async function autoLoadBroadcastList() {
+            if (broadcastListLoaded) return;
 
-                const response = await fetch('http://10.23.35.21:8083/broadcast/list?aggr=true', {
+            try {
+                console.log('[StressTest] 开始加载广播列表...');
+                const response = await fetch('http://10.23.183.87:8083/broadcast/list?aggr=true', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -2186,24 +2195,140 @@ console.log('B站弹幕开关完成');`
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
-                const data = await response.json();
-                const select = document.getElementById(`stress-broadcasts-${itemId}`);
-                select.innerHTML = '';
+                const result = await response.json();
+                console.log('[StressTest] API响应:', result);
 
-                if (data && Array.isArray(data)) {
-                    data.forEach(broadcast => {
-                        const option = document.createElement('option');
-                        option.value = broadcast.cmd;
-                        option.textContent = `${broadcast.cmd} - ${broadcast.cmd_desc || '未知'}`;
-                        select.appendChild(option);
-                    });
-                    showToast(`成功加载 ${data.length} 个广播类型`, 'success');
+                if (result.code !== 200) {
+                    throw new Error(result.message || '加载失败');
+                }
+
+                const data = result.data;
+
+                if (data && Array.isArray(data) && data.length > 0) {
+                    broadcastListCache = data.map(broadcast => ({
+                        cmd_id: broadcast.cmd_id,
+                        cmd_name: broadcast.cmd_name,
+                        remark: broadcast.remark,
+                        displayName: broadcast.remark ?
+                            `${broadcast.cmd_name} - ${broadcast.remark}` :
+                            broadcast.cmd_name
+                    }));
+                    broadcastListLoaded = true;
+                    console.log(`[StressTest] 成功加载 ${broadcastListCache.length} 个广播类型`);
+
+                    // 重新渲染列表以显示加载的广播
+                    renderUrlList();
                 } else {
-                    throw new Error('返回数据格式不正确');
+                    console.warn('[StressTest] 广播列表为空');
                 }
             } catch (error) {
-                console.error('加载广播列表失败:', error);
-                showToast(`加载失败: ${error.message}`, 'error');
+                console.error('[StressTest] 加载广播列表失败:', error);
+            }
+        }
+
+        // 页面加载时自动获取广播列表
+        autoLoadBroadcastList();
+
+        // 渲染广播列表
+        function renderBroadcastList(item) {
+            if (!broadcastListLoaded || broadcastListCache.length === 0) {
+                return '<div style="padding: 16px; text-align: center; color: #718096; font-size: 0.85em;">加载中...</div>';
+            }
+
+            const selectedBroadcasts = item.stressTest?.broadcasts || [];
+            const selectedMap = {};
+            selectedBroadcasts.forEach(b => {
+                selectedMap[b.cmd_id] = b;
+            });
+
+            return broadcastListCache.map(broadcast => {
+                const isSelected = !!selectedMap[broadcast.cmd_id];
+                const customConfig = selectedMap[broadcast.cmd_id];
+                const hasCustomConfig = customConfig && (customConfig.qps || customConfig.duration);
+
+                return `
+                    <div style="border-bottom: 1px solid #e2e8f0; padding: 8px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox"
+                                   id="broadcast-${item.id}-${broadcast.cmd_id}"
+                                   ${isSelected ? 'checked' : ''}
+                                   onchange="toggleBroadcast('${item.id}', '${broadcast.cmd_id}')"
+                                   style="cursor: pointer;">
+                            <label for="broadcast-${item.id}-${broadcast.cmd_id}" style="flex: 1; cursor: pointer; font-size: 0.85em; color: #2d3748;">
+                                ${broadcast.displayName}
+                            </label>
+                            <button type="button"
+                                    onclick="toggleBroadcastConfig('${item.id}', '${broadcast.cmd_id}')"
+                                    style="padding: 2px 8px; background: ${hasCustomConfig ? '#3182ce' : '#e2e8f0'}; color: ${hasCustomConfig ? 'white' : '#4a5568'}; border: none; border-radius: 3px; cursor: pointer; font-size: 0.75em;"
+                                    ${!isSelected ? 'disabled' : ''}>
+                                ${hasCustomConfig ? '✓ 已配置' : '⚙️ 配置'}
+                            </button>
+                        </div>
+                        <div id="broadcast-config-${item.id}-${broadcast.cmd_id}" style="display: ${isSelected && hasCustomConfig ? 'block' : 'none'}; margin-top: 8px; padding: 8px; background: #f7fafc; border-radius: 4px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                                <input type="number"
+                                       id="broadcast-qps-${item.id}-${broadcast.cmd_id}"
+                                       placeholder="QPS(留空使用默认)"
+                                       value="${customConfig?.qps || ''}"
+                                       min="1"
+                                       style="padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 0.8em;">
+                                <input type="number"
+                                       id="broadcast-duration-${item.id}-${broadcast.cmd_id}"
+                                       placeholder="时长(秒,留空使用默认)"
+                                       value="${customConfig?.duration || ''}"
+                                       min="1"
+                                       style="padding: 4px 6px; border: 1px solid #cbd5e0; border-radius: 3px; font-size: 0.8em;">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 切换广播选择
+        function toggleBroadcast(itemId, cmdId) {
+            const item = urlItems.find(i => i.id == itemId);
+            if (!item) return;
+
+            if (!item.stressTest) {
+                item.stressTest = { enabled: true, broadcasts: [] };
+            }
+            if (!item.stressTest.broadcasts) {
+                item.stressTest.broadcasts = [];
+            }
+
+            const checkbox = document.getElementById(`broadcast-${itemId}-${cmdId}`);
+            const isChecked = checkbox.checked;
+
+            if (isChecked) {
+                // 添加广播
+                const broadcast = broadcastListCache.find(b => b.cmd_id === cmdId);
+                if (broadcast && !item.stressTest.broadcasts.find(b => b.cmd_id === cmdId)) {
+                    item.stressTest.broadcasts.push({
+                        cmd_id: cmdId,
+                        cmd_name: broadcast.cmd_name,
+                        displayName: broadcast.displayName
+                    });
+                }
+            } else {
+                // 移除广播
+                item.stressTest.broadcasts = item.stressTest.broadcasts.filter(b => b.cmd_id !== cmdId);
+            }
+
+            renderUrlList();
+        }
+
+        // 切换广播单独配置面板
+        function toggleBroadcastConfig(itemId, cmdId) {
+            const configDiv = document.getElementById(`broadcast-config-${itemId}-${cmdId}`);
+            const button = event.target;
+
+            if (configDiv.style.display === 'none' || !configDiv.style.display) {
+                configDiv.style.display = 'block';
+                button.textContent = '▲ 收起';
+            } else {
+                configDiv.style.display = 'none';
+                button.textContent = '⚙️ 配置';
             }
         }
 
@@ -2223,10 +2348,8 @@ console.log('B站弹幕开关完成');`
 
             const roomId = document.getElementById(`stress-room-${itemId}`).value.trim();
             const uid = document.getElementById(`stress-uid-${itemId}`).value.trim();
-            const qps = parseInt(document.getElementById(`stress-qps-${itemId}`).value);
-            const duration = parseInt(document.getElementById(`stress-duration-${itemId}`).value);
-            const broadcastSelect = document.getElementById(`stress-broadcasts-${itemId}`);
-            const selectedBroadcasts = Array.from(broadcastSelect.selectedOptions).map(opt => parseInt(opt.value));
+            const defaultQps = parseInt(document.getElementById(`stress-qps-${itemId}`).value);
+            const defaultDuration = parseInt(document.getElementById(`stress-duration-${itemId}`).value);
 
             // 验证必填字段
             if (!roomId) {
@@ -2237,29 +2360,47 @@ console.log('B站弹幕开关完成');`
                 showToast('请输入UID', 'error');
                 return;
             }
-            if (selectedBroadcasts.length === 0) {
+            if (!item.stressTest?.broadcasts || item.stressTest.broadcasts.length === 0) {
                 showToast('请选择至少一个广播类型', 'error');
                 return;
             }
-            if (isNaN(qps) || qps < 1) {
-                showToast('QPS必须大于0', 'error');
+            if (isNaN(defaultQps) || defaultQps < 1) {
+                showToast('默认QPS必须大于0', 'error');
                 return;
             }
-            if (isNaN(duration) || duration < 1) {
-                showToast('持续时间必须大于0', 'error');
+            if (isNaN(defaultDuration) || defaultDuration < 1) {
+                showToast('默认持续时间必须大于0', 'error');
                 return;
             }
+
+            // 收集每个广播的单独配置
+            const broadcasts = item.stressTest.broadcasts.map(broadcast => {
+                const qpsInput = document.getElementById(`broadcast-qps-${itemId}-${broadcast.cmd_id}`);
+                const durationInput = document.getElementById(`broadcast-duration-${itemId}-${broadcast.cmd_id}`);
+
+                const customQps = qpsInput ? parseInt(qpsInput.value) : null;
+                const customDuration = durationInput ? parseInt(durationInput.value) : null;
+
+                return {
+                    cmd_id: broadcast.cmd_id,
+                    cmd_name: broadcast.cmd_name,
+                    displayName: broadcast.displayName,
+                    qps: !isNaN(customQps) && customQps > 0 ? customQps : null,
+                    duration: !isNaN(customDuration) && customDuration > 0 ? customDuration : null
+                };
+            });
 
             item.stressTest = {
                 enabled: true,
                 room_id: roomId,
                 uid: uid,
-                qps: qps,
-                duration: duration,
-                cmd_ids: selectedBroadcasts
+                qps: defaultQps,
+                duration: defaultDuration,
+                broadcasts: broadcasts
             };
 
-            showToast('已应用压测配置', 'success');
+            console.log('[StressTest] 已保存配置:', JSON.stringify(item.stressTest, null, 2));
+            showToast(`已应用压测配置: ${broadcasts.length}个广播`, 'success');
             renderUrlList();
         }
 
@@ -2718,26 +2859,36 @@ console.log('B站弹幕开关完成');`
                     </div>
 
                     <!-- 压测模拟配置 -->
-                    <div style="background: #fffbeb; padding: 10px; border-radius: 4px; border: 1px solid #fbbf24; margin-bottom: ${item.configExpanded ? '12px' : '0'};">
-                        <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px; cursor: pointer;">
+                    <div style="margin-bottom: ${item.configExpanded ? '8px' : '0'};">
+                        <label style="display: flex; align-items: center; gap: 8px; padding: 8px; background: #f7fafc; border-radius: 4px; cursor: pointer;">
                             <input type="checkbox" id="stress-enabled-${item.id}" ${item.stressTest?.enabled ? 'checked' : ''} onchange="toggleStressTest('${item.id}')" style="cursor: pointer;">
-                            <span style="font-weight: 600; color: #92400e; font-size: 0.9em;">🚀 启用压测模拟</span>
+                            <span style="font-weight: 500; color: #4a5568; font-size: 0.9em;">🚀 启用压测模拟</span>
                         </label>
-                        <div id="stress-config-${item.id}" style="display: ${item.stressTest?.enabled ? 'block' : 'none'};">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; font-size: 0.85em;">
-                                <input type="text" id="stress-room-${item.id}" placeholder="房间号" value="${item.stressTest?.room_id || ''}" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
-                                <input type="text" id="stress-uid-${item.id}" placeholder="UID" value="${item.stressTest?.uid || ''}" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
-                                <input type="number" id="stress-qps-${item.id}" placeholder="QPS" value="${item.stressTest?.qps || 50}" min="1" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
-                                <input type="number" id="stress-duration-${item.id}" placeholder="时长(秒)" value="${item.stressTest?.duration || 60}" min="1" style="padding: 4px 6px; border: 1px solid #fbbf24; border-radius: 3px;">
+                        <div id="stress-config-${item.id}" style="display: ${item.stressTest?.enabled ? 'block' : 'none'}; margin-top: 8px; padding: 12px; background: #f7fafc; border: 1px solid #cbd5e0; border-radius: 4px;">
+                            <!-- 统一配置区域 -->
+                            <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #e2e8f0;">
+                                <div style="font-weight: 500; color: #2d3748; margin-bottom: 8px; font-size: 0.9em;">⚙️ 统一配置</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px;">
+                                    <input type="text" id="stress-room-${item.id}" placeholder="房间号" value="${item.stressTest?.room_id || ''}" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <input type="text" id="stress-uid-${item.id}" placeholder="UID" value="${item.stressTest?.uid || ''}" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <input type="number" id="stress-qps-${item.id}" placeholder="默认QPS" value="${item.stressTest?.qps || 50}" min="1" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                    <input type="number" id="stress-duration-${item.id}" placeholder="默认时长(秒)" value="${item.stressTest?.duration || 60}" min="1" style="padding: 6px 8px; border: 1px solid #cbd5e0; border-radius: 4px; font-size: 0.9em;">
+                                </div>
                             </div>
-                            <div style="margin-top: 6px; display: flex; gap: 6px; align-items: center;">
-                                <button type="button" onclick="loadBroadcastList('${item.id}')" style="padding: 4px 8px; background: #3182ce; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; white-space: nowrap;">加载广播</button>
-                                <select id="stress-broadcasts-${item.id}" multiple style="flex: 1; padding: 4px; border: 1px solid #fbbf24; border-radius: 3px; font-size: 0.8em; min-height: 50px;">
-                                    <option disabled>点击"加载广播"</option>
-                                </select>
-                                <button type="button" onclick="applyStressTest('${item.id}')" style="padding: 4px 8px; background: #10b981; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8em; white-space: nowrap;">应用</button>
+
+                            <!-- 广播列表 -->
+                            <div>
+                                <div style="font-weight: 500; color: #2d3748; margin-bottom: 8px; font-size: 0.9em;">📡 广播配置 <span style="color: #718096; font-size: 0.85em; font-weight: normal;">(点击选择，支持单独配置)</span></div>
+                                <div id="stress-broadcasts-container-${item.id}" style="max-height: 300px; overflow-y: auto; border: 1px solid #cbd5e0; border-radius: 4px; background: white;">
+                                    ${renderBroadcastList(item)}
+                                </div>
                             </div>
-                            ${item.stressTest?.cmd_ids ? `<div style="margin-top: 6px; padding: 4px 6px; background: white; border-radius: 3px; font-size: 0.75em; color: #78350f;">✓ 已配置: 房间${item.stressTest.room_id} | ${item.stressTest.cmd_ids.length}个广播 | QPS${item.stressTest.qps} | ${item.stressTest.duration}秒</div>` : ''}
+
+                            <div style="margin-top: 12px; display: flex; justify-content: flex-end;">
+                                <button type="button" onclick="applyStressTest('${item.id}')" class="btn-sm" style="padding: 6px 16px; background: #10b981; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;">✅ 应用配置</button>
+                            </div>
+
+                            ${item.stressTest?.broadcasts?.length ? `<div style="margin-top: 12px; padding: 8px; background: #f0fdf4; border-radius: 4px; border: 1px solid #86efac; font-size: 0.85em; color: #166534;">✓ 已配置: 房间${item.stressTest.room_id} | ${item.stressTest.broadcasts.length}个广播 | 默认QPS${item.stressTest.qps} | ${item.stressTest.duration}秒</div>` : ''}
                         </div>
                     </div>
 
@@ -2774,9 +2925,14 @@ console.log('B站弹幕开关完成');`
             clearUrlList();
             urlsWithDesc.forEach(item => {
                 if (typeof item === 'string') {
-                    addUrlItem(item, item, {});
+                    addUrlItem(item, item, {}, null);
                 } else {
-                    addUrlItem(item.url || '', item.description || item.url || '', item.config || {});
+                    addUrlItem(
+                        item.url || '',
+                        item.description || item.url || '',
+                        item.config || {},
+                        item.stressTest || null
+                    );
                 }
             });
         }
@@ -3062,6 +3218,11 @@ console.log('B站弹幕开关完成');`
                 // 🆕 添加per-URL配置（如果有）
                 if (item.config && Object.keys(item.config).length > 0) {
                     urlConfig.config = item.config;
+                }
+
+                // 🆕 添加压测配置（如果有）
+                if (item.stressTest && item.stressTest.enabled) {
+                    urlConfig.stressTest = item.stressTest;
                 }
 
                 urlsWithDesc.push(urlConfig);
@@ -3354,7 +3515,8 @@ console.log('B站弹幕开关完成');`
                     if (testCase.runners.Initialization?.enabled) {
                         runnersConfig.Initialization = {
                             enabled: true,
-                            testCases: testCasesArray,
+                            testCases: testCasesArray,  // benchmark配置用
+                            urlsWithDesc: urlsData,      // 🆕 压测配置用（原始数据）
                             iterations: testCase.runners.Initialization.iterations || 7
                         };
                         enabledRunners.push('Initialization');
@@ -3363,7 +3525,8 @@ console.log('B站弹幕开关完成');`
                     if (testCase.runners.Runtime?.enabled) {
                         runnersConfig.Runtime = {
                             enabled: true,
-                            testCases: testCasesArray,
+                            testCases: testCasesArray,  // benchmark配置用
+                            urlsWithDesc: urlsData,      // 🆕 压测配置用（原始数据）
                             durationMs: testCase.runners.Runtime.durationMs || 60000,
                             delayMs: testCase.runners.Runtime.delayMs || 10000
                         };
@@ -3382,7 +3545,8 @@ console.log('B站弹幕开关完成');`
 
                         runnersConfig.MemoryLeak = {
                             enabled: true,
-                            testCases: memoryTestCases,
+                            testCases: memoryTestCases,  // benchmark配置用
+                            urlsWithDesc: urlsData,       // 🆕 压测配置用（原始数据）
                             intervalMs: testCase.runners.MemoryLeak.intervalMs || 60000,
                             iterations: testCase.runners.MemoryLeak.iterations || 3
                         };
@@ -3392,7 +3556,8 @@ console.log('B站弹幕开关完成');`
                     // 旧格式：单个runner
                     runnersConfig[testCase.runner] = {
                         enabled: true,
-                        testCases: testCasesArray
+                        testCases: testCasesArray,  // benchmark配置用
+                        urlsWithDesc: urlsData       // 🆕 压测配置用（原始数据）
                     };
                     enabledRunners.push(testCase.runner);
                 }
@@ -3467,22 +3632,27 @@ console.log('B站弹幕开关完成');`
                     // 使用本地执行 API
                     appendOutput(`[系统] 💻 使用本地执行`);
 
+                    const requestPayload = {
+                        name: taskName, // 使用带标记的任务名称
+                        testCaseId: testCase.id && testCase.id.toString().startsWith('testcase_') ? testCase.id : undefined, // 关联测试用例ID
+                        remarks: testLabel || undefined, // 备注：测试目的、版本等信息
+                        config: {
+                            mode: {
+                                anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
+                                headless: mode === 'headless'
+                            },
+                            cpuThrottlingRate: testCase.cpuThrottling || 1,
+                            runners: runnersConfig
+                        }
+                    };
+
+                    console.log('[RunCase] 📤 发送到后端的完整config:', JSON.stringify(requestPayload.config, null, 2));
+                    console.log('[RunCase] 📤 runnersConfig详情:', JSON.stringify(runnersConfig, null, 2));
+
                     response = await fetch('/api/start', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            name: taskName, // 使用带标记的任务名称
-                            testCaseId: testCase.id && testCase.id.toString().startsWith('testcase_') ? testCase.id : undefined, // 关联测试用例ID
-                            remarks: testLabel || undefined, // 备注：测试目的、版本等信息
-                            config: {
-                                mode: {
-                                    anonymous: testCase.anonymous !== undefined ? testCase.anonymous : true,
-                                    headless: mode === 'headless'
-                                },
-                                cpuThrottlingRate: testCase.cpuThrottling || 1,
-                                runners: runnersConfig
-                            }
-                        })
+                        body: JSON.stringify(requestPayload)
                     });
 
                     result = await response.json();

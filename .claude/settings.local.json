@@ -32,7 +32,10 @@
       "Bash(do sed -i '' 's|<link rel=\"\"stylesheet\"\" href=\"\"/css/enhanced-ui.css\"\">|<link rel=\"\"stylesheet\"\" href=\"\"/css/enhanced-ui.css\"\">\\n    <link rel=\"\"stylesheet\"\" href=\"\"/css/common-components.css\"\">|' \"$file\")",
       "Bash(done)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(pm2 list:*)",
+      "Bash(ps:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

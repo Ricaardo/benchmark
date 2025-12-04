@@ -279,7 +279,8 @@ interface Task {
     process: ChildProcess | null;
     startTime: Date;
     endTime?: Date;
-    config: any;
+    config: any;  // 用于生成 .mts 文件的配置（转换后的）
+    rawConfig?: any;  // 🆕 原始配置（包含 urlsWithDesc 等压测相关数据）
     killTimeout?: NodeJS.Timeout;
     perfcatId?: string;
     perfcatUrl?: string;
@@ -377,7 +378,7 @@ function appendTaskOutput(taskId: string, data: string) {
 }
 
 // 创建新任务
-function createTask(name: string, runner: string, config: any, testCaseId?: string, remarks?: string): string {
+function createTask(name: string, runner: string, config: any, testCaseId?: string, remarks?: string, rawConfig?: any): string {
     const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const task: Task = {
@@ -389,7 +390,8 @@ function createTask(name: string, runner: string, config: any, testCaseId?: stri
         output: '',
         process: null,
         startTime: new Date(),
-        config,
+        config,  // 转换后的配置（用于生成 .mts）
+        rawConfig: rawConfig || config,  // 🆕 原始配置（用于压测等功能）
         remarks // 备注：测试目的、版本等信息
     };
 
@@ -443,13 +445,13 @@ async function startTask(taskId: string) {
         // 处理自动Cookie：在生成配置前自动获取Cookie
         await processAutoCookies(task.config, taskId);
 
-        // 生成配置文件
+        // 生成配置文件（使用转换后的配置，保持 .mts 文件纯净）
         const tempConfigCode = generateConfig(task.config, taskId);
         const tempConfigPath = path.join(__dirname, `../benchmark.config.${taskId}.mts`);
         await fs.writeFile(tempConfigPath, tempConfigCode, 'utf-8');
 
-        // 处理压测模拟：在执行 benchmark 之前触发压测
-        await handleStressTest(task.config, taskId);
+        // 🆕 处理压测模拟：使用原始配置（包含 urlsWithDesc）
+        await handleStressTest(task.rawConfig || task.config, taskId);
 
         // 执行 benchmark
         const command = `npx @bilibili-player/benchmark --config benchmark.config.${taskId}.mts`;
@@ -1483,6 +1485,8 @@ app.post('/api/dynamic-config', async (req, res) => {
 app.post('/api/start', async (req, res) => {
     const { runner, config, name, testCaseId, remarks } = req.body;
 
+    console.log('[API /api/start] 📥 接收到请求body:', JSON.stringify(req.body, null, 2));
+
     try {
         let finalConfig;
         let runnerNames: string[] = [];
@@ -1490,6 +1494,11 @@ app.post('/api/start', async (req, res) => {
 
         if (config) {
             // 新模式：直接使用传入的config（支持多runner）
+            console.log('[API /api/start] config.runners:', Object.keys(config.runners || {}));
+            if (config.runners && config.runners.Runtime) {
+                console.log('[API /api/start] Runtime.urlsWithDesc存在:', !!config.runners.Runtime.urlsWithDesc);
+                console.log('[API /api/start] Runtime完整内容:', JSON.stringify(config.runners.Runtime, null, 2));
+            }
             finalConfig = config;
 
             // 提取启用的runner名称
@@ -1549,13 +1558,14 @@ app.post('/api/start', async (req, res) => {
         // 转换前端配置为SDK期望的格式
         const transformedConfig = transformConfigForSDK(finalConfig);
 
-        // 创建任务（传入testCaseId以便关联，传入remarks作为备注）
+        // 🆕 创建任务（传入 transformedConfig 用于生成 .mts，传入 finalConfig 保留压测配置）
         const taskId = createTask(
             taskName,
             runnerNames.join(' + '),
-            transformedConfig,
+            transformedConfig,  // 用于生成 .mts 文件
             testCaseId,
-            remarks
+            remarks,
+            finalConfig  // 🆕 原始配置，包含 urlsWithDesc 用于压测
         );
 
         // 立即尝试启动任务
@@ -2089,124 +2099,220 @@ async function retryFetch(url: string, options: any, retries = 3, delayMs = 1000
 
 // 处理压测模拟配置
 async function handleStressTest(config: any, taskId: string) {
+    console.log('[StressTest] ========== 开始处理压测 ==========');
+    console.log('[StressTest] 接收到的完整config:', JSON.stringify(config, null, 2));
+
     const runners = config.runners || {};
+    console.log('[StressTest] runners对象:', Object.keys(runners));
 
     for (const runnerName of Object.keys(runners)) {
         const runner = runners[runnerName];
-        if (!runner.enabled || !runner.testCases) continue;
+        console.log(`[StressTest] 检查runner: ${runnerName}, enabled=${runner.enabled}, hasTestCases=${!!runner.testCases}`);
 
-        for (const testCase of runner.testCases) {
-            // 从 urlsWithDesc 中查找启用了压测的URL
-            const urlsWithDesc = testCase.urlsWithDesc || [];
+        if (!runner.enabled || !runner.testCases) {
+            console.log(`[StressTest] 跳过runner: ${runnerName}`);
+            continue;
+        }
 
-            for (const urlItem of urlsWithDesc) {
-                if (!urlItem.stressTest || !urlItem.stressTest.enabled) continue;
+        // 从 runner 级别获取 urlsWithDesc（前端现在直接在 runner 下传递）
+        const urlsWithDesc = runner.urlsWithDesc || [];
+        console.log(`[StressTest] runner.urlsWithDesc存在: ${!!runner.urlsWithDesc}, 长度: ${urlsWithDesc.length}`);
 
-                const stressConfig = urlItem.stressTest;
-                const { room_id, uid, cmd_ids, qps, duration } = stressConfig;
+        // 兼容旧格式：如果 runner 下没有，尝试从 testCases 中获取
+        if (urlsWithDesc.length === 0 && runner.testCases && runner.testCases.length > 0) {
+            const firstTestCase = runner.testCases[0];
+            console.log(`[StressTest] 尝试从testCases[0]获取urlsWithDesc:`, firstTestCase.urlsWithDesc ? '存在' : '不存在');
+            if (firstTestCase.urlsWithDesc) {
+                urlsWithDesc.push(...firstTestCase.urlsWithDesc);
+            }
+        }
 
-                appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
-                appendTaskOutput(taskId, `🚀 启动压测模拟\n`);
-                appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
-                appendTaskOutput(taskId, `URL:        ${urlItem.url}\n`);
-                appendTaskOutput(taskId, `房间号:     ${room_id}\n`);
-                appendTaskOutput(taskId, `UID:        ${uid}\n`);
-                appendTaskOutput(taskId, `广播数量:   ${cmd_ids.length}\n`);
-                appendTaskOutput(taskId, `QPS:        ${qps}\n`);
-                appendTaskOutput(taskId, `持续时间:   ${duration}秒\n`);
+        console.log(`[StressTest] 最终urlsWithDesc长度: ${urlsWithDesc.length}`);
+        if (urlsWithDesc.length > 0) {
+            console.log(`[StressTest] urlsWithDesc内容:`, JSON.stringify(urlsWithDesc, null, 2));
+        }
+
+        for (const urlItem of urlsWithDesc) {
+            console.log(`[StressTest] 检查URL项: ${urlItem.url}, hasStressTest=${!!urlItem.stressTest}, enabled=${urlItem.stressTest?.enabled}`);
+            if (!urlItem.stressTest || !urlItem.stressTest.enabled) {
+                console.log(`[StressTest] 跳过URL: ${urlItem.url}`);
+                continue;
+            }
+
+            const stressConfig = urlItem.stressTest;
+            console.log('[StressTest] 配置详情:', JSON.stringify(stressConfig, null, 2));
+
+            const { room_id, uid, broadcasts, qps: defaultQps, duration: defaultDuration } = stressConfig;
+
+            if (!broadcasts || broadcasts.length === 0) {
+                console.log('[StressTest] 跳过: broadcasts为空');
+                continue;
+            }
+
+            appendTaskOutput(taskId, `\n${'='.repeat(60)}\n`);
+            appendTaskOutput(taskId, `🚀 启动压测模拟\n`);
+            appendTaskOutput(taskId, `${'='.repeat(60)}\n`);
+            appendTaskOutput(taskId, `URL:        ${urlItem.url}\n`);
+            appendTaskOutput(taskId, `房间号:     ${room_id}\n`);
+            appendTaskOutput(taskId, `UID:        ${uid}\n`);
+            appendTaskOutput(taskId, `广播数量:   ${broadcasts.length}\n`);
+            appendTaskOutput(taskId, `默认QPS:    ${defaultQps}\n`);
+            appendTaskOutput(taskId, `默认时长:   ${defaultDuration}秒\n`);
+
+            try {
+                // 步骤1: 先关播（确保干净的起始状态）
+                appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+                appendTaskOutput(taskId, `📡 关播中（重置状态）...\n`);
 
                 try {
-                    // 步骤1: 先关播（确保干净的起始状态）
-                    appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
-                    appendTaskOutput(taskId, `📡 关播中（重置状态）...\n`);
+                    const stopPayload = { uid: parseInt(uid), room_id };
+                    console.log('[StressTest] 📤 关播请求:', 'POST http://10.23.183.87:8083/live/stop', stopPayload);
+                    appendTaskOutput(taskId, `  请求: POST /live/stop\n  参数: ${JSON.stringify(stopPayload)}\n`);
 
-                    try {
-                        await retryFetch('http://10.23.183.87:8083/live/stop', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ uid: parseInt(uid), room_id })
-                        }, 3, 1000);
-                        appendTaskOutput(taskId, `✅ 关播成功\n`);
-                    } catch (error) {
-                        appendTaskOutput(taskId, `⚠️ 关播失败（可能本就未开播）: ${(error as Error).message}\n`);
-                    }
-
-                    // 步骤2: 开播
-                    appendTaskOutput(taskId, `📡 开播中...\n`);
-
-                    await retryFetch('http://10.23.183.87:8083/live/start', {
+                    const stopResponse = await retryFetch('http://10.23.183.87:8083/live/stop', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uid: parseInt(uid), room_id })
+                        body: JSON.stringify(stopPayload)
                     }, 3, 1000);
 
-                    appendTaskOutput(taskId, `✅ 开播成功\n`);
-                    appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-                    console.log(`[StressTest] 开播成功: room_id=${room_id}, uid=${uid}`);
-
-                    // 步骤3: 启动广播压测
-                    appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
-                    appendTaskOutput(taskId, `📊 启动广播压测...\n`);
-
-                    await retryFetch('http://10.23.183.87:8083/broadcast/sendCoroutineBroadcastAggrByCmdIds', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            room_id,
-                            qps: qps.toString(),
-                            goroutines: '5',  // 固定并发数
-                            duration: duration.toString(),
-                            cmd_ids: JSON.stringify(cmd_ids)
-                        })
-                    }, 3, 1000);
-
-                    appendTaskOutput(taskId, `✅ 广播压测已启动\n`);
-                    appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-
-                    console.log(`[StressTest] 广播压测已启动: room_id=${room_id}, qps=${qps}, duration=${duration}s`);
-
-                    // 步骤4: 等待压测完成
-                    appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
-                    appendTaskOutput(taskId, `⏳ 等待压测完成 (${duration}秒)...\n`);
-                    await new Promise(resolve => setTimeout(resolve, duration * 1000 + 2000)); // 额外等待2秒确保完成
-
-                    // 步骤5: 压测完成后关播
-                    appendTaskOutput(taskId, `📡 压测完成，关播中...\n`);
-
-                    await retryFetch('http://10.23.183.87:8083/live/stop', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ uid: parseInt(uid), room_id })
-                    }, 3, 1000);
-
+                    const stopResult = await stopResponse.json();
+                    console.log('[StressTest] 📥 关播响应:', stopResult);
+                    appendTaskOutput(taskId, `  响应: ${JSON.stringify(stopResult)}\n`);
                     appendTaskOutput(taskId, `✅ 关播成功\n`);
-                    appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-                    appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
-
-                    console.log(`[StressTest] 压测模拟完成: room_id=${room_id}`);
-
                 } catch (error) {
-                    const errorMsg = (error as Error).message;
-                    appendTaskOutput(taskId, `\n❌ 压测模拟失败\n`);
-                    appendTaskOutput(taskId, `错误: ${errorMsg}\n`);
-                    appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
-
-                    // 尝试关播清理
-                    try {
-                        await retryFetch('http://10.23.183.87:8083/live/stop', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ uid: parseInt(uid), room_id })
-                        }, 2, 500);
-                        appendTaskOutput(taskId, `✅ 已尝试关播清理\n`);
-                    } catch (stopError) {
-                        appendTaskOutput(taskId, `⚠️ 关播清理失败\n`);
-                    }
-
-                    appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
-                    console.error(`[StressTest] 压测模拟失败:`, error);
-                    // 不中断任务执行，只记录错误
+                    console.error('[StressTest] ❌ 关播失败:', error);
+                    appendTaskOutput(taskId, `⚠️ 关播失败（可能本就未开播）: ${(error as Error).message}\n`);
                 }
+
+                // 步骤2: 开播
+                appendTaskOutput(taskId, `📡 开播中...\n`);
+
+                const startPayload = { uid: parseInt(uid), room_id };
+                console.log('[StressTest] 📤 开播请求:', 'POST http://10.23.183.87:8083/live/start', startPayload);
+                appendTaskOutput(taskId, `  请求: POST /live/start\n  参数: ${JSON.stringify(startPayload)}\n`);
+
+                const startResponse = await retryFetch('http://10.23.183.87:8083/live/start', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(startPayload)
+                }, 3, 1000);
+
+                const startResult = await startResponse.json();
+                console.log('[StressTest] 📥 开播响应:', startResult);
+                appendTaskOutput(taskId, `  响应: ${JSON.stringify(startResult)}\n`);
+                appendTaskOutput(taskId, `✅ 开播成功\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
+                console.log(`[StressTest] 开播成功: room_id=${room_id}, uid=${uid}`);
+
+                // 步骤3: 分组启动广播压测（按QPS和duration分组）
+                const groupedBroadcasts = new Map<string, any[]>();
+                let maxDuration = 0;
+
+                broadcasts.forEach((broadcast: any) => {
+                    const qps = broadcast.qps || defaultQps;
+                    const duration = broadcast.duration || defaultDuration;
+                    const key = `${qps}_${duration}`;
+
+                    if (!groupedBroadcasts.has(key)) {
+                        groupedBroadcasts.set(key, []);
+                    }
+                    groupedBroadcasts.get(key)!.push(broadcast.cmd_id);
+
+                    maxDuration = Math.max(maxDuration, duration);
+                });
+
+                appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+                appendTaskOutput(taskId, `📊 启动广播压测（分${groupedBroadcasts.size}组）...\n`);
+
+                for (const [key, cmdIds] of groupedBroadcasts) {
+                    const [qps, duration] = key.split('_');
+                    appendTaskOutput(taskId, `\n  启动组: ${cmdIds.length}个广播 | QPS=${qps} | 时长=${duration}秒\n`);
+
+                    const broadcastPayload = {
+                        room_id,
+                        qps: qps,
+                        goroutines: '5',
+                        duration: duration,
+                        cmd_ids: JSON.stringify(cmdIds)
+                    };
+
+                    console.log('[StressTest] 📤 压测请求:', 'POST http://10.23.183.87:8083/broadcast/sendCoroutineBroadcastAggrByCmdIds', broadcastPayload);
+                    appendTaskOutput(taskId, `  请求: POST /broadcast/sendCoroutineBroadcastAggrByCmdIds\n`);
+                    appendTaskOutput(taskId, `  参数: ${JSON.stringify(broadcastPayload, null, 2)}\n`);
+
+                    const broadcastResponse = await retryFetch('http://10.23.183.87:8083/broadcast/sendCoroutineBroadcastAggrByCmdIds', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(broadcastPayload)
+                    }, 3, 1000);
+
+                    const broadcastResult = await broadcastResponse.json();
+                    console.log('[StressTest] 📥 压测响应:', broadcastResult);
+                    appendTaskOutput(taskId, `  响应: ${JSON.stringify(broadcastResult)}\n`);
+                    appendTaskOutput(taskId, `  ✅ 该组压测已启动\n`);
+                }
+
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
+                console.log(`[StressTest] 广播压测已启动: ${groupedBroadcasts.size}组`);
+
+                // 步骤4: 等待最长的压测完成
+                appendTaskOutput(taskId, `\n${'-'.repeat(60)}\n`);
+                appendTaskOutput(taskId, `⏳ 等待压测完成 (${maxDuration}秒)...\n`);
+                await new Promise(resolve => setTimeout(resolve, maxDuration * 1000 + 2000));
+
+                // 步骤5: 压测完成后关播
+                appendTaskOutput(taskId, `📡 压测完成，关播中...\n`);
+
+                const finalStopPayload = { uid: parseInt(uid), room_id };
+                console.log('[StressTest] 📤 最终关播请求:', 'POST http://10.23.183.87:8083/live/stop', finalStopPayload);
+                appendTaskOutput(taskId, `  请求: POST /live/stop\n  参数: ${JSON.stringify(finalStopPayload)}\n`);
+
+                const finalStopResponse = await retryFetch('http://10.23.183.87:8083/live/stop', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalStopPayload)
+                }, 3, 1000);
+
+                const finalStopResult = await finalStopResponse.json();
+                console.log('[StressTest] 📥 最终关播响应:', finalStopResult);
+                appendTaskOutput(taskId, `  响应: ${JSON.stringify(finalStopResult)}\n`);
+                appendTaskOutput(taskId, `✅ 关播成功\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
+                appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
+
+                console.log(`[StressTest] 压测模拟完成: room_id=${room_id}`);
+
+            } catch (error) {
+                const errorMsg = (error as Error).message;
+                console.error('[StressTest] ❌ 压测执行失败:', error);
+                appendTaskOutput(taskId, `\n❌ 压测模拟失败\n`);
+                appendTaskOutput(taskId, `错误: ${errorMsg}\n`);
+                appendTaskOutput(taskId, `${'-'.repeat(60)}\n`);
+
+                // 尝试关播清理
+                try {
+                    const cleanupPayload = { uid: parseInt(uid), room_id };
+                    console.log('[StressTest] 📤 清理关播请求:', cleanupPayload);
+                    appendTaskOutput(taskId, `  清理请求: POST /live/stop\n  参数: ${JSON.stringify(cleanupPayload)}\n`);
+
+                    const cleanupResponse = await retryFetch('http://10.23.183.87:8083/live/stop', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(cleanupPayload)
+                    }, 2, 500);
+
+                    const cleanupResult = await cleanupResponse.json();
+                    console.log('[StressTest] 📥 清理关播响应:', cleanupResult);
+                    appendTaskOutput(taskId, `  响应: ${JSON.stringify(cleanupResult)}\n`);
+                    appendTaskOutput(taskId, `✅ 已尝试关播清理\n`);
+                } catch (stopError) {
+                    console.error('[StressTest] ❌ 清理关播失败:', stopError);
+                    appendTaskOutput(taskId, `⚠️ 关播清理失败: ${(stopError as Error).message}\n`);
+                }
+
+                appendTaskOutput(taskId, `${'='.repeat(60)}\n\n`);
+                console.error(`[StressTest] 压测模拟失败:`, error);
+                // 不中断任务执行，只记录错误
             }
         }
     }

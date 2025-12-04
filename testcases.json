@@ -1,63 +1,5 @@
 [
   {
-    "name": "初始化对比测试",
-    "runners": {
-      "Initialization": {
-        "enabled": false,
-        "repeatCount": 1
-      },
-      "Runtime": {
-        "enabled": true,
-        "repeatCount": 1,
-        "durationMs": 60000,
-        "delayMs": 10000
-      },
-      "MemoryLeak": {
-        "enabled": false,
-        "repeatCount": 1,
-        "intervalMs": 60000,
-        "iterations": 3,
-        "onPageTesting": ""
-      }
-    },
-    "urls": [
-      "https://www.bilibili.com",
-      "https://www.bilibili.com/video/BV1xx411c7mD"
-    ],
-    "urlsWithDesc": [
-      {
-        "url": "https://www.bilibili.com",
-        "description": "首页"
-      },
-      {
-        "url": "https://www.bilibili.com/video/BV1xx411c7mD",
-        "description": "视频页",
-        "config": {
-          "cookie": "DedeUserID=123456; SESSDATA=custom_session",
-          "customCss": ".ad { display: none; }"
-        }
-      }
-    ],
-    "mode": "headed",
-    "repeatCount": 1,
-    "anonymous": false,
-    "cpuThrottling": 1,
-    "description": "测试per-URL配置功能",
-    "tags": [
-      "test",
-      "per-url-config"
-    ],
-    "createdAt": "2025-11-24T04:50:06.689Z",
-    "executionHistory": [
-      "task_1764822170099_81gfcvzww",
-      "task_1764752466127_i39n1lbqs",
-      "task_1763959812820_7o0cqdtg7"
-    ],
-    "id": "testcase_1763959806689_k1ul6o0x",
-    "updatedAt": "2025-12-04T04:29:06.847Z",
-    "chromeArgs": []
-  },
-  {
     "name": "压测运行对比",
     "runners": {
       "Initialization": {
@@ -67,7 +9,7 @@
       "Runtime": {
         "enabled": true,
         "repeatCount": 1,
-        "durationMs": 600000,
+        "durationMs": 6000,
         "delayMs": 10000
       },
       "MemoryLeak": {
@@ -85,7 +27,30 @@
     "urlsWithDesc": [
       {
         "url": "https://ff-uat-live.bilibili.com/460689",
-        "description": "压测"
+        "description": "压测",
+        "stressTest": {
+          "enabled": true,
+          "room_id": "460689",
+          "uid": "110000233",
+          "qps": 50,
+          "duration": 60,
+          "broadcasts": [
+            {
+              "cmd_id": "a254990ae9effa7a4940d7ef88298885",
+              "cmd_name": "SUPER_CHAT_MESSAGE",
+              "displayName": "SUPER_CHAT_MESSAGE - 醒目留言",
+              "qps": null,
+              "duration": null
+            },
+            {
+              "cmd_id": "4b73dc299c7bfec6f7ec1202a7312b4e",
+              "cmd_name": "DANMU_ACTIVITY_CONFIG",
+              "displayName": "DANMU_ACTIVITY_CONFIG - 醒目留言动画_哈哈哈",
+              "qps": null,
+              "duration": null
+            }
+          ]
+        }
       },
       {
         "url": "https://ff-uat-live.bilibili.com/460690",
@@ -107,6 +72,13 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764838666223_07zt9ilau",
+      "task_1764838234209_1qwp38ctb",
+      "task_1764838160763_qftnzb50i",
+      "task_1764837735264_jhnevc5fr",
+      "task_1764837411293_tj9m0pkuz",
+      "task_1764837103348_jt3oj6jci",
+      "task_1764836492898_zch5rqqx9",
       "task_1764820282993_9qaad4yxe",
       "task_1764753395395_0t8u9mn70",
       "task_1764735959135_wjzo6lxra",
@@ -144,6 +116,7 @@
       "task_1763723957301_5yvgw1kcn"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-12-03T09:16:31.542Z"
+    "updatedAt": "2025-12-04T08:50:29.280Z",
+    "chromeArgs": []
   }
 ]
