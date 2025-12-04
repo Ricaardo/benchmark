@@ -87,6 +87,8 @@
     ],
     "createdAt": "2025-11-21T11:10:13.707Z",
     "executionHistory": [
+      "task_1764845399388_mm2k8zbcv",
+      "task_1764844926502_m8ibyaq5i",
       "task_1764842382461_5prcrp4ho",
       "task_1764842355283_hrgqwnww4",
       "task_1764842116505_2e67zdgqo",
@@ -134,12 +136,10 @@
       "task_1763985415130_4d9a2rkjd",
       "task_1763985443816_kt6u8s3lw",
       "task_1763985430692_55ecjzp72",
-      "task_1763956897290_vwiznux0h",
-      "task_1763955776797_cvsnsh9kj",
-      "task_1763727359664_hcaq15cii"
+      "task_1763956897290_vwiznux0h"
     ],
     "id": "testcase_1763723413707_ai28ms2b",
-    "updatedAt": "2025-12-04T09:59:40.671Z",
+    "updatedAt": "2025-12-04T10:49:57.138Z",
     "chromeArgs": [],
     "status": "pending",
     "cookie": "",

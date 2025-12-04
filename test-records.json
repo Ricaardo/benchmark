@@ -1,5 +1,31 @@
 [
   {
+    "id": "task_1764845399388_mm2k8zbcv",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "completed",
+    "startTime": "2025-12-04T10:49:59.388Z",
+    "endTime": "2025-12-04T10:52:36.058Z",
+    "duration": 156670,
+    "exitCode": 0,
+    "reportFile": "2025-12-04T18-50-00-Runtime-Local.json",
+    "logFile": "task_task_1764845399388_mm2k8zbcv_1764845557103.log"
+  },
+  {
+    "id": "task_1764844926502_m8ibyaq5i",
+    "testCaseId": "testcase_1763723413707_ai28ms2b",
+    "name": "压测运行对比",
+    "runner": "Runtime",
+    "status": "error",
+    "startTime": "2025-12-04T10:42:06.502Z",
+    "endTime": "2025-12-04T10:43:14.020Z",
+    "duration": 67518,
+    "exitCode": 1,
+    "errorMessage": "ignoreHTTPSErrors: true,\nGather process failed: Error: MultiConditionWaiter cancelled: abnormal page closed\nError occurred in 压测 of {\"runner\":\"Runtime\"}: Error: MultiConditionWaiter cancelled: abnormal page closed\n    ignoreHTTPSErrors: true,\nGather process failed: Error: MultiConditionWaiter cancelled: abnormal page closed\nError occurred in 非压测 of {\"runner\":\"Runtime\"}: Error: MultiConditionWaiter cancelled: abnormal page closed\n  ❌  任务失败\n可能原因: 生成失败或文件名不匹配",
+    "logFile": "task_task_1764844926502_m8ibyaq5i_1764844995058.log"
+  },
+  {
     "id": "task_1764842382461_5prcrp4ho",
     "testCaseId": "testcase_1763723413707_ai28ms2b",
     "name": "压测运行对比",
